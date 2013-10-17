@@ -1,0 +1,1 @@
+C:\Code\ESL\NEventSocket\src\NEventSocket\obj\Debug\NEventSocket.csprojResolveAssemblyReference.cache
