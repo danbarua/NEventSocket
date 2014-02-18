@@ -16,7 +16,6 @@ namespace NEventSocket.Sockets.Protocol
     using Common.Logging;
 
     using NEventSocket.FreeSwitch;
-    using NEventSocket.Messages;
     using NEventSocket.Util;
 
     /// <summary>

@@ -57,32 +57,33 @@
     <Compile Include="..\CommonAssemblyInfo.cs">
       <Link>Properties\CommonAssemblyInfo.cs</Link>
     </Compile>
-    <Compile Include="Sockets\Implementation\EventSocket.cs" />
-    <Compile Include="Sockets\Implementation\InboundSocket.cs" />
-    <Compile Include="Sockets\Interfaces\IEventSocketCommands.cs" />
-    <Compile Include="Sockets\Implementation\ObservableSocket.cs" />
-    <Compile Include="Sockets\Implementation\OutboundSocket.cs" />
-    <Compile Include="Sockets\Protocol\Commands.cs" />
+    <Compile Include="OutboundListener.cs" />
+    <Compile Include="Sockets\EventSocket.cs" />
+    <Compile Include="InboundSocket.cs" />
+    <Compile Include="IEventSocketCommands.cs" />
+    <Compile Include="Sockets\ObservableSocket.cs" />
+    <Compile Include="OutboundSocket.cs" />
+    <Compile Include="Commands.cs" />
     <Compile Include="FreeSwitch\HeaderNames.cs" />
-    <Compile Include="Sockets\Protocol\Messages\ApiResponse.cs">
+    <Compile Include="FreeSwitch\ApiResponse.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Sockets\Protocol\Messages\BackgroundJobResult.cs">
+    <Compile Include="FreeSwitch\BackgroundJobResult.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Sockets\Protocol\Messages\BasicMessage.cs">
+    <Compile Include="FreeSwitch\BasicMessage.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="FreeSwitch\ChannelState.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Sockets\Protocol\Messages\CommandReply.cs">
+    <Compile Include="FreeSwitch\CommandReply.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="FreeSwitch\ContentTypes.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Sockets\Protocol\Messages\EventMessage.cs">
+    <Compile Include="FreeSwitch\EventMessage.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="FreeSwitch\EventSocketLogLevel.cs">
@@ -95,8 +96,8 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Sockets\Interfaces\IEventSocket.cs" />
-    <Compile Include="Sockets\Interfaces\IInboundSocket.cs" />
+    <Compile Include="IEventSocket.cs" />
+    <Compile Include="IInboundSocket.cs" />
     <Compile Include="Sockets\Protocol\ParserExtensions.cs" />
     <Compile Include="Sockets\Protocol\Parser.cs" />
     <Compile Include="Util\EnumerableExtensions.cs" />

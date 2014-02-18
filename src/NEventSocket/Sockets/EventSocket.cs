@@ -1,4 +1,4 @@
-﻿namespace NEventSocket.Sockets.Implementation
+﻿namespace NEventSocket.Sockets
 {
     using System;
     using System.Collections.Generic;
@@ -14,8 +14,6 @@
     using Common.Logging;
 
     using NEventSocket.FreeSwitch;
-    using NEventSocket.Messages;
-    using NEventSocket.Sockets.Interfaces;
     using NEventSocket.Sockets.Protocol;
     using NEventSocket.Util;
 
@@ -41,45 +39,45 @@
                                      .SubscribeOn(TaskPoolScheduler.Default) // use the task pool
                                      .Multicast(new Subject<BasicMessage>()); // publish it to multiple subscribers
             
-            disposables.Add(this.incomingMessages.Connect()); // we can use this to disconnect subscribers when we want to disconnect the socket
+            this.disposables.Add(this.incomingMessages.Connect()); // we can use this to disconnect subscribers when we want to disconnect the socket
 
             // some messages will be received in reply to a command that we sent earlier through the socket
             // we'll parse those into the appropriate message and complete the outstanding task associated with that command
 
-            disposables.Add(MessagesReceived
+            this.disposables.Add(this.MessagesReceived
                                     .Where(x => x.ContentType == ContentTypes.CommandReply)
                                     .Subscribe(response =>
                                         {
                                                      var result = new CommandReply(response);
                                                      Log.DebugFormat("CommandReply received {0}", result.ReplyText);
-                                                     lock (commandCallbacks)
+                                                     lock (this.commandCallbacks)
                                                      {
-                                                         commandCallbacks.Dequeue().SetResult(result);
+                                                         this.commandCallbacks.Dequeue().SetResult(result);
                                                      }
                                                  },
                                                  ex =>
                                                      {
-                                                         lock (commandCallbacks)
+                                                         lock (this.commandCallbacks)
                                                          {
-                                                             commandCallbacks.Dequeue().SetException(ex);
+                                                             this.commandCallbacks.Dequeue().SetException(ex);
                                                          }
                                                      }));
 
-            disposables.Add(MessagesReceived
+            this.disposables.Add(this.MessagesReceived
                                     .Where(x => x.ContentType == ContentTypes.ApiResponse)
                                     .Subscribe(response =>
                                                  {
                                                      Log.DebugFormat("ApiResponse received {0}", response.BodyText);
-                                                     lock (apiCallbacks)
+                                                     lock (this.apiCallbacks)
                                                      {
-                                                         apiCallbacks.Dequeue().SetResult(new ApiResponse(response));
+                                                         this.apiCallbacks.Dequeue().SetResult(new ApiResponse(response));
                                                      }
                                                  },
                                                  ex =>
                                                      {
-                                                         lock (commandCallbacks)
+                                                         lock (this.commandCallbacks)
                                                          {
-                                                             apiCallbacks.Dequeue().SetException(ex);
+                                                             this.apiCallbacks.Dequeue().SetException(ex);
                                                          }
                                                      }));
 
@@ -113,7 +111,7 @@
             var tcs = new TaskCompletionSource<EventMessage>();
 
             //we'll get CHANNEL_EXECUTE_COMPLETE event when this finishes
-            var subscription = EventsReceived.Where(
+            var subscription = this.EventsReceived.Where(
                 x =>
                 x.EventType == EventType.CHANNEL_EXECUTE_COMPLETE
                 && x.EventHeaders[HeaderNames.Application] == appName)
@@ -125,7 +123,7 @@
                             tcs.SetResult(x);
                         });
 
-            SendCommandAsync("sendmsg {0}\ncall-command: execute\nexecute-app-name: {1}\nexecute-app-arg: {2}".Fmt(uuid, appName, appArg))
+            this.SendCommandAsync("sendmsg {0}\ncall-command: execute\nexecute-app-name: {1}\nexecute-app-arg: {2}".Fmt(uuid, appName, appArg))
                 .ContinueWith(t =>
                 {
                     if (!t.IsCompleted)
@@ -150,19 +148,19 @@
 
             try
             {
-                Monitor.Enter(apiCallbacks);
+                Monitor.Enter(this.apiCallbacks);
                 Log.DebugFormat("Sending Api {0}", command);
-                SendAsync(Encoding.ASCII.GetBytes("api " + command + "\n\n")).Wait(cts.Token);
-                apiCallbacks.Enqueue(tcs);
+                this.SendAsync(Encoding.ASCII.GetBytes("api " + command + "\n\n")).Wait(this.cts.Token);
+                this.apiCallbacks.Enqueue(tcs);
             }
             catch (Exception ex)
             {
-                if (IsConnected) Disconnect();
+                if (this.IsConnected) this.Disconnect();
                 tcs.SetException(ex);
             }
             finally
             {
-                Monitor.Exit(apiCallbacks);
+                Monitor.Exit(this.apiCallbacks);
             }
 
             return tcs.Task;
@@ -176,7 +174,7 @@
             var tcs = new TaskCompletionSource<BackgroundJobResult>();
 
             //we'll get an event in the future for this JobUUID and we'll use that to complete the task
-            var subscription = EventsReceived.Where(
+            var subscription = this.EventsReceived.Where(
                 x => x.EventType == EventType.BACKGROUND_JOB && x.EventHeaders["Job-UUID"] == jobUUID.ToString())
                                              .Take(1) //will auto terminate the subscription when received
                                              .Subscribe(x =>
@@ -188,7 +186,7 @@
 
             Log.DebugFormat("Sending BgApi {0}", command, arg, jobUUID);
 
-            SendCommandAsync(arg != null
+            this.SendCommandAsync(arg != null
                                  ? "bgapi {0} {1}\nJob-UUID: {2}".Fmt(command, arg, jobUUID)
                                  : "bgapi {0}\nJob-UUID: {1}".Fmt(command, jobUUID))
                 .ContinueWith(t =>
@@ -215,19 +213,19 @@
 
             try
             {
-                Monitor.Enter(commandCallbacks);
+                Monitor.Enter(this.commandCallbacks);
                 Log.DebugFormat("Sending Command {0}", command);
-                SendAsync(Encoding.ASCII.GetBytes(command + "\n\n")).Wait(cts.Token);
-                commandCallbacks.Enqueue(tcs);
+                this.SendAsync(Encoding.ASCII.GetBytes(command + "\n\n")).Wait(this.cts.Token);
+                this.commandCallbacks.Enqueue(tcs);
             }
             catch (Exception ex)
             {
-                if (IsConnected) Disconnect();
+                if (this.IsConnected) this.Disconnect();
                 tcs.SetException(ex);
             }
             finally
             {
-                Monitor.Exit(commandCallbacks);
+                Monitor.Exit(this.commandCallbacks);
             }
             
             return tcs.Task;

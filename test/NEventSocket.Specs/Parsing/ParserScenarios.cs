@@ -6,7 +6,7 @@
 
     using FluentAssertions;
 
-    using NEventSocket.Messages;
+    using NEventSocket.FreeSwitch;
     using NEventSocket.Sockets.Protocol;
 
     using Xbehave;

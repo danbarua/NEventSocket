@@ -1,4 +1,4 @@
-﻿namespace NEventSocket.Messages
+﻿namespace NEventSocket.FreeSwitch
 {
     using System;
 

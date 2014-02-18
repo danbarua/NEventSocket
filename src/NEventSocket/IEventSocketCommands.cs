@@ -1,9 +1,9 @@
-﻿namespace NEventSocket.Sockets.Interfaces
+﻿namespace NEventSocket
 {
     using System;
     using System.Threading.Tasks;
 
-    using NEventSocket.Messages;
+    using NEventSocket.FreeSwitch;
 
     public interface IEventSocketCommands
     {

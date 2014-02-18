@@ -13,7 +13,7 @@ namespace NEventSocket.Sockets.Protocol
     using System.Reactive.Linq;
     using System.Text;
 
-    using NEventSocket.Messages;
+    using NEventSocket.FreeSwitch;
     using NEventSocket.Util;
 
     public static class ParserExtensions

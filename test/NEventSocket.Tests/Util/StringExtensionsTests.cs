@@ -2,7 +2,6 @@
 {
     using System.Threading.Tasks;
 
-    using NEventSocket.Sockets.Implementation;
     using NEventSocket.Sockets.Protocol;
     using NEventSocket.Util;
 

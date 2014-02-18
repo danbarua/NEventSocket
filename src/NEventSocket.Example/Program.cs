@@ -1,37 +1,22 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace NEventSocket.Example
 {
-    using System.Reactive.Disposables;
     using System.Reactive.Linq;
 
     using Common.Logging;
     using Common.Logging.Simple;
 
     using NEventSocket.FreeSwitch;
-    using NEventSocket.Sockets.Implementation;
-    using NEventSocket.Sockets.Protocol;
     using NEventSocket.Util;
-
-    public static class Colour
-    {
-        public static IDisposable Use(ConsoleColor color)
-        {
-            var prev = Console.ForegroundColor;
-            Console.ForegroundColor = color;
-            return Disposable.Create(() => Console.ForegroundColor = prev);
-        }
-    }
 
     class Program
     {
         private static void Main(string[] args)
         {
             // set logger factory
-            LogManager.Adapter = new ConsoleOutLoggerFactoryAdapter();
+            LogManager.Adapter = new ConsoleOutLoggerFactoryAdapter(
+                LogLevel.All, true, true, true, "yyyy-MM-dd hh:mm:ss");
 
             Console.WriteLine("Starting...");
             var client = new InboundSocket("localhost", 8021, "ClueCon");
@@ -67,18 +52,6 @@ namespace NEventSocket.Example
                     }
                 };
 
-            client.EventsReceived.Where(x => x.EventType == EventType.CHANNEL_EXECUTE_COMPLETE).Subscribe(
-                x =>
-                {
-                    using (Colour.Use(ConsoleColor.DarkGreen))
-                    {
-                        Console.WriteLine("CHANNEL_EXECUTE_COMPLETE");
-                        Console.WriteLine("Application: " + x.EventHeaders[HeaderNames.Application]);
-                        Console.WriteLine("Args: " + x.EventHeaders[HeaderNames.ApplicationData]);
-                        Console.WriteLine("Response: " + x.EventHeaders[HeaderNames.ApplicationResponse]);
-                    }
-                });
-
             client.Disconnected += (sender, eventArgs) =>
                 {
                     using (Colour.Use(ConsoleColor.Blue))
@@ -96,7 +69,7 @@ namespace NEventSocket.Example
                         using (Colour.Use(ConsoleColor.Red))
                         {
                             Console.WriteLine("HANGUP DETECTED!");
-                            e.EventHeaders.ForEach(x => Console.WriteLine(x));
+                            //e.EventHeaders.ForEach(x => Console.WriteLine(x));
                         }
                     });
 

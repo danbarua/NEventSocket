@@ -1,13 +1,10 @@
-﻿namespace NEventSocket.Sockets.Protocol
+﻿namespace NEventSocket
 {
     using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
 
     using NEventSocket.FreeSwitch;
-    using NEventSocket.Messages;
-    using NEventSocket.Sockets.Implementation;
-    using NEventSocket.Sockets.Interfaces;
     using NEventSocket.Util;
 
     public static class Commands

@@ -1,4 +1,4 @@
-﻿namespace NEventSocket.Sockets.Implementation
+﻿namespace NEventSocket
 {
     using System;
     using System.Net.Sockets;
@@ -9,8 +9,7 @@
     using Common.Logging;
 
     using NEventSocket.FreeSwitch;
-    using NEventSocket.Messages;
-    using NEventSocket.Sockets.Protocol;
+    using NEventSocket.Sockets;
 
     public class InboundSocket : EventSocket
     {
@@ -23,10 +22,10 @@
         {
             this.password = password;
 
-            MessagesReceived
+            this.MessagesReceived
                     .Where(x => x.ContentType == ContentTypes.AuthRequest)
                     .Take(1)
-                    .Subscribe(x => Authenticate());
+                    .Subscribe(x => this.Authenticate());
         }
 
         public event EventHandler Authenticated = (sender, args) => { };
@@ -36,7 +35,7 @@
             var tcs = new TaskCompletionSource<EventMessage>();
 
             //we'll get an event in the future for this channel and we'll use that to complete the task
-            var subscription = EventsReceived.Where(
+            var subscription = this.EventsReceived.Where(
                 x => x.EventType == EventType.CHANNEL_ANSWER || x.EventType == EventType.CHANNEL_DESTROY)
                                              .Take(1) //will auto terminate the subscription
                                              .Subscribe(x =>
@@ -65,11 +64,11 @@
 
         private async Task Authenticate()
         {
-            var result = await this.Auth(password);
+            var result = await this.Auth(this.password);
             if (result.Success)
             {
                 Log.Debug("Authenticated.");
-                Authenticated(this, EventArgs.Empty);
+                this.Authenticated(this, EventArgs.Empty);
             }
             else
             {

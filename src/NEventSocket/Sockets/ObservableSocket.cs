@@ -1,4 +1,4 @@
-﻿namespace NEventSocket.Sockets.Implementation
+﻿namespace NEventSocket.Sockets
 {
     using System;
     using System.Collections.Concurrent;
@@ -36,11 +36,11 @@
         {
             this.tcpClient = tcpClient;
 
-            receiver = received.GetConsumingEnumerable()
+            this.receiver = this.received.GetConsumingEnumerable()
                 .ToObservable(TaskPoolScheduler.Default)
-                .TakeUntil(receiverTermination);
+                .TakeUntil(this.receiverTermination);
 
-            readSubscription = Observable.Defer(
+            this.readSubscription = Observable.Defer(
                 () =>
                     {
                         var stream = tcpClient.GetStream();
@@ -56,38 +56,38 @@
                         ex =>
                             {
                                 Log.Error("Read Failed", ex);
-                                Disconnect(false);
+                                this.Disconnect(false);
                             },
-                        () => Disconnect(false));
+                        () => this.Disconnect(false));
         }
 
         ~ObservableSocket()
         {
-            Dispose(false);
+            this.Dispose(false);
         }
 
         public event EventHandler Disconnected = (sender, args) => { };
 
         public event EventHandler Disposed = (sender, args) => { };
 
-        public bool IsConnected { get { return tcpClient != null && tcpClient.Connected; } }
+        public bool IsConnected { get { return this.tcpClient != null && this.tcpClient.Connected; } }
 
-        protected IObservable<byte[]> Receiver { get { return receiver; } }
+        protected IObservable<byte[]> Receiver { get { return this.receiver; } }
 
         public Task SendAsync(byte[] bytes)
         {
-            return SendAsync(bytes, CancellationToken.None);
+            return this.SendAsync(bytes, CancellationToken.None);
         }
 
         public Task SendAsync(byte[] bytes, CancellationToken cancellationToken)
         {
-            if (disposed) throw new ObjectDisposedException(this.ToString());
+            if (this.disposed) throw new ObjectDisposedException(this.ToString());
             
-            if (!IsConnected) throw new InvalidOperationException("Not connected");
+            if (!this.IsConnected) throw new InvalidOperationException("Not connected");
             
             try
             {
-                Monitor.Enter(syncLock);
+                Monitor.Enter(this.syncLock);
                 var stream = this.GetStream();
                 return stream.WriteAsync(bytes, 0, bytes.Length, cancellationToken);
             }
@@ -99,70 +99,70 @@
             }
             finally
             {
-                Monitor.Exit(syncLock);
+                Monitor.Exit(this.syncLock);
             }
         }
 
         public void Disconnect()
         {
-            if (!IsConnected)
+            if (!this.IsConnected)
                 throw new InvalidOperationException("Client is not connected");
 
-            Disconnect(false);
+            this.Disconnect(false);
         }
 
         public void Dispose()
         {
-            Dispose(true);
+            this.Dispose(true);
             GC.SuppressFinalize(this);
         }
 
         protected virtual Stream GetStream()
         {
-            return tcpClient.GetStream();
+            return this.tcpClient.GetStream();
         }
 
         protected void Disconnect(bool disposing)
         {
-            if (disposed && !disposing)
+            if (this.disposed && !disposing)
                 throw new ObjectDisposedException(this.ToString());
 
             Log.Debug("Disconnecting");
 
-            if (readSubscription != null)
+            if (this.readSubscription != null)
             {
-                readSubscription.Dispose();
+                this.readSubscription.Dispose();
             }
 
-            readSubscription = null;
+            this.readSubscription = null;
 
-            if (IsConnected)
+            if (this.IsConnected)
             {
-                tcpClient.Close();
+                this.tcpClient.Close();
                 Log.Debug("Client closed.");
             }
 
-            tcpClient = null;
+            this.tcpClient = null;
 
-            Disconnected(this, EventArgs.Empty);
+            this.Disconnected(this, EventArgs.Empty);
         }
 
         protected virtual void Dispose(bool disposing)
         {
             Log.Debug("Disposing");
 
-            if (!disposed)
+            if (!this.disposed)
             {
                 if (disposing)
                 {
-                    Disconnect(true);
+                    this.Disconnect(true);
 
-                    receiverTermination.OnNext(Unit.Default);
+                    this.receiverTermination.OnNext(Unit.Default);
                 }
 
-                Disposed(this, EventArgs.Empty);
+                this.Disposed(this, EventArgs.Empty);
 
-                disposed = true;
+                this.disposed = true;
             }
         }
     }

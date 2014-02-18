@@ -1,4 +1,4 @@
-﻿namespace NEventSocket.Messages
+﻿namespace NEventSocket.FreeSwitch
 {
     using System;
     using System.Collections.Generic;
@@ -7,7 +7,6 @@
 
     using Common.Logging;
 
-    using NEventSocket.FreeSwitch;
     using NEventSocket.Sockets.Protocol;
     using NEventSocket.Util;
 
@@ -32,12 +31,12 @@
             if (string.IsNullOrEmpty(basicMessage.BodyText))
                 throw new ArgumentException("Message did not contain an event body.");
 
-            Headers = basicMessage.Headers;
-            BodyText = basicMessage.BodyText;
+            this.Headers = basicMessage.Headers;
+            this.BodyText = basicMessage.BodyText;
 
             try
             {
-                if (BodyText.Contains(HeaderNames.ContentLength))
+                if (this.BodyText.Contains(HeaderNames.ContentLength))
                 {
                     // need to parse this as a message with a body eg. BACKGROUND_JOB event
                     var parser = new Parser();
@@ -62,7 +61,7 @@
             catch (Exception ex)
             {
                 Log.Error("Failed to parse body of event", ex);
-                Log.Error(BodyText);
+                Log.Error(this.BodyText);
                 throw;
             }
         }
@@ -71,7 +70,7 @@
         {
             get
             {
-                return (EventType)Enum.Parse(typeof(EventType), EventHeaders[HeaderNames.EventName]);
+                return (EventType)Enum.Parse(typeof(EventType), this.EventHeaders[HeaderNames.EventName]);
             }
         }
 
@@ -79,7 +78,7 @@
         {
             get
             {
-                return (ChannelState)Enum.Parse(typeof(ChannelState), EventHeaders[HeaderNames.ChannelState]);
+                return (ChannelState)Enum.Parse(typeof(ChannelState), this.EventHeaders[HeaderNames.ChannelState]);
             }
         }
 
@@ -88,7 +87,7 @@
             get
             {
                 //possible values: answered, hangup
-                return EventHeaders[HeaderNames.AnswerState];
+                return this.EventHeaders[HeaderNames.AnswerState];
             }
         }
 
@@ -96,7 +95,7 @@
 
         public string GetVariable(string variable)
         {
-            return EventHeaders["variable_" + variable];
+            return this.EventHeaders["variable_" + variable];
         }
 
         public override string ToString()
@@ -104,18 +103,18 @@
             var sb = new StringBuilder();
             sb.AppendLine("Message Headers:");
 
-            foreach (var h in Headers.OrderBy(x => x.Key))
+            foreach (var h in this.Headers.OrderBy(x => x.Key))
                 sb.AppendLine("\t" + h.Key + " : " + h.Value);
 
             sb.AppendLine("Event Headers:");
 
-            foreach (var h in EventHeaders.OrderBy(x => x.Key))
+            foreach (var h in this.EventHeaders.OrderBy(x => x.Key))
                 sb.AppendLine("\t" + h.Key + " : " + h.Value);
 
-            if (!string.IsNullOrEmpty(BodyText))
+            if (!string.IsNullOrEmpty(this.BodyText))
             {
                 sb.AppendLine("Body:");
-                sb.AppendLine(BodyText);
+                sb.AppendLine(this.BodyText);
             }
 
             return sb.ToString();

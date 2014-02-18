@@ -7,7 +7,7 @@
 // </summary>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace NEventSocket.Sockets.Interfaces
+namespace NEventSocket
 {
     using System;
 

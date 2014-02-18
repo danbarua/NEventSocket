@@ -1,4 +1,4 @@
-﻿namespace NEventSocket.Sockets.Implementation
+﻿namespace NEventSocket
 {
     using System;
     using System.Net.Sockets;
@@ -7,7 +7,7 @@
     using Common.Logging;
 
     using NEventSocket.FreeSwitch;
-    using NEventSocket.Sockets.Protocol;
+    using NEventSocket.Sockets;
 
     public class OutboundSocket : EventSocket
     {

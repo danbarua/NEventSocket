@@ -7,11 +7,11 @@
 // </summary>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace NEventSocket.Sockets.Interfaces
+namespace NEventSocket
 {
     using System;
 
-    using NEventSocket.Messages;
+    using NEventSocket.FreeSwitch;
 
     /// <summary>The EventSocket interface.</summary>
     public interface IEventSocket : IDisposable

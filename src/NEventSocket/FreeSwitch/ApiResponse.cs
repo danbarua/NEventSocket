@@ -1,9 +1,7 @@
-﻿namespace NEventSocket.Messages
+﻿namespace NEventSocket.FreeSwitch
 {
     using System;
 
-    using NEventSocket.FreeSwitch;
-    using NEventSocket.Sockets.Protocol;
     using NEventSocket.Util;
 
     /// <summary>

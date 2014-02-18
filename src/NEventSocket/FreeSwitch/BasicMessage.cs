@@ -1,14 +1,11 @@
-﻿namespace NEventSocket.Messages
+﻿namespace NEventSocket.FreeSwitch
 {
     using System;
     using System.Collections.Generic;
-    using System.Collections.ObjectModel;
     using System.Linq;
     using System.Text;
     using System.Text.RegularExpressions;
 
-    using NEventSocket.FreeSwitch;
-    using NEventSocket.Sockets.Protocol;
     using NEventSocket.Util;
 
     /// <summary>
@@ -28,13 +25,13 @@
 
         public BasicMessage(IDictionary<string, string> headers)
         {
-            Headers = new Dictionary<string, string>(headers, StringComparer.OrdinalIgnoreCase);
+            this.Headers = new Dictionary<string, string>(headers, StringComparer.OrdinalIgnoreCase);
         }
 
         public BasicMessage(IDictionary<string, string> headers, string body)
         {
-            Headers = new Dictionary<string, string>(headers, StringComparer.OrdinalIgnoreCase);
-            BodyText = body;
+            this.Headers = new Dictionary<string, string>(headers, StringComparer.OrdinalIgnoreCase);
+            this.BodyText = body;
         }
 
         public IReadOnlyDictionary<string, string> Headers { get; protected set; }
@@ -44,7 +41,7 @@
         /// <summary>Gets the Content Type header.</summary>
         public string ContentType
         {
-            get { return Headers[HeaderNames.ContentType]; }
+            get { return this.Headers[HeaderNames.ContentType]; }
         }
 
         /// <summary>Gets the content length.</summary>
@@ -52,8 +49,8 @@
         {
             get
             {
-                if (!Headers.ContainsKey(HeaderNames.ContentLength)) return null;
-                return int.Parse(Headers[HeaderNames.ContentLength]);
+                if (!this.Headers.ContainsKey(HeaderNames.ContentLength)) return null;
+                return int.Parse(this.Headers[HeaderNames.ContentLength]);
             }
         }
 
@@ -64,14 +61,14 @@
             var sb = new StringBuilder();
             sb.AppendLine("Headers:\n");
 
-            foreach (var h in Headers.OrderBy(x => x.Key))
+            foreach (var h in this.Headers.OrderBy(x => x.Key))
                 sb.AppendFormat("\t{0}:{1}\n".Fmt(h.Key, h.Value));
 
-            if (BodyText != null)
+            if (this.BodyText != null)
             {
                 sb.AppendLine("Body:\n");
                 sb.Append("\t");
-                sb.AppendLine(BodyText);
+                sb.AppendLine(this.BodyText);
             }
 
             return sb.ToString();
