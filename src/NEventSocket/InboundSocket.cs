@@ -44,17 +44,13 @@
                                                      tcs.SetResult(x);
                                                  });
 
-            this.BgApi("originate " + args)
+            this.BgApi("originate", args)
                 .ContinueWith(
                     t =>
                         {
                             if ((t.IsFaulted && t.Exception != null) || (t.Result != null && !t.Result.Success))
                             {
-                                //we're never going to get anevent because we didn't send the command successfully
                                 subscription.Dispose();
-                                //fail the parent task
-                                //tcs.SetException(t.Exception);
-
                                 tcs.SetResult(null);
                             }
                         });

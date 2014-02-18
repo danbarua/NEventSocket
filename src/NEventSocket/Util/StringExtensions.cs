@@ -26,6 +26,7 @@
         /// <param name="keyValuePairDelimiter">The delimiter which separates key-value pairs, e.g. a newline.</param>
         /// <param name="keyValueDelimiter">The delimiter which separates keys and values, e.g. a colon.</param>
         /// <returns>A <see cref="System.Collections.Generic.IDictionary{string, string}"/> containing the key-value pairs.</returns>
+        /// <exception cref="FormatException">Thrown when an invalid key-value pair is encountered.</exception>
         [DebuggerStepThrough]
         public static IDictionary<string, string> ParseKeyValuePairs(this string inputString, string keyValuePairDelimiter, string keyValueDelimiter)
         {
