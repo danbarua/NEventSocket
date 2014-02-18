@@ -5,3 +5,6 @@ StyleCop.Cache
 *.user
 Thumbs.db
 *.sln.ide
+packages/*
+*/obj/*
+*.suo

@@ -21,6 +21,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{8A973BD1
 		..\test\Settings.StyleCop = ..\test\Settings.StyleCop
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NEventSocket.Tests", "..\test\NEventSocket.Tests\NEventSocket.Tests.csproj", "{731A678B-6827-468A-BFA1-AB2533947D61}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NEventSocket.Example", "NEventSocket.Example\NEventSocket.Example.csproj", "{0486B4C4-BD02-4DF1-99C8-1188400B08E1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -35,11 +39,21 @@ Global
 		{83DCA19D-3FF7-4E60-A066-BAE1C5A7B65E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{83DCA19D-3FF7-4E60-A066-BAE1C5A7B65E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{83DCA19D-3FF7-4E60-A066-BAE1C5A7B65E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{731A678B-6827-468A-BFA1-AB2533947D61}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{731A678B-6827-468A-BFA1-AB2533947D61}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{731A678B-6827-468A-BFA1-AB2533947D61}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{731A678B-6827-468A-BFA1-AB2533947D61}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0486B4C4-BD02-4DF1-99C8-1188400B08E1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0486B4C4-BD02-4DF1-99C8-1188400B08E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0486B4C4-BD02-4DF1-99C8-1188400B08E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0486B4C4-BD02-4DF1-99C8-1188400B08E1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{4DB49BC2-C16A-46AC-91FF-36AE53F9864B} = {8A973BD1-83E8-4794-A81A-538CC7069BDC}
+		{731A678B-6827-468A-BFA1-AB2533947D61} = {8A973BD1-83E8-4794-A81A-538CC7069BDC}
+		{0486B4C4-BD02-4DF1-99C8-1188400B08E1} = {8A973BD1-83E8-4794-A81A-538CC7069BDC}
 	EndGlobalSection
 EndGlobal

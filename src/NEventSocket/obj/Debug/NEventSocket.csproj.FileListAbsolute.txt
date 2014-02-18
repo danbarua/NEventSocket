@@ -1,1 +1,16 @@
 C:\Code\ESL\NEventSocket\src\NEventSocket\obj\Debug\NEventSocket.csprojResolveAssemblyReference.cache
+C:\Code\ESL\NEventSocket\src\NEventSocket\bin\Debug\NEventSocket.dll
+C:\Code\ESL\NEventSocket\src\NEventSocket\bin\Debug\NEventSocket.pdb
+C:\Code\ESL\NEventSocket\src\NEventSocket\bin\Debug\Common.Logging.dll
+C:\Code\ESL\NEventSocket\src\NEventSocket\bin\Debug\Common.Logging.pdb
+C:\Code\ESL\NEventSocket\src\NEventSocket\bin\Debug\Common.Logging.xml
+C:\Code\ESL\NEventSocket\src\NEventSocket\obj\Debug\NEventSocket.dll
+C:\Code\ESL\NEventSocket\src\NEventSocket\obj\Debug\NEventSocket.pdb
+C:\Code\ESL\NEventSocket\src\NEventSocket\bin\Debug\System.Reactive.Core.dll
+C:\Code\ESL\NEventSocket\src\NEventSocket\bin\Debug\System.Reactive.Interfaces.dll
+C:\Code\ESL\NEventSocket\src\NEventSocket\bin\Debug\System.Reactive.Linq.dll
+C:\Code\ESL\NEventSocket\src\NEventSocket\bin\Debug\System.Reactive.PlatformServices.dll
+C:\Code\ESL\NEventSocket\src\NEventSocket\bin\Debug\System.Reactive.Core.xml
+C:\Code\ESL\NEventSocket\src\NEventSocket\bin\Debug\System.Reactive.Interfaces.xml
+C:\Code\ESL\NEventSocket\src\NEventSocket\bin\Debug\System.Reactive.Linq.xml
+C:\Code\ESL\NEventSocket\src\NEventSocket\bin\Debug\System.Reactive.PlatformServices.xml
