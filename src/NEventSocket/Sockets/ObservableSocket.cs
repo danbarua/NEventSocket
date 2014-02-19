@@ -58,7 +58,11 @@
                                 Log.Error("Read Failed", ex);
                                 this.Disconnect(false);
                             },
-                        () => this.Disconnect(false));
+                        () =>
+                            {
+                                Log.Trace("Read Observable Completed");
+                                this.Disconnect(false);
+                            });
         }
 
         ~ObservableSocket()
@@ -127,7 +131,6 @@
             if (this.disposed && !disposing)
                 throw new ObjectDisposedException(this.ToString());
 
-            Log.Debug("Disconnecting");
 
             if (this.readSubscription != null)
             {
@@ -138,13 +141,14 @@
 
             if (this.IsConnected)
             {
+                Log.Debug("Disconnecting");
                 this.tcpClient.Close();
+                this.tcpClient = null;
                 Log.Debug("Client closed.");
+
+                this.Disconnected(this, EventArgs.Empty);
             }
 
-            this.tcpClient = null;
-
-            this.Disconnected(this, EventArgs.Empty);
         }
 
         protected virtual void Dispose(bool disposing)

@@ -23,7 +23,7 @@
 
         private static readonly ILog Log = LogManager.GetCurrentClassLogger();
 
-        private readonly IConnectableObservable<BasicMessage> incomingMessages; 
+        private readonly ISubject<BasicMessage> incomingMessages = new Subject<BasicMessage>();
 
         private readonly Queue<TaskCompletionSource<CommandReply>> commandCallbacks = new Queue<TaskCompletionSource<CommandReply>>();
  
@@ -34,12 +34,7 @@
 
         protected EventSocket(TcpClient tcpClient) : base(tcpClient)
         {
-            this.incomingMessages = this.Receiver // pull bytes from the socket until the socket goes away
-                                     .ExtractBasicMessages() // transform the byte stream to a stream of basic messages
-                                     .SubscribeOn(TaskPoolScheduler.Default) // use the task pool
-                                     .Multicast(new Subject<BasicMessage>()); // publish it to multiple subscribers
-            
-            this.disposables.Add(this.incomingMessages.Connect()); // we can use this to disconnect subscribers when we want to disconnect the socket
+            this.Receiver.ExtractBasicMessages().Subscribe(msg => this.incomingMessages.OnNext(msg));
 
             // some messages will be received in reply to a command that we sent earlier through the socket
             // we'll parse those into the appropriate message and complete the outstanding task associated with that command
@@ -237,6 +232,8 @@
             {
                 // cancel any outgoing network sends
                 this.cts.Cancel();
+
+                this.incomingMessages.OnCompleted();
 
                 this.disposables.Dispose();
             }
