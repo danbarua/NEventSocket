@@ -48,7 +48,8 @@ namespace NEventSocket.Example
                                             }
                                         });
 
-                                connection.EventsReceived.Where(x => x.EventType == EventType.CHANNEL_HANGUP || x.EventType == EventType.CHANNEL_HANGUP_COMPLETE)
+                                connection.EventsReceived.Where(x => 
+                                    x.EventType == EventType.CHANNEL_HANGUP_COMPLETE)
                                           .Take(1)
                                           .Subscribe(
                                               e =>
@@ -74,7 +75,6 @@ namespace NEventSocket.Example
                                 connection.Disposed += (o, e) => Console.WriteLine("connection disposed");
 
                                 var status = await connection.Connect();
-                                
                                 var uuid = status.Headers["Unique-ID"];
                                 Console.WriteLine(uuid);
                                 await connection.MyEvents(Guid.Parse(uuid));
@@ -127,16 +127,24 @@ namespace NEventSocket.Example
                     client.Originate(
                         "{origination_caller_id_number=1234567}sofia/external/1000@172.16.50.128:5070 &park");
 
-                if (channel != null)
+                if (channel != null && channel.AnswerState == "answered")
                 {
-                    await client.Linger();
                     var uuid = channel.EventHeaders[HeaderNames.CallerUniqueId];
                     await client.MyEvents(Guid.Parse(uuid));
+                    await client.Linger();
                     var evt = await client.ExecuteAppAsync(uuid, "playback", "$${base_dir}/sounds/en/us/callie/ivr/8000/ivr-all_your_call_are_belong_to_us.wav");
                     Console.WriteLine("Finished playback {0}", evt.EventHeaders[HeaderNames.ApplicationResponse]);
 
                     if (evt.AnswerState != "hangup")
                         await client.Hangup(uuid, "NORMAL_CALL_CLEARING");
+                }
+                else
+                {
+                    using (Colour.Use(ConsoleColor.DarkRed))
+                    {
+                        Console.WriteLine("Call rejected");
+                        client.Exit();
+                    }
                 }
             };
 
@@ -153,7 +161,10 @@ namespace NEventSocket.Example
             client.EventsReceived.Where(x => x.EventType == EventType.DTMF)
                   .Subscribe(e => Console.WriteLine("DTMF: {0}", e.EventHeaders["DTMF-Digit"]));
 
-            client.EventsReceived.Where(x => x.EventType == EventType.CHANNEL_HANGUP || x.EventType == EventType.CHANNEL_HANGUP_COMPLETE).Subscribe(
+            client.EventsReceived.Where(x => 
+                //x.EventType == EventType.CHANNEL_HANGUP|| 
+                x.EventType == EventType.CHANNEL_HANGUP_COMPLETE
+                ).Subscribe(
                 e =>
                 {
                     using (Colour.Use(ConsoleColor.Red))

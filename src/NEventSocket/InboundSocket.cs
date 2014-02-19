@@ -36,7 +36,7 @@
 
             //we'll get an event in the future for this channel and we'll use that to complete the task
             var subscription = this.EventsReceived.Where(
-                x => x.EventType == EventType.CHANNEL_ANSWER || x.EventType == EventType.CHANNEL_DESTROY)
+                x => x.EventType == EventType.CHANNEL_ANSWER || x.EventType == EventType.CHANNEL_DESTROY || x.EventType == EventType.CHANNEL_HANGUP_COMPLETE)
                                              .Take(1) //will auto terminate the subscription
                                              .Subscribe(x =>
                                                  {

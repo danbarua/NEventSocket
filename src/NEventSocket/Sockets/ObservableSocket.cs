@@ -37,7 +37,7 @@
             this.tcpClient = tcpClient;
 
             this.receiver = this.received.GetConsumingEnumerable()
-                .ToObservable(TaskPoolScheduler.Default)
+                .ToObservable(Scheduler.Default)
                 .TakeUntil(this.receiverTermination);
 
             this.readSubscription = Observable.Defer(
@@ -141,14 +141,15 @@
 
             if (this.IsConnected)
             {
-                Log.Trace("Disconnecting");
-                this.tcpClient.Close();
-                this.tcpClient = null;
-                Log.Trace("Client closed.");
-
-                this.Disconnected(this, EventArgs.Empty);
+                if (this.tcpClient != null)
+                {
+                    Log.Trace("Disconnecting");
+                    this.tcpClient.Close();
+                    this.tcpClient = null;
+                    this.Disconnected(this, EventArgs.Empty);
+                    Log.Trace("Client closed.");
+                }
             }
-
         }
 
         protected virtual void Dispose(bool disposing)
