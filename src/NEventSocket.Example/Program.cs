@@ -19,66 +19,130 @@ namespace NEventSocket.Example
                 LogLevel.All, true, true, true, "yyyy-MM-dd hh:mm:ss");
 
             Console.WriteLine("Starting...");
+
+            OutboundSocket();
+            InboundSocket();
+
+            Console.WriteLine("Press [Enter] to exit.");
+            Console.ReadLine();
+        }
+
+        private static void OutboundSocket()
+        {
+            var listener = new OutboundListener(8084);
+
+            listener.Connections
+                    .Subscribe(
+                        async connection =>
+                            {
+                                Console.WriteLine("New Socket connected");
+
+                                //connection.MessagesReceived.Subscribe(Console.WriteLine);
+
+                                connection.EventsReceived.Where(x => x.EventType == EventType.CHANNEL_HANGUP || x.EventType == EventType.CHANNEL_HANGUP_COMPLETE)
+                                          .Take(1)
+                                          .Subscribe(
+                                              e =>
+                                                  {
+                                                      using (Colour.Use(ConsoleColor.Red))
+                                                      {
+                                                          Console.WriteLine("HANGUP DETECTED " + e.EventType);
+                                                      }
+                                                      connection.Exit();
+                                                  });
+
+                                connection.Disconnected += (sender, eventArgs) =>
+                                {
+                                    using (Colour.Use(ConsoleColor.Blue))
+                                    {
+                                        Console.WriteLine("Disconnected!");
+                                    }
+
+                                    connection.Dispose();
+                                };
+
+
+                                connection.Disposed += (o, e) => Console.WriteLine("connection disposed");
+
+                                var status = await connection.Connect();
+                                
+                                var uuid = status.Headers["Unique-ID"];
+                                Console.WriteLine(uuid);
+                                await connection.MyEvents(Guid.Parse(uuid));
+                                await connection.Event(EventType.BACKGROUND_JOB, EventType.API, EventType.PLAYBACK_START, EventType.PLAYBACK_STOP, EventType.DTMF, EventType.CHANNEL_HANGUP, EventType.CHANNEL_HANGUP_COMPLETE);
+                                await connection.Linger();
+                                await connection.SendMessage(uuid, "call-command: execute\nexecute-app-name: answer");
+                                var result = await
+                                    connection.ExecuteAppAsync(uuid, "playback", "$${base_dir}/sounds/en/us/callie/misc/8000/misc-freeswitch_is_state_of_the_art.wav");
+                                Console.WriteLine("Finished playback {0}", result.EventHeaders[HeaderNames.ApplicationResponse]);
+                                if (result.AnswerState != "hangup")
+                                    await connection.Hangup(uuid, "NORMAL_CALL_CLEARING");
+                    });
+
+            listener.Start();
+        }
+
+        private static void InboundSocket()
+        {
             var client = new InboundSocket("localhost", 8021, "ClueCon");
 
             client.Connected += (sender, eventArgs) => Console.WriteLine("Connected...");
-            
+
             client.Authenticated += async (sender, eventArgs) =>
+            {
+                Console.WriteLine("Authenticated!");
+
+                var result = await client.Event(
+                    EventType.BACKGROUND_JOB,
+                    EventType.CHANNEL_EXECUTE_COMPLETE,
+                    EventType.CHANNEL_HANGUP,
+                    EventType.CHANNEL_HANGUP_COMPLETE,
+                    EventType.DTMF,
+                    EventType.CHANNEL_DESTROY,
+                    EventType.CHANNEL_ANSWER);
+
+
+                var channel =
+                    await
+                    client.Originate(
+                        "{origination_caller_id_number=1234567}sofia/external/1000@172.16.50.128:5070 &park");
+
+                if (channel != null)
                 {
-                    Console.WriteLine("Authenticated!");
+                    await client.Linger();
+                    var uuid = channel.EventHeaders[HeaderNames.CallerUniqueId];
+                    await client.MyEvents(Guid.Parse(uuid));
+                    var evt = await client.ExecuteAppAsync(uuid, "playback", "$${base_dir}/sounds/en/us/callie/ivr/8000/ivr-all_your_call_are_belong_to_us.wav");
+                    Console.WriteLine("Finished playback {0}", evt.EventHeaders[HeaderNames.ApplicationResponse]);
 
-                    var result = await client.Event(
-                        EventType.BACKGROUND_JOB,
-                        EventType.CHANNEL_EXECUTE_COMPLETE,
-                        EventType.CHANNEL_HANGUP,
-                        EventType.CHANNEL_HANGUP_COMPLETE,
-                        EventType.DTMF,
-                        EventType.CHANNEL_DESTROY,
-                        EventType.CHANNEL_ANSWER);
-
-                    Console.WriteLine(result.Success);
-
-                    var channel =
-                        await
-                        client.Originate(
-                            "{origination_caller_id_number=1234567}sofia/external/1000@172.16.50.128:5070 &park");
-
-                    if (channel != null)
-                    {
-                        var uuid = channel.EventHeaders[HeaderNames.CallerUniqueId];
-                        await client.MyEvents(Guid.Parse(uuid));
-                        var evt = await client.ExecuteAppAsync(uuid, "playback", "$${base_dir}/sounds/en/us/callie/ivr/8000/ivr-all_your_call_are_belong_to_us.wav");
-                        Console.WriteLine("Finished playback {0}", evt.EventHeaders[HeaderNames.ApplicationResponse]);
-                    }
-                };
+                    if (evt.AnswerState != "hangup")
+                        await client.Hangup(uuid, "NORMAL_CALL_CLEARING");
+                }
+            };
 
             client.Disconnected += (sender, eventArgs) =>
+            {
+                using (Colour.Use(ConsoleColor.Blue))
                 {
-                    using (Colour.Use(ConsoleColor.Blue))
-                    {
-                        Console.WriteLine("Disconnected!");
-                    }
-                };
+                    Console.WriteLine("Disconnected!");
+                }
+
+                client.Dispose();
+            };
 
             client.EventsReceived.Where(x => x.EventType == EventType.DTMF)
                   .Subscribe(e => Console.WriteLine("DTMF: {0}", e.EventHeaders["DTMF-Digit"]));
 
             client.EventsReceived.Where(x => x.EventType == EventType.CHANNEL_HANGUP || x.EventType == EventType.CHANNEL_HANGUP_COMPLETE).Subscribe(
                 e =>
+                {
+                    using (Colour.Use(ConsoleColor.Red))
                     {
-                        using (Colour.Use(ConsoleColor.Red))
-                        {
-                            Console.WriteLine("HANGUP DETECTED!");
-                            //e.EventHeaders.ForEach(x => Console.WriteLine(x));
-                        }
-                    });
+                        Console.WriteLine("HANGUP DETECTED " + e.EventType);
+                    }
 
-            Console.ReadLine();
-
-            client.Exit();
-
-            Console.WriteLine("Finished...");
-            Console.ReadLine();
+                    client.Exit();
+                });
         }
     }
 }
