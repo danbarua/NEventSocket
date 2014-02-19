@@ -75,6 +75,8 @@
 
             this.listenerTermination.OnNext(Unit.Default);
 
+            this.observable.OnCompleted();
+
             this.subscription.Dispose();
             this.subscription = null;
             this.tcpListener.Server.Close();
