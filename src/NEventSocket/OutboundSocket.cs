@@ -29,7 +29,7 @@
                                 .Subscribe(
                                     _ =>
                                     {
-                                        Log.Debug("Disconnect Notice received.");
+                                        Log.Trace("Disconnect Notice received.");
                                         this.Disconnect();
                                     }));
             return result;

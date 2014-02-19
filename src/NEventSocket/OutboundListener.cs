@@ -8,11 +8,15 @@
     using System.Reactive.Subjects;
     using System.Reactive;
 
+    using Common.Logging;
+
     /// <summary>
     ///     Listens for Outbound connections from FreeSwitch
     /// </summary>
     public class OutboundListener
     {
+        private static readonly ILog Log = LogManager.GetCurrentClassLogger();
+
         private bool disposed;
         private IDisposable subscription;
         private TcpListener tcpListener;
@@ -50,17 +54,25 @@
 
             this.tcpListener.Start();
 
+            Log.TraceFormat("OutboundListener Started on Port {0}", this.port);
+
             this.subscription = Observable.FromAsync(this.tcpListener.AcceptTcpClientAsync)
                                      .Repeat()
                                      .TakeUntil(this.listenerTermination)
                                      .Select(client => new OutboundSocket(client))
-                      .Subscribe(connection =>
-                      {
-                          this.connections.Add(connection);
-                          this.observable.OnNext(connection);
+                      .Subscribe(
+                          connection =>
+                          {
+                                  Log.Trace("New Connection");
+                                  this.connections.Add(connection);
+                                  this.observable.OnNext(connection);
 
-                          connection.Disposed += (o, e) => this.connections.Remove(connection);
-                      });
+                                  connection.Disposed += (o, e) =>
+                                      {
+                                          Log.Trace("Connection Disposed");
+                                          this.connections.Remove(connection);
+                                      };
+                              });
         }
 
         /// <summary>
@@ -84,6 +96,8 @@
 
 
             this.connections.ToList().ForEach(connection => connection.Dispose());
+
+            Log.Trace("OutboundListener Disposed");
         }
     }
 }

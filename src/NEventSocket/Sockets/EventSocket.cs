@@ -44,7 +44,7 @@
                                     .Subscribe(response =>
                                         {
                                                      var result = new CommandReply(response);
-                                                     Log.DebugFormat("CommandReply received {0}", result.ReplyText);
+                                                     Log.TraceFormat("CommandReply received [{0}]", result.ReplyText);
                                                      lock (this.commandCallbacks)
                                                      {
                                                          this.commandCallbacks.Dequeue().SetResult(result);
@@ -62,7 +62,7 @@
                                     .Where(x => x.ContentType == ContentTypes.ApiResponse)
                                     .Subscribe(response =>
                                                  {
-                                                     Log.DebugFormat("ApiResponse received {0}", response.BodyText);
+                                                     Log.TraceFormat("ApiResponse received [{0}]", response.BodyText);
                                                      lock (this.apiCallbacks)
                                                      {
                                                          this.apiCallbacks.Dequeue().SetResult(new ApiResponse(response));
@@ -76,7 +76,7 @@
                                                          }
                                                      }));
 
-            Log.Debug("EventSocket initialized");
+            Log.Trace("EventSocket initialized");
 
             this.Connected(this, EventArgs.Empty);
         }
@@ -105,16 +105,19 @@
 
             var tcs = new TaskCompletionSource<EventMessage>();
 
-            //we'll get CHANNEL_EXECUTE_COMPLETE event when this finishes
             var subscription = this.EventsReceived.Where(
                 x =>
                 x.EventType == EventType.CHANNEL_EXECUTE_COMPLETE
                 && x.EventHeaders[HeaderNames.Application] == appName)
-                .Take(1) //will auto terminate the subscription when received
+                .Take(1)
                 .Subscribe(
                     x =>
                         {
-                            Log.DebugFormat("CHANNEL_EXECUTE_COMPLETE {0} {1} {2}", appName, appArg, x.EventHeaders[HeaderNames.ApplicationResponse]);
+                            Log.TraceFormat("CHANNEL_EXECUTE_COMPLETE [{0} {1} {2} {3}]",
+                                x.EventHeaders[HeaderNames.AnswerState],
+                                x.EventHeaders[HeaderNames.Application], 
+                                x.EventHeaders[HeaderNames.ApplicationData], 
+                                x.EventHeaders[HeaderNames.ApplicationResponse]);
                             tcs.SetResult(x);
                         });
 
@@ -144,7 +147,7 @@
             try
             {
                 Monitor.Enter(this.apiCallbacks);
-                Log.DebugFormat("Sending Api {0}", command);
+                Log.TraceFormat("Sending [api {0}]", command);
                 this.SendAsync(Encoding.ASCII.GetBytes("api " + command + "\n\n")).Wait(this.cts.Token);
                 this.apiCallbacks.Enqueue(tcs);
             }
@@ -175,11 +178,9 @@
                                              .Subscribe(x =>
                                                  {
                                                      var result = new BackgroundJobResult(x);
-                                                     Log.DebugFormat("BgApi Job Complete {0} {1} {2}", result.JobUUID, result.Success, result.ErrorMessage);
+                                                     Log.TraceFormat("bgapi Job Complete [{0} {1} {2}]", result.JobUUID, result.Success, result.ErrorMessage);
                                                      tcs.SetResult(result);
                                                  });
-
-            Log.DebugFormat("Sending BgApi {0}", command, arg, jobUUID);
 
             this.SendCommandAsync(arg != null
                                  ? "bgapi {0} {1}\nJob-UUID: {2}".Fmt(command, arg, jobUUID)
@@ -209,7 +210,7 @@
             try
             {
                 Monitor.Enter(this.commandCallbacks);
-                Log.DebugFormat("Sending Command {0}", command);
+                Log.TraceFormat("Sending [{0}]", command);
                 this.SendAsync(Encoding.ASCII.GetBytes(command + "\n\n")).Wait(this.cts.Token);
                 this.commandCallbacks.Enqueue(tcs);
             }

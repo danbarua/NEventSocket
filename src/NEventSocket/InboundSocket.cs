@@ -40,7 +40,7 @@
                                              .Take(1) //will auto terminate the subscription
                                              .Subscribe(x =>
                                                  {
-                                                     Log.DebugFormat("Originate {0} complete - {1}", args, x.EventHeaders[HeaderNames.AnswerState]);
+                                                     Log.TraceFormat("Originate {0} complete - {1}", args, x.EventHeaders[HeaderNames.AnswerState]);
                                                      tcs.SetResult(x);
                                                  });
 
@@ -63,12 +63,12 @@
             var result = await this.Auth(this.password);
             if (result.Success)
             {
-                Log.Debug("Authenticated.");
+                Log.Trace("Authenticated.");
                 this.Authenticated(this, EventArgs.Empty);
             }
             else
             {
-                Log.ErrorFormat("Invalid Password {0}", result.BodyText);
+                Log.ErrorFormat("Invalid Password [{0}]", result.BodyText);
                 throw new SecurityException("Invalid Password");
             }
         }

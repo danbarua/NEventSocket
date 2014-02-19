@@ -141,10 +141,10 @@
 
             if (this.IsConnected)
             {
-                Log.Debug("Disconnecting");
+                Log.Trace("Disconnecting");
                 this.tcpClient.Close();
                 this.tcpClient = null;
-                Log.Debug("Client closed.");
+                Log.Trace("Client closed.");
 
                 this.Disconnected(this, EventArgs.Empty);
             }
@@ -153,7 +153,7 @@
 
         protected virtual void Dispose(bool disposing)
         {
-            Log.Debug("Disposing");
+            Log.Trace("Disposing");
 
             if (!this.disposed)
             {
