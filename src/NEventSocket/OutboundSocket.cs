@@ -3,6 +3,7 @@
     using System;
     using System.Net.Sockets;
     using System.Reactive.Linq;
+    using System.Threading.Tasks;
 
     using Common.Logging;
 
@@ -16,22 +17,23 @@
         protected internal OutboundSocket(TcpClient tcpClient)
             : base(tcpClient)
         {
-            this.SendCommandAsync("connect")
-                .ContinueWith(t =>
-                    {
-                        if (t.IsCompleted)
-                        {
-                            this.disposables.Add(
-                                this.MessagesReceived.Where(x => x.ContentType == ContentTypes.DisconnectNotice)
-                                    .Take(1)
-                                    .Subscribe(
-                                        _ =>
-                                            {
-                                                Log.Debug("Disconnect Notice received.");
-                                                this.Disconnect();
-                                            }));
-                        }
-                    });
+            }
+
+        public async Task<CommandReply> Connect()
+        {
+            var result = await this.SendCommandAsync("connect");
+
+            this.disposables.Add(
+                            this.MessagesReceived.Where(x => x.ContentType == ContentTypes.DisconnectNotice)
+                                .Take(1)
+                                .Subscribe(
+                                    _ =>
+                                    {
+                                        Log.Debug("Disconnect Notice received.");
+                                        this.Disconnect();
+                                    }));
+            return result;
+               
         }
     }
 }
