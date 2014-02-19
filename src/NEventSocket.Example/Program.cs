@@ -21,6 +21,7 @@ namespace NEventSocket.Example
             Console.WriteLine("Starting...");
 
             OutboundSocket();
+
             InboundSocket();
 
             Console.WriteLine("Press [Enter] to exit.");
@@ -37,7 +38,15 @@ namespace NEventSocket.Example
                             {
                                 Console.WriteLine("New Socket connected");
 
-                                //connection.MessagesReceived.Subscribe(Console.WriteLine);
+                                connection.MessagesReceived.Subscribe(
+                                    _ => { },
+                                    () =>
+                                        {
+                                            using (Colour.Use(ConsoleColor.Yellow))
+                                            {
+                                                Console.WriteLine("MESSAGES_OBS_COMPLETE");
+                                            }
+                                        });
 
                                 connection.EventsReceived.Where(x => x.EventType == EventType.CHANNEL_HANGUP || x.EventType == EventType.CHANNEL_HANGUP_COMPLETE)
                                           .Take(1)
@@ -87,6 +96,17 @@ namespace NEventSocket.Example
             var client = new InboundSocket("localhost", 8021, "ClueCon");
 
             client.Connected += (sender, eventArgs) => Console.WriteLine("Connected...");
+
+
+            client.MessagesReceived.Subscribe(
+                                     _ => { },
+                                     () =>
+                                     {
+                                         using (Colour.Use(ConsoleColor.Yellow))
+                                         {
+                                             Console.WriteLine("MESSAGES_OBS_COMPLETE");
+                                         }
+                                     });
 
             client.Authenticated += async (sender, eventArgs) =>
             {
