@@ -153,7 +153,6 @@
             }
             catch (Exception ex)
             {
-                if (this.IsConnected) this.Disconnect();
                 tcs.SetException(ex);
             }
             finally
@@ -216,7 +215,6 @@
             }
             catch (Exception ex)
             {
-                if (this.IsConnected) this.Disconnect();
                 tcs.SetException(ex);
             }
             finally

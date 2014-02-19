@@ -21,8 +21,5 @@ namespace NEventSocket
 
         /// <summary>Gets the stream of incoming messages.</summary>
         IObservable<BasicMessage> MessagesReceived { get; }
-
-        /// <summary>Disconnects the socket..</summary>
-        void Disconnect();
     }
 }

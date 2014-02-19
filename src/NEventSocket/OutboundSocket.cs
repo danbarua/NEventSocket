@@ -30,10 +30,9 @@
                                     _ =>
                                     {
                                         Log.Trace("Disconnect Notice received.");
-                                        this.Disconnect();
+                                        this.Dispose();
                                     }));
             return result;
-               
         }
     }
 }

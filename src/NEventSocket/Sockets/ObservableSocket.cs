@@ -56,12 +56,12 @@
                         ex =>
                             {
                                 Log.Error("Read Failed", ex);
-                                this.Disconnect(false);
+                                this.Dispose();
                             },
                         () =>
                             {
                                 Log.Trace("Read Observable Completed");
-                                this.Disconnect(false);
+                                this.Dispose();
                             });
         }
 
@@ -69,8 +69,6 @@
         {
             this.Dispose(false);
         }
-
-        public event EventHandler Disconnected = (sender, args) => { };
 
         public event EventHandler Disposed = (sender, args) => { };
 
@@ -98,21 +96,13 @@
             catch (Exception ex)
             {
                 Log.Error("Error writing.", ex);
-                this.Disconnect();
+                this.Dispose();
                 throw;
             }
             finally
             {
                 Monitor.Exit(this.syncLock);
             }
-        }
-
-        public void Disconnect()
-        {
-            if (!this.IsConnected)
-                throw new InvalidOperationException("Client is not connected");
-
-            this.Disconnect(false);
         }
 
         public void Dispose()
@@ -126,32 +116,6 @@
             return this.tcpClient.GetStream();
         }
 
-        protected void Disconnect(bool disposing)
-        {
-            if (this.disposed && !disposing)
-                throw new ObjectDisposedException(this.ToString());
-
-
-            if (this.readSubscription != null)
-            {
-                this.readSubscription.Dispose();
-            }
-
-            this.readSubscription = null;
-
-            if (this.IsConnected)
-            {
-                if (this.tcpClient != null)
-                {
-                    Log.Trace("Disconnecting");
-                    this.tcpClient.Close();
-                    this.tcpClient = null;
-                    this.Disconnected(this, EventArgs.Empty);
-                    Log.Trace("Client closed.");
-                }
-            }
-        }
-
         protected virtual void Dispose(bool disposing)
         {
             Log.Trace("Disposing");
@@ -160,9 +124,24 @@
             {
                 if (disposing)
                 {
-                    this.Disconnect(true);
+                    if (this.readSubscription != null)
+                    {
+                        this.readSubscription.Dispose();
+                    }
+
+                    this.readSubscription = null;
 
                     this.receiverTermination.OnNext(Unit.Default);
+                }
+
+                if (this.IsConnected)
+                {
+                    if (this.tcpClient != null)
+                    {
+                        this.tcpClient.Close();
+                        this.tcpClient = null;
+                        Log.Trace("Client closed.");
+                    }
                 }
 
                 this.Disposed(this, EventArgs.Empty);
