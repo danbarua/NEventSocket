@@ -45,7 +45,7 @@
             return eventSocket.SendCommandAsync("event plain {0}".Fmt(string.Join(" ", eventTypes)));
         }
 
-        public static Task<CommandReply> MyEvents(this IEventSocketCommands eventSocket, Guid uuid)
+        public static Task<CommandReply> MyEvents(this IEventSocketCommands eventSocket, string uuid)
         {
             return eventSocket.SendCommandAsync("myevents {0} plain".Fmt(uuid));
         }
@@ -118,9 +118,9 @@
             return eventSocket.SendMessage(uuid, "call-command: hangup\nhangup-cause: " + hangupCause);
         }
 
-        public static Task<CommandReply> Exit(this IEventSocketCommands eventSocket)
+        public static void Exit(this IEventSocketCommands eventSocket)
         {
-            return eventSocket.SendCommandAsync("exit");
+            eventSocket.SendCommandAsync("exit"); //will disconnect, no reply will arrive
         }
 
         public static Task<CommandReply> FsLog(this IEventSocketCommands eventSocket, string logLevel)
