@@ -19,21 +19,25 @@
         [Fact]
         public void Disposing_the_socket_completes_the_observable()
         {
-            var listener = new OutboundListener(8021);
-
-            bool completed = false;
-            listener.Connections.Subscribe(
-                connection => connection.MessagesReceived.Subscribe(x => { }, () => completed = true));
-            
+            var listener = new OutboundListener(8084);
             listener.Start();
 
-            var socket = new FakeOutboundSocket(8021);
-            socket.Disconnect();
-            listener.Dispose();
+            bool connected = false;
+            bool completed = false;
+
+            listener.Connections.Subscribe((connection) =>
+                { 
+                    connected = true;
+                    connection.MessagesReceived.Subscribe(_ => { }, () => completed = true);
+                });
+
+            var client = new FakeOutboundSocket(8084);
 
             Thread.Sleep(100);
+            listener.Dispose(); // will dispose the socket
 
-            Assert.True(completed);
+            Assert.True(connected, "Expect a connection to have been made.");
+            Assert.True(completed, "Expect the observable to be completed");
         }
     }
 }
