@@ -23,14 +23,14 @@
         {
             var result = await this.SendCommandAsync("connect");
 
-            this.disposables.Add(
+            disposables.Add(
                             this.MessagesReceived.Where(x => x.ContentType == ContentTypes.DisconnectNotice)
                                 .Take(1)
                                 .Subscribe(
                                     _ =>
                                     {
                                         Log.Trace("Disconnect Notice received.");
-                                        this.Dispose();
+                                        Dispose();
                                     }));
             return result;
         }
