@@ -20,11 +20,11 @@
 
         private static readonly ILog Log = LogManager.GetCurrentClassLogger();
 
-        private readonly BlockingCollection<byte[]> received = new BlockingCollection<byte[]>(1024 * 1024);
+        private BlockingCollection<byte[]> received = new BlockingCollection<byte[]>(1024 * 1024);
 
         private readonly IObservable<byte[]> receiver;
 
-        private readonly Subject<Unit> receiverTermination = new Subject<Unit>();
+        private Subject<Unit> receiverTermination = new Subject<Unit>();
 
         private readonly object syncLock = new object();
 
@@ -127,11 +127,21 @@
                     if (this.readSubscription != null)
                     {
                         this.readSubscription.Dispose();
+                        this.readSubscription = null;
                     }
 
-                    this.readSubscription = null;
+                    if (this.receiverTermination != null)
+                    {
+                        this.receiverTermination.OnNext(Unit.Default);
+                        this.receiverTermination.Dispose();
+                        this.receiverTermination = null;
+                    }
 
-                    this.receiverTermination.OnNext(Unit.Default);
+                    if (this.received != null)
+                    {
+                        this.received.Dispose();
+                        this.received = null;
+                    }
                 }
 
                 if (this.IsConnected)

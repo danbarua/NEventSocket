@@ -13,7 +13,7 @@
     /// <summary>
     ///     Listens for Outbound connections from FreeSwitch
     /// </summary>
-    public class OutboundListener
+    public class OutboundListener : IDisposable
     {
         private static readonly ILog Log = LogManager.GetCurrentClassLogger();
 
@@ -33,6 +33,12 @@
         {
             this.port = port;
         }
+
+        ~OutboundListener()
+        {
+            Dispose(false);
+        }
+
 
         /// <summary>
         ///     Observable of all outbound connections
@@ -75,29 +81,37 @@
                               });
         }
 
-        /// <summary>
-        ///     Disposes of the listener, stopping and disposing of all active connections
-        /// </summary>
         public void Dispose()
         {
-            if (this.disposed)
-                return;
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
 
-            this.disposed = true;
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposed)
+            {
+                if (disposing)
+                {
+                    listenerTermination.OnNext(Unit.Default);
+                    listenerTermination.Dispose();
 
-            this.listenerTermination.OnNext(Unit.Default);
+                    observable.OnCompleted();
+                    observable.Dispose();
 
-            this.observable.OnCompleted();
-
-            this.subscription.Dispose();
-            this.subscription = null;
-            this.tcpListener.Server.Close();
-            this.tcpListener = null;
+                    subscription.Dispose();
+                    subscription = null;
+                    tcpListener.Server.Close();
+                    tcpListener = null;
 
 
-            this.connections.ToList().ForEach(connection => connection.Dispose());
+                    connections.ToList().ForEach(connection => connection.Dispose());
 
-            Log.Trace("OutboundListener Disposed");
+                    Log.Trace("OutboundListener Disposed");
+                }
+
+                disposed = true;
+            }
         }
     }
 }

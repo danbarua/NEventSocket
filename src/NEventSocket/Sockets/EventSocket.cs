@@ -229,12 +229,16 @@
         {
             if (!this.disposed)
             {
-                // cancel any outgoing network sends
-                this.cts.Cancel();
+                if (disposing)
+                {
+                    // cancel any outgoing network sends
+                    this.cts.Cancel();
+                    this.cts.Dispose();
 
-                this.incomingMessages.OnCompleted();
+                    this.incomingMessages.OnCompleted();
 
-                this.disposables.Dispose();
+                    this.disposables.Dispose();
+                }
             }
 
             base.Dispose(disposing);
