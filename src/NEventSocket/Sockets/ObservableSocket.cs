@@ -18,29 +18,29 @@
     {
         protected bool disposed;
 
+        protected TcpClient tcpClient;
+
         private static readonly ILog Log = LogManager.GetCurrentClassLogger();
 
-        private BlockingCollection<byte[]> received = new BlockingCollection<byte[]>(1024 * 1024);
+        private readonly object syncLock = new object();
 
         private readonly IObservable<byte[]> receiver;
 
         private Subject<Unit> receiverTermination = new Subject<Unit>();
 
-        private readonly object syncLock = new object();
-
-        protected TcpClient tcpClient;
-
         private IDisposable readSubscription;
+
+        private BlockingCollection<byte[]> received = new BlockingCollection<byte[]>(1024 * 1024);
 
         protected ObservableSocket(TcpClient tcpClient)
         {
             this.tcpClient = tcpClient;
 
-            this.receiver = this.received.GetConsumingEnumerable()
+            receiver = received.GetConsumingEnumerable()
                 .ToObservable(Scheduler.Default)
-                .TakeUntil(this.receiverTermination);
+                .TakeUntil(receiverTermination);
 
-            this.readSubscription = Observable.Defer(
+            readSubscription = Observable.Defer(
                 () =>
                     {
                         var stream = tcpClient.GetStream();
@@ -52,111 +52,111 @@
                     .Repeat()
                     .TakeWhile(x => x.Any())
                     .Subscribe(
-                        bytes => this.received.Add(bytes),
+                        bytes => received.Add(bytes),
                         ex =>
                             {
                                 Log.Error("Read Failed", ex);
-                                this.Dispose();
+                                Dispose();
                             },
                         () =>
                             {
                                 Log.Trace("Read Observable Completed");
-                                this.Dispose();
+                                Dispose();
                             });
         }
 
         ~ObservableSocket()
         {
-            this.Dispose(false);
+            Dispose(false);
         }
 
         public event EventHandler Disposed = (sender, args) => { };
 
-        public bool IsConnected { get { return this.tcpClient != null && this.tcpClient.Connected; } }
+        public bool IsConnected { get { return tcpClient != null && tcpClient.Connected; } }
 
-        protected IObservable<byte[]> Receiver { get { return this.receiver; } }
+        protected IObservable<byte[]> Receiver { get { return receiver; } }
 
         public Task SendAsync(byte[] bytes)
         {
-            return this.SendAsync(bytes, CancellationToken.None);
+            return SendAsync(bytes, CancellationToken.None);
         }
 
         public Task SendAsync(byte[] bytes, CancellationToken cancellationToken)
         {
-            if (this.disposed) throw new ObjectDisposedException(this.ToString());
+            if (disposed) throw new ObjectDisposedException(ToString());
             
-            if (!this.IsConnected) throw new InvalidOperationException("Not connected");
+            if (!IsConnected) throw new InvalidOperationException("Not connected");
             
             try
             {
-                Monitor.Enter(this.syncLock);
-                var stream = this.GetStream();
+                Monitor.Enter(syncLock);
+                var stream = GetStream();
                 return stream.WriteAsync(bytes, 0, bytes.Length, cancellationToken);
             }
             catch (Exception ex)
             {
                 Log.Error("Error writing.", ex);
-                this.Dispose();
+                Dispose();
                 throw;
             }
             finally
             {
-                Monitor.Exit(this.syncLock);
+                Monitor.Exit(syncLock);
             }
         }
 
         public void Dispose()
         {
-            this.Dispose(true);
+            Dispose(true);
             GC.SuppressFinalize(this);
         }
 
         protected virtual Stream GetStream()
         {
-            return this.tcpClient.GetStream();
+            return tcpClient.GetStream();
         }
 
         protected virtual void Dispose(bool disposing)
         {
             Log.Trace("Disposing");
 
-            if (!this.disposed)
+            if (!disposed)
             {
                 if (disposing)
                 {
-                    if (this.readSubscription != null)
+                    if (readSubscription != null)
                     {
-                        this.readSubscription.Dispose();
-                        this.readSubscription = null;
+                        readSubscription.Dispose();
+                        readSubscription = null;
                     }
 
-                    if (this.receiverTermination != null)
+                    if (receiverTermination != null)
                     {
-                        this.receiverTermination.OnNext(Unit.Default);
-                        this.receiverTermination.Dispose();
-                        this.receiverTermination = null;
+                        receiverTermination.OnNext(Unit.Default);
+                        receiverTermination.Dispose();
+                        receiverTermination = null;
                     }
 
-                    if (this.received != null)
+                    if (received != null)
                     {
-                        this.received.Dispose();
-                        this.received = null;
+                        received.Dispose();
+                        received = null;
                     }
                 }
 
-                if (this.IsConnected)
+                if (IsConnected)
                 {
-                    if (this.tcpClient != null)
+                    if (tcpClient != null)
                     {
-                        this.tcpClient.Close();
-                        this.tcpClient = null;
+                        tcpClient.Close();
+                        tcpClient = null;
                         Log.Trace("Client closed.");
                     }
                 }
 
-                this.Disposed(this, EventArgs.Empty);
+                Disposed(this, EventArgs.Empty);
 
-                this.disposed = true;
+                disposed = true;
             }
         }
     }

@@ -3,11 +3,13 @@
     using System;
     using System.Collections.Generic;
     using System.Reactive.Linq;
+    using System.Text;
 
     using FluentAssertions;
 
     using NEventSocket.FreeSwitch;
     using NEventSocket.Sockets.Protocol;
+    using NEventSocket.Util;
 
     using Xbehave;
 
@@ -23,7 +25,9 @@
             "When the stream is parsed"._(
                 () =>
                 stream.ToObservable()
-                      .ExtractBasicMessages()
+                        .AggregateUntil(
+                            () => new Parser(), (builder, ch) => builder.Append(ch), builder => builder.Completed)
+                        .Select(builder => builder.ParseMessage())
                       .Subscribe(m => messages.Add(m)));
 
             "Then it should have parsed 2 messages"._(() => messages.Count.ShouldBeEquivalentTo(2));
@@ -39,7 +43,9 @@
             "When the stream is parsed"._(
                 () =>
                 stream.ToObservable()
-                      .ExtractBasicMessages()
+                       .AggregateUntil(
+                            () => new Parser(), (builder, ch) => builder.Append(ch), builder => builder.Completed)
+                        .Select(builder => builder.ParseMessage())
                       .Subscribe(m => messages.Add(m)));
 
             "Then it should have parsed 2 messages"._(() => messages.Count.ShouldBeEquivalentTo(2));
@@ -55,7 +61,9 @@
             "When the stream is parsed"._(
                 () =>
                 stream.ToObservable()
-                      .ExtractBasicMessages()
+                       .AggregateUntil(
+                            () => new Parser(), (builder, ch) => builder.Append(ch), builder => builder.Completed)
+                        .Select(builder => builder.ParseMessage())
                       .Subscribe(m => messages.Add(m)));
 
             "Then it should have parsed 5 messages"._(() => messages.Count.ShouldBeEquivalentTo(5));

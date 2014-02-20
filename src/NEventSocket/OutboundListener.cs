@@ -56,13 +56,13 @@
             if (this.disposed)
                 throw new ObjectDisposedException(this.ToString());
 
-            this.tcpListener = TcpListener.Create(this.port);
+            tcpListener = TcpListener.Create(this.port);
 
-            this.tcpListener.Start();
+            tcpListener.Start();
 
             Log.TraceFormat("OutboundListener Started on Port {0}", this.port);
 
-            this.subscription = Observable.FromAsync(this.tcpListener.AcceptTcpClientAsync)
+            subscription = Observable.FromAsync(this.tcpListener.AcceptTcpClientAsync)
                                      .Repeat()
                                      .TakeUntil(this.listenerTermination)
                                      .Select(client => new OutboundSocket(client))
@@ -99,13 +99,19 @@
                     observable.OnCompleted();
                     observable.Dispose();
 
-                    subscription.Dispose();
-                    subscription = null;
-                    tcpListener.Server.Close();
-                    tcpListener = null;
-
+                    if (subscription != null)
+                    {
+                        subscription.Dispose();
+                        subscription = null;
+                    }
 
                     connections.ToList().ForEach(connection => connection.Dispose());
+
+                    if (tcpListener != null)
+                    {
+                        tcpListener.Stop();
+                        tcpListener = null;
+                    }
 
                     Log.Trace("OutboundListener Disposed");
                 }

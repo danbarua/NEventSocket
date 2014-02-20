@@ -34,64 +34,67 @@
 
         protected EventSocket(TcpClient tcpClient) : base(tcpClient)
         {
-            this.Receiver.ExtractBasicMessages().Subscribe(msg => this.incomingMessages.OnNext(msg));
+            Receiver
+                .SelectMany(x => Encoding.ASCII.GetString(x))
+                .AggregateUntil(() => new Parser(), (builder, ch) => builder.Append(ch), builder => builder.Completed)
+                .Select(builder => builder.ParseMessage()).Subscribe(msg => incomingMessages.OnNext(msg));
 
             // some messages will be received in reply to a command that we sent earlier through the socket
             // we'll parse those into the appropriate message and complete the outstanding task associated with that command
 
-            this.disposables.Add(this.MessagesReceived
+            disposables.Add(MessagesReceived
                                     .Where(x => x.ContentType == ContentTypes.CommandReply)
                                     .Subscribe(response =>
                                         {
                                                      var result = new CommandReply(response);
                                                      Log.TraceFormat("CommandReply received [{0}]", result.ReplyText);
-                                                     lock (this.commandCallbacks)
+                                                     lock (commandCallbacks)
                                                      {
-                                                         this.commandCallbacks.Dequeue().SetResult(result);
+                                                         commandCallbacks.Dequeue().SetResult(result);
                                                      }
                                                  },
                                                  ex =>
                                                      {
-                                                         lock (this.commandCallbacks)
+                                                         lock (commandCallbacks)
                                                          {
-                                                             this.commandCallbacks.Dequeue().SetException(ex);
+                                                             commandCallbacks.Dequeue().SetException(ex);
                                                          }
                                                      }));
 
-            this.disposables.Add(this.MessagesReceived
+            disposables.Add(MessagesReceived
                                     .Where(x => x.ContentType == ContentTypes.ApiResponse)
                                     .Subscribe(response =>
                                                  {
                                                      Log.TraceFormat("ApiResponse received [{0}]", response.BodyText);
-                                                     lock (this.apiCallbacks)
+                                                     lock (apiCallbacks)
                                                      {
-                                                         this.apiCallbacks.Dequeue().SetResult(new ApiResponse(response));
+                                                         apiCallbacks.Dequeue().SetResult(new ApiResponse(response));
                                                      }
                                                  },
                                                  ex =>
                                                      {
-                                                         lock (this.commandCallbacks)
+                                                         lock (commandCallbacks)
                                                          {
-                                                             this.apiCallbacks.Dequeue().SetException(ex);
+                                                             apiCallbacks.Dequeue().SetException(ex);
                                                          }
                                                      }));
 
             Log.Trace("EventSocket initialized");
 
-            this.Connected(this, EventArgs.Empty);
+            Connected(this, EventArgs.Empty);
         }
 
         public event EventHandler Connected = (sender, args) => { };
 
         /// <summary> Gets an observable stream of BasicMessages </summary>
-        public IObservable<BasicMessage> MessagesReceived { get { return this.incomingMessages; } }
+        public IObservable<BasicMessage> MessagesReceived { get { return incomingMessages; } }
 
         /// <summary>Observable of all Events received on this connection</summary>
         public IObservable<EventMessage> EventsReceived
         {
             get
             {
-                return this.MessagesReceived
+                return MessagesReceived
                             .Where(x => x.ContentType == ContentTypes.EventPlain)
                             .Select(x => new EventMessage(x));
             }
@@ -105,7 +108,7 @@
 
             var tcs = new TaskCompletionSource<EventMessage>();
 
-            var subscription = this.EventsReceived.Where(
+            var subscription = EventsReceived.Where(
                 x =>
                 x.EventType == EventType.CHANNEL_EXECUTE_COMPLETE
                 && x.EventHeaders[HeaderNames.Application] == appName)
@@ -121,7 +124,7 @@
                             tcs.SetResult(x);
                         });
 
-            this.SendCommandAsync("sendmsg {0}\ncall-command: execute\nexecute-app-name: {1}\nexecute-app-arg: {2}".Fmt(uuid, appName, appArg))
+            SendCommandAsync("sendmsg {0}\ncall-command: execute\nexecute-app-name: {1}\nexecute-app-arg: {2}".Fmt(uuid, appName, appArg))
                 .ContinueWith(t =>
                 {
                     if (!t.IsCompleted)
@@ -146,10 +149,10 @@
 
             try
             {
-                Monitor.Enter(this.apiCallbacks);
+                Monitor.Enter(apiCallbacks);
                 Log.TraceFormat("Sending [api {0}]", command);
-                this.SendAsync(Encoding.ASCII.GetBytes("api " + command + "\n\n")).Wait(this.cts.Token);
-                this.apiCallbacks.Enqueue(tcs);
+                SendAsync(Encoding.ASCII.GetBytes("api " + command + "\n\n")).Wait(cts.Token);
+                apiCallbacks.Enqueue(tcs);
             }
             catch (Exception ex)
             {
@@ -157,7 +160,7 @@
             }
             finally
             {
-                Monitor.Exit(this.apiCallbacks);
+                Monitor.Exit(apiCallbacks);
             }
 
             return tcs.Task;
@@ -171,7 +174,7 @@
             var tcs = new TaskCompletionSource<BackgroundJobResult>();
 
             //we'll get an event in the future for this JobUUID and we'll use that to complete the task
-            var subscription = this.EventsReceived.Where(
+            var subscription = EventsReceived.Where(
                 x => x.EventType == EventType.BACKGROUND_JOB && x.EventHeaders["Job-UUID"] == jobUUID.ToString())
                                              .Take(1) //will auto terminate the subscription when received
                                              .Subscribe(x =>
@@ -181,7 +184,7 @@
                                                      tcs.SetResult(result);
                                                  });
 
-            this.SendCommandAsync(arg != null
+            SendCommandAsync(arg != null
                                  ? "bgapi {0} {1}\nJob-UUID: {2}".Fmt(command, arg, jobUUID)
                                  : "bgapi {0}\nJob-UUID: {1}".Fmt(command, jobUUID))
                 .ContinueWith(t =>
@@ -208,10 +211,10 @@
 
             try
             {
-                Monitor.Enter(this.commandCallbacks);
+                Monitor.Enter(commandCallbacks);
                 Log.TraceFormat("Sending [{0}]", command);
-                this.SendAsync(Encoding.ASCII.GetBytes(command + "\n\n")).Wait(this.cts.Token);
-                this.commandCallbacks.Enqueue(tcs);
+                SendAsync(Encoding.ASCII.GetBytes(command + "\n\n")).Wait(cts.Token);
+                commandCallbacks.Enqueue(tcs);
             }
             catch (Exception ex)
             {
@@ -219,7 +222,7 @@
             }
             finally
             {
-                Monitor.Exit(this.commandCallbacks);
+                Monitor.Exit(commandCallbacks);
             }
             
             return tcs.Task;
@@ -227,17 +230,17 @@
 
         protected override void Dispose(bool disposing)
         {
-            if (!this.disposed)
+            if (!disposed)
             {
                 if (disposing)
                 {
                     // cancel any outgoing network sends
-                    this.cts.Cancel();
-                    this.cts.Dispose();
+                    cts.Cancel();
+                    cts.Dispose();
 
-                    this.incomingMessages.OnCompleted();
+                    incomingMessages.OnCompleted();
 
-                    this.disposables.Dispose();
+                    disposables.Dispose();
                 }
             }
 

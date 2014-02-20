@@ -98,7 +98,6 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="IEventSocket.cs" />
     <Compile Include="IInboundSocket.cs" />
-    <Compile Include="Sockets\ParserExtensions.cs" />
     <Compile Include="Sockets\Parser.cs" />
     <Compile Include="Util\ObservableExtensions.cs" />
     <Compile Include="Util\StringExtensions.cs" />
