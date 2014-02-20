@@ -31,37 +31,37 @@
             if (string.IsNullOrEmpty(basicMessage.BodyText))
                 throw new ArgumentException("Message did not contain an event body.");
 
-            this.Headers = basicMessage.Headers;
-            this.BodyText = basicMessage.BodyText;
+            Headers = basicMessage.Headers;
+            BodyText = basicMessage.BodyText;
 
             try
             {
-                if (this.BodyText.Contains(HeaderNames.ContentLength))
+                if (BodyText.Contains(HeaderNames.ContentLength))
                 {
                     // need to parse this as a message with a body eg. BACKGROUND_JOB event
                     var parser = new Parser();
-                    foreach (char c in this.BodyText)
+                    foreach (char c in BodyText)
                     {
                         parser.Append(c);
                     }
 
                     BasicMessage payload = parser.ParseMessage();
 
-                    this.EventHeaders = payload.Headers;
-                    this.BodyText = payload.BodyText.Trim();
+                    EventHeaders = payload.Headers;
+                    BodyText = payload.BodyText.Trim();
                 }
                 else
                 {
                     // body text consists of event headers only
-                    this.EventHeaders = new Dictionary<string, string>(
-                        this.BodyText.ParseKeyValuePairs("\n", ": "), StringComparer.OrdinalIgnoreCase);
-                    this.BodyText = null;
+                    EventHeaders = new Dictionary<string, string>(
+                        BodyText.ParseKeyValuePairs("\n", ": "), StringComparer.OrdinalIgnoreCase);
+                    BodyText = null;
                 }
             }
             catch (Exception ex)
             {
                 Log.Error("Failed to parse body of event", ex);
-                Log.Error(this.BodyText);
+                Log.Error(BodyText);
                 throw;
             }
         }
@@ -70,7 +70,7 @@
         {
             get
             {
-                return (EventType)Enum.Parse(typeof(EventType), this.EventHeaders[HeaderNames.EventName]);
+                return (EventType)Enum.Parse(typeof(EventType), EventHeaders[HeaderNames.EventName]);
             }
         }
 
@@ -78,7 +78,7 @@
         {
             get
             {
-                return (ChannelState)Enum.Parse(typeof(ChannelState), this.EventHeaders[HeaderNames.ChannelState]);
+                return (ChannelState)Enum.Parse(typeof(ChannelState), EventHeaders[HeaderNames.ChannelState]);
             }
         }
 
@@ -87,7 +87,7 @@
             get
             {
                 //possible values: answered, hangup
-                return this.EventHeaders[HeaderNames.AnswerState];
+                return EventHeaders[HeaderNames.AnswerState];
             }
         }
 
@@ -95,7 +95,7 @@
 
         public string GetVariable(string variable)
         {
-            return this.EventHeaders["variable_" + variable];
+            return EventHeaders["variable_" + variable];
         }
 
         public override string ToString()
@@ -103,18 +103,18 @@
             var sb = new StringBuilder();
             sb.AppendLine("Message Headers:");
 
-            foreach (var h in this.Headers.OrderBy(x => x.Key))
+            foreach (var h in Headers.OrderBy(x => x.Key))
                 sb.AppendLine("\t" + h.Key + " : " + h.Value);
 
             sb.AppendLine("Event Headers:");
 
-            foreach (var h in this.EventHeaders.OrderBy(x => x.Key))
+            foreach (var h in EventHeaders.OrderBy(x => x.Key))
                 sb.AppendLine("\t" + h.Key + " : " + h.Value);
 
-            if (!string.IsNullOrEmpty(this.BodyText))
+            if (!string.IsNullOrEmpty(BodyText))
             {
                 sb.AppendLine("Body:");
-                sb.AppendLine(this.BodyText);
+                sb.AppendLine(BodyText);
             }
 
             return sb.ToString();

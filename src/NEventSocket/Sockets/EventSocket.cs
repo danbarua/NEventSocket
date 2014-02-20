@@ -17,7 +17,7 @@
     using NEventSocket.Sockets.Protocol;
     using NEventSocket.Util;
 
-    public class EventSocket : ObservableSocket, IEventSocket, IEventSocketCommands
+    public abstract class EventSocket : ObservableSocket, IEventSocket, IEventSocketCommands
     {
         protected readonly CompositeDisposable disposables = new CompositeDisposable();
 
@@ -80,11 +80,7 @@
                                                      }));
 
             Log.Trace("EventSocket initialized");
-
-            Connected(this, EventArgs.Empty);
         }
-
-        public event EventHandler Connected = (sender, args) => { };
 
         /// <summary> Gets an observable stream of BasicMessages </summary>
         public IObservable<BasicMessage> MessagesReceived { get { return incomingMessages; } }

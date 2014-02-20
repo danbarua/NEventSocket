@@ -25,13 +25,13 @@
 
         public BasicMessage(IDictionary<string, string> headers)
         {
-            this.Headers = new Dictionary<string, string>(headers, StringComparer.OrdinalIgnoreCase);
+            Headers = new Dictionary<string, string>(headers, StringComparer.OrdinalIgnoreCase);
         }
 
         public BasicMessage(IDictionary<string, string> headers, string body)
         {
-            this.Headers = new Dictionary<string, string>(headers, StringComparer.OrdinalIgnoreCase);
-            this.BodyText = body;
+            Headers = new Dictionary<string, string>(headers, StringComparer.OrdinalIgnoreCase);
+            BodyText = body;
         }
 
         public IReadOnlyDictionary<string, string> Headers { get; protected set; }
@@ -41,7 +41,7 @@
         /// <summary>Gets the Content Type header.</summary>
         public string ContentType
         {
-            get { return this.Headers[HeaderNames.ContentType]; }
+            get { return Headers[HeaderNames.ContentType]; }
         }
 
         /// <summary>Gets the content length.</summary>
@@ -49,8 +49,8 @@
         {
             get
             {
-                if (!this.Headers.ContainsKey(HeaderNames.ContentLength)) return null;
-                return int.Parse(this.Headers[HeaderNames.ContentLength]);
+                if (!Headers.ContainsKey(HeaderNames.ContentLength)) return null;
+                return int.Parse(Headers[HeaderNames.ContentLength]);
             }
         }
 
@@ -61,14 +61,14 @@
             var sb = new StringBuilder();
             sb.AppendLine("Headers:\n");
 
-            foreach (var h in this.Headers.OrderBy(x => x.Key))
+            foreach (var h in Headers.OrderBy(x => x.Key))
                 sb.AppendFormat("\t{0}:{1}\n".Fmt(h.Key, h.Value));
 
-            if (this.BodyText != null)
+            if (BodyText != null)
             {
                 sb.AppendLine("Body:\n");
                 sb.Append("\t");
-                sb.AppendLine(this.BodyText);
+                sb.AppendLine(BodyText);
             }
 
             return sb.ToString();

@@ -14,7 +14,7 @@
 
     using Common.Logging;
 
-    public class ObservableSocket : IDisposable
+    public abstract class ObservableSocket : IDisposable
     {
         protected bool disposed;
 

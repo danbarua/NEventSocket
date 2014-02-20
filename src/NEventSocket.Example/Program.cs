@@ -91,8 +91,6 @@ namespace NEventSocket.Example
         private static void InboundSocket()
         {
             var client = new InboundSocket("localhost", 8021, "ClueCon");
-
-            client.Connected += (sender, eventArgs) => Console.WriteLine("Connected...");
             client.Disposed += (o, e) => Console.WriteLine("client disposed");
 
             client.MessagesReceived.Subscribe(

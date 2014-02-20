@@ -17,8 +17,8 @@
                     "Expected content type command/reply, got {0} instead.".Fmt(basicMessage.ContentType));
 
 
-            this.Headers = basicMessage.Headers;
-            this.BodyText = basicMessage.BodyText;
+            Headers = basicMessage.Headers;
+            BodyText = basicMessage.BodyText;
         }
 
         public bool Success
