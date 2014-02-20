@@ -25,37 +25,55 @@
         public EventMessage(BasicMessage basicMessage)
         {
             if (basicMessage.ContentType != ContentTypes.EventPlain)
+            {
+                /* 
+                 * Special Case:
+                 * On a FreeSwitch Outbound socket, the Command-Reply response to the "connect"
+                 * command contains a CHANNEL_DATA event. In this case, the Command-Reply message
+                 * is also an event message, we'll just copy the headers over.
+                 */
+                if (basicMessage.Headers.ContainsKey(HeaderNames.EventName))
+                {
+                    this.Headers = basicMessage.Headers;
+                    this.BodyText = basicMessage.BodyText;
+                    this.EventHeaders = basicMessage.Headers;
+                    return;
+                }
+
                 throw new ArgumentException(
                     "Expected content type text/plain, got {0} instead.".Fmt(basicMessage.ContentType));
+            }
 
             if (string.IsNullOrEmpty(basicMessage.BodyText))
                 throw new ArgumentException("Message did not contain an event body.");
+
+            //...otherwise the content of the event will be in the BasicMessage's body
 
             Headers = basicMessage.Headers;
             BodyText = basicMessage.BodyText;
 
             try
             {
-                if (BodyText.Contains(HeaderNames.ContentLength))
+                if (!this.BodyText.Contains(HeaderNames.ContentLength))
                 {
-                    // need to parse this as a message with a body eg. BACKGROUND_JOB event
+                    // Normally the body text consistes of key-value-pair event headers
+                    this.EventHeaders = new Dictionary<string, string>(
+                        this.BodyText.ParseKeyValuePairs("\n", ": "), StringComparer.OrdinalIgnoreCase);
+                    this.BodyText = null;
+                }
+                else
+                {
+                    //...but some Event Messages, eg. BACKGROUND_JOB events contain a body payload.
                     var parser = new Parser();
-                    foreach (char c in BodyText)
+                    foreach (char c in this.BodyText)
                     {
                         parser.Append(c);
                     }
 
                     BasicMessage payload = parser.ParseMessage();
 
-                    EventHeaders = payload.Headers;
-                    BodyText = payload.BodyText.Trim();
-                }
-                else
-                {
-                    // body text consists of event headers only
-                    EventHeaders = new Dictionary<string, string>(
-                        BodyText.ParseKeyValuePairs("\n", ": "), StringComparer.OrdinalIgnoreCase);
-                    BodyText = null;
+                    this.EventHeaders = payload.Headers;
+                    this.BodyText = payload.BodyText.Trim();
                 }
             }
             catch (Exception ex)
@@ -86,7 +104,7 @@
         {
             get
             {
-                //possible values: answered, hangup
+                //possible values: answered, hangup, ringing
                 return EventHeaders[HeaderNames.AnswerState];
             }
         }

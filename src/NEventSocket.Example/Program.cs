@@ -61,29 +61,30 @@ namespace NEventSocket.Example
 
                                 connection.Disposed += (o, e) => Console.WriteLine("connection disposed");
 
-                                var status = await connection.Connect();
-                                var uuid = status.Headers["Unique-ID"];
+                                var uuid = connection.ChannelData.Headers["Unique-Id"];
                                 Console.WriteLine(uuid);
-                                await connection.MyEvents(uuid);
-                                await
-                                    connection.Event(
+
+                                await connection.Events(
                                         EventType.BACKGROUND_JOB,
+                                        EventType.CHANNEL_EXECUTE_COMPLETE,
                                         EventType.API,
                                         EventType.PLAYBACK_START,
                                         EventType.PLAYBACK_STOP,
                                         EventType.DTMF,
                                         EventType.CHANNEL_HANGUP_COMPLETE,
                                         EventType.CHANNEL_HANGUP);
+
                                 await connection.Linger();
-                                await connection.SendMessage(uuid, "call-command: execute\nexecute-app-name: answer");
-                                var result = await
-                                    connection.ExecuteAppAsync(uuid, "playback", "$${base_dir}/sounds/en/us/callie/misc/8000/misc-freeswitch_is_state_of_the_art.wav");
+                                await connection.SendMessage(uuid, "call-command: execute\nexecute-app-name: answer");  //ExecuteAppAsync(uuid, "answer"); //
+                                
+                                var result = await connection.ExecuteAppAsync(uuid, "playback", "$${base_dir}/sounds/en/us/callie/misc/8000/misc-freeswitch_is_state_of_the_art.wav");
                                 Console.WriteLine("Finished playback {0}", result.EventHeaders[HeaderNames.ApplicationResponse]);
+                                
                                 if (result.AnswerState != "hangup")
                                 {
                                     await connection.Hangup(uuid, "NORMAL_CLEARING");
                                 }
-                    });
+                            });
 
             listener.Start();
         }
@@ -107,17 +108,17 @@ namespace NEventSocket.Example
             {
                 Console.WriteLine("Authenticated!");
 
-                var result = await client.Event(
-                    EventType.BACKGROUND_JOB,
-                    EventType.CHANNEL_EXECUTE_COMPLETE,
+                var result = await client.Events(
                     EventType.CHANNEL_HANGUP,
                     EventType.CHANNEL_HANGUP_COMPLETE,
                     EventType.DTMF,
+                    EventType.CHANNEL_STATE,
+                    EventType.CHANNEL_PROGRESS,
                     EventType.CHANNEL_DESTROY,
                     EventType.CHANNEL_ANSWER);
 
 
-                var channel = await client.Originate("{origination_caller_id_number=1234567}sofia/external/1000@172.16.50.128:5070 &park");
+                var channel = await client.Originate("{origination_caller_id_number=123456789}sofia/external/1000@172.16.50.128:5070 &park");
 
                 if (channel != null && channel.AnswerState == "answered")
                 {
@@ -136,7 +137,7 @@ namespace NEventSocket.Example
                     {
                         await client.Hangup(uuid, "NORMAL_CLEARING");
                     }
-            }
+                }
                 else
                 {
                     using (Colour.Use(ConsoleColor.DarkRed))
@@ -149,6 +150,15 @@ namespace NEventSocket.Example
 
             client.EventsReceived.Where(x => x.EventType == EventType.DTMF)
                   .Subscribe(e => Console.WriteLine("DTMF: {0}", e.EventHeaders["DTMF-Digit"]));
+
+            client.EventsReceived.Where(x => x.EventType == EventType.CHANNEL_PROGRESS).Subscribe(
+                e =>
+                    {
+                        using (Colour.Use(ConsoleColor.DarkGreen))
+                        {
+                            Console.WriteLine("Progress {0} {1}", e.EventHeaders[HeaderNames.CallerUniqueId], e.AnswerState);
+                        }
+                    });
 
             client.EventsReceived.Where(x => x.EventType == EventType.CHANNEL_HANGUP).Subscribe(
                 e =>

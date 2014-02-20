@@ -62,23 +62,25 @@
 
             Log.TraceFormat("OutboundListener Started on Port {0}", this.port);
 
-            subscription = Observable.FromAsync(this.tcpListener.AcceptTcpClientAsync)
-                                     .Repeat()
-                                     .TakeUntil(this.listenerTermination)
-                                     .Select(client => new OutboundSocket(client))
-                      .Subscribe(
-                          connection =>
-                          {
-                                  Log.Trace("New Connection");
-                                  this.connections.Add(connection);
-                                  this.observable.OnNext(connection);
+            subscription =
+                Observable.FromAsync(this.tcpListener.AcceptTcpClientAsync)
+                          .Repeat()
+                          .TakeUntil(this.listenerTermination)
+                          .Select(client => new OutboundSocket(client))
+                          .Subscribe(
+                              connection =>
+                                  {
+                                      Log.Trace("New Connection");
+                                      this.connections.Add(connection);
+                                      this.observable.OnNext(connection);
 
-                                  connection.Disposed += (o, e) =>
-                                      {
-                                          Log.Trace("Connection Disposed");
-                                          this.connections.Remove(connection);
-                                      };
-                              });
+                                      connection.Disposed += (o, e) =>
+                                          {
+                                              Log.Trace("Connection Disposed");
+                                              this.connections.Remove(connection);
+                                          };
+                                  },
+                              ex => Log.ErrorFormat("Error handling inbound connection", ex));
         }
 
         public void Dispose()

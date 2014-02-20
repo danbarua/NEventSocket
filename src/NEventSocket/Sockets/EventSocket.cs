@@ -27,10 +27,12 @@
 
         private readonly Queue<TaskCompletionSource<CommandReply>> commandCallbacks = new Queue<TaskCompletionSource<CommandReply>>();
  
-        private readonly Queue<TaskCompletionSource<ApiResponse>> apiCallbacks = new Queue<TaskCompletionSource<ApiResponse>>(); 
+        private readonly Queue<TaskCompletionSource<ApiResponse>> apiCallbacks = new Queue<TaskCompletionSource<ApiResponse>>();
+        
+        // minimum events required for this class to do its job
+        private readonly HashSet<EventType> events = new HashSet<EventType>() { EventType.CHANNEL_EXECUTE_COMPLETE, EventType.BACKGROUND_JOB };
 
-        private readonly CancellationTokenSource cts = new CancellationTokenSource();
-
+        private CancellationTokenSource cts = new CancellationTokenSource();
 
         protected EventSocket(TcpClient tcpClient) : base(tcpClient)
         {
@@ -96,11 +98,10 @@
             }
         }
 
-        public Task<EventMessage> ExecuteAppAsync(string uuid, string appName, string appArg)
+        public Task<EventMessage> ExecuteAppAsync(string uuid, string appName, string appArg = null)
         {
             if (uuid == null) throw new ArgumentNullException("uuid");
-            if (appName == null) throw new ArgumentNullException("appName");
-            if (appArg == null) throw new ArgumentNullException("appArg");
+            if (appName == null) throw new ArgumentNullException("appName");           
 
             var tcs = new TaskCompletionSource<EventMessage>();
 
@@ -112,10 +113,9 @@
                 .Subscribe(
                     x =>
                         {
-                            Log.TraceFormat("CHANNEL_EXECUTE_COMPLETE [{0} {1} {2} {3}]",
+                            Log.TraceFormat("CHANNEL_EXECUTE_COMPLETE [{0} {1} {2}]",
                                 x.EventHeaders[HeaderNames.AnswerState],
-                                x.EventHeaders[HeaderNames.Application], 
-                                x.EventHeaders[HeaderNames.ApplicationData], 
+                                x.EventHeaders[HeaderNames.Application],
                                 x.EventHeaders[HeaderNames.ApplicationResponse]);
                             tcs.SetResult(x);
                         });
@@ -224,6 +224,12 @@
             return tcs.Task;
         }
 
+        public Task<CommandReply> Events(params EventType[] events)
+        {
+            this.events.UnionWith(events); //ensures we are always at least using the default minimum events
+            return this.SendCommandAsync("event plain {0}".Fmt(string.Join(" ", this.events)));
+        }
+
         protected override void Dispose(bool disposing)
         {
             if (!disposed)
@@ -231,8 +237,12 @@
                 if (disposing)
                 {
                     // cancel any outgoing network sends
-                    cts.Cancel();
-                    cts.Dispose();
+                    if (cts != null)
+                    {
+                        cts.Cancel();
+                        cts.Dispose();
+                        cts = null;
+                    }
 
                     incomingMessages.OnCompleted();
 

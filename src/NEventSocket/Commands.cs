@@ -18,7 +18,7 @@
         public static Task<ApiResponse> Api(this IEventSocketCommands eventSocket, string command, string arg = null)
         {
             if (command == null) throw new ArgumentNullException("command");
-            return eventSocket.SendApiAsync(arg != null ? "api {0} {1}".Fmt(command, arg) : "api {0}".Fmt(command));
+            return eventSocket.SendApiAsync(arg != null ? "{0} {1}".Fmt(command, arg) : "api {0}".Fmt(command));
         }
 
         public static Task<CommandReply> Linger(this IEventSocketCommands eventSocket)
@@ -29,20 +29,6 @@
         public static Task<CommandReply> NoLinger(this IEventSocketCommands eventSocket)
         {
             return eventSocket.SendCommandAsync("nolinger");
-        }
-
-        public static Task<CommandReply> Event(this IEventSocketCommands eventSocket, params EventType[] eventTypes)
-        {
-            if (eventTypes == null) throw new ArgumentNullException("eventTypes");
-            if (eventTypes.Length == 0) throw new ArgumentException("eventTypes");
-            return eventSocket.SendCommandAsync("event plain {0}".Fmt(string.Join(" ", eventTypes)));
-        }
-
-        public static Task<CommandReply> Event(this IEventSocketCommands eventSocket, params string[] eventTypes)
-        {
-            if (eventTypes == null) throw new ArgumentNullException("eventTypes");
-            if (eventTypes.Length == 0) throw new ArgumentException("eventTypes");
-            return eventSocket.SendCommandAsync("event plain {0}".Fmt(string.Join(" ", eventTypes)));
         }
 
         public static Task<CommandReply> MyEvents(this IEventSocketCommands eventSocket, string uuid)
