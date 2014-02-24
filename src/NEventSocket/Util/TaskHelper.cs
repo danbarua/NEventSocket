@@ -37,6 +37,17 @@
             return task;
         }
 
+        public static Task ContinueWithCompleted<TR1, TR2>(this Task<TR1> task, TaskCompletionSource<TR2> tcs, Func<TR1, TR2> convert)
+        {
+            if (task == null) throw new ArgumentNullException("task");
+            if (tcs == null) throw new ArgumentNullException("tcs");
+            if (convert == null) throw new ArgumentNullException("convert");
+
+            task.ContinueWith(t => tcs.SetResult(convert(t.Result)), TaskContinuationOptions.OnlyOnRanToCompletion);
+
+            return task;
+        }
+
         public static Task<TResult> Then<TResult>(this Task<TResult> task, Action onSuccess)
         {
             if (task == null) throw new ArgumentNullException("task");

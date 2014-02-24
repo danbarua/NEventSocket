@@ -116,7 +116,7 @@ namespace NEventSocket.Example
                         {
                             CallerIdNumber = "123456789",
                             CallerIdName = "Dan B",
-                            ReturnRingReady = true,
+                            //ReturnRingReady = true,
                             Timeout = 20
                         });
 

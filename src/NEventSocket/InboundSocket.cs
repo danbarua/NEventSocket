@@ -48,14 +48,16 @@
 
         public Task<OriginateResult> Originate(IEndpoint endpoint, OriginateOptions options, string application = "park")
         {
-            var args = string.Format("{0}{1} &{2}", options, endpoint, application);
-
             var tcs = new TaskCompletionSource<OriginateResult>();
 
-            //we'll get an event in the future for this channel and we'll use that to complete the task
+            // if no UUID provided, we'll set one now and use that to filter for the correct channel events
+            // this way, one inbound socket can originate many calls
+            if (string.IsNullOrEmpty(options.UUID)) options.UUID = Guid.NewGuid().ToString();
+
+            var args = string.Format("{0}{1} &{2}", options, endpoint, application);
             var subscription = this.Events.Where(
-                x => (x.EventType == EventType.CHANNEL_ANSWER || x.EventType == EventType.CHANNEL_HANGUP)
-                                             || (options.ReturnRingReady && x.EventType == EventType.CHANNEL_PROGRESS))
+                x => (x.Headers.ContainsKey("Unique-ID") && x.Headers["Unique-ID"] == options.UUID && 
+                    (x.EventType == EventType.CHANNEL_ANSWER || x.EventType == EventType.CHANNEL_HANGUP || (options.ReturnRingReady && x.EventType == EventType.CHANNEL_PROGRESS))))
                                              .Take(1) //will auto terminate the subscription
                                              .Subscribe(x =>
                                              {
@@ -63,11 +65,13 @@
                                                  tcs.SetResult(new OriginateResult(x));
                                              });
 
-            this.BgApi("originate", args).ContinueWith(
+            this.BgApi("originate", args)
+                .ContinueWith(
                 t =>
                 {
                     if (t.Result != null && !t.Result.Success)
                     {
+                        Log.TraceFormat("Originate {0} failed - {1}", args, t.Result.ErrorMessage);
                         subscription.Dispose();
                         tcs.SetResult(new OriginateResult(t.Result));
                     }

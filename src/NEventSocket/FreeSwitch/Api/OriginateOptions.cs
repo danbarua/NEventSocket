@@ -62,6 +62,7 @@
             sb.Append("{");
 
             if (!string.IsNullOrEmpty(UUID)) sb.AppendFormat("origination_uuid='{0}',", UUID);
+
             if (!string.IsNullOrEmpty(CallerIdName)) sb.AppendFormat("origination_caller_id_name='{0}',", CallerIdName);
             if (!string.IsNullOrEmpty(CallerIdNumber)) sb.AppendFormat("origination_caller_id_number={0},", CallerIdNumber);
 
