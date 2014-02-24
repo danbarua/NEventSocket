@@ -108,15 +108,15 @@
             var subscription = EventsReceived.Where(
                 x =>
                 x.EventType == EventType.CHANNEL_EXECUTE_COMPLETE
-                && x.EventHeaders[HeaderNames.Application] == appName)
+                && x.Headers[HeaderNames.Application] == appName)
                 .Take(1)
                 .Subscribe(
                     x =>
                         {
                             Log.TraceFormat("CHANNEL_EXECUTE_COMPLETE [{0} {1} {2}]",
-                                x.EventHeaders[HeaderNames.AnswerState],
-                                x.EventHeaders[HeaderNames.Application],
-                                x.EventHeaders[HeaderNames.ApplicationResponse]);
+                                x.Headers[HeaderNames.AnswerState],
+                                x.Headers[HeaderNames.Application],
+                                x.Headers[HeaderNames.ApplicationResponse]);
                             tcs.SetResult(x);
                         });
 
@@ -171,7 +171,7 @@
 
             //we'll get an event in the future for this JobUUID and we'll use that to complete the task
             var subscription = EventsReceived.Where(
-                x => x.EventType == EventType.BACKGROUND_JOB && x.EventHeaders["Job-UUID"] == jobUUID.ToString())
+                x => x.EventType == EventType.BACKGROUND_JOB && x.Headers["Job-UUID"] == jobUUID.ToString())
                                              .Take(1) //will auto terminate the subscription when received
                                              .Subscribe(x =>
                                                  {
@@ -228,6 +228,13 @@
         {
             this.events.UnionWith(events); //ensures we are always at least using the default minimum events
             return this.SendCommandAsync("event plain {0}".Fmt(string.Join(" ", this.events)));
+        }
+
+        public IDisposable SubscribeEvent(EventType eventType, Action<EventMessage> handler)
+        {
+            if (!events.Contains(eventType)) Events(eventType).Wait();
+
+            return EventsReceived.Where(x => x.EventType == eventType).Subscribe(handler);
         }
 
         protected override void Dispose(bool disposing)

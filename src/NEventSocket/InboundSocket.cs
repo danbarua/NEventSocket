@@ -40,7 +40,7 @@
                                              .Take(1) //will auto terminate the subscription
                                              .Subscribe(x =>
                                                  {
-                                                     Log.TraceFormat("Originate {0} complete - {1}", args, x.EventHeaders[HeaderNames.AnswerState]);
+                                                     Log.TraceFormat("Originate {0} complete - {1}", args, x.Headers[HeaderNames.AnswerState]);
                                                      tcs.SetResult(x);
                                                  });
 

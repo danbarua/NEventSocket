@@ -3,20 +3,19 @@
     using System;
 
     [Serializable]
-    public class BackgroundJobResult : EventMessage
+    public class BackgroundJobResult : BasicMessage
     {
-        public BackgroundJobResult(EventMessage eventMessage)
+        public BackgroundJobResult(EventMessage basicMessage)
         {
-            this.Headers = eventMessage.Headers;
-            this.EventHeaders = eventMessage.EventHeaders;
-            this.BodyText = eventMessage.BodyText;
+            this.Headers = basicMessage.Headers;
+            this.BodyText = basicMessage.BodyText;
         }
 
         public string JobUUID
         {
             get
             {
-                return this.EventHeaders["Job-UUID"];
+                return this.Headers["Job-UUID"];
             }
         }
 

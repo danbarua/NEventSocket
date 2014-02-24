@@ -53,7 +53,7 @@ namespace NEventSocket.Example
                                                   {
                                                       using (Colour.Use(ConsoleColor.Red))
                                                       {
-                                                          Console.WriteLine("HANGUP DETECTED {0} {1}", e.EventHeaders[HeaderNames.CallerUniqueId], e.EventType);
+                                                          Console.WriteLine("HANGUP DETECTED {0} {1}", e.Headers[HeaderNames.CallerUniqueId], e.EventType);
                                                       }
                                                       connection.Exit();
                                                   });
@@ -76,10 +76,10 @@ namespace NEventSocket.Example
 
                                 await connection.Linger();
                                 await connection.SendMessage(uuid, "call-command: execute\nexecute-app-name: answer");  //ExecuteAppAsync(uuid, "answer"); //
-                                
+
                                 var result = await connection.ExecuteAppAsync(uuid, "playback", "$${base_dir}/sounds/en/us/callie/misc/8000/misc-freeswitch_is_state_of_the_art.wav");
-                                Console.WriteLine("Finished playback {0}", result.EventHeaders[HeaderNames.ApplicationResponse]);
-                                
+                                Console.WriteLine("Finished playback {0}", result.Headers[HeaderNames.ApplicationResponse]);
+
                                 if (result.AnswerState != "hangup")
                                 {
                                     await connection.Hangup(uuid, "NORMAL_CLEARING");
@@ -120,9 +120,9 @@ namespace NEventSocket.Example
 
                 var channel = await client.Originate("{origination_caller_id_number=123456789}sofia/external/1000@172.16.50.128:5070 &park");
 
-                if (channel != null && channel.AnswerState == "answered")
+                if (channel != null && channel.AnswerState == AnswerState.Answered)
                 {
-                    var uuid = channel.EventHeaders[HeaderNames.CallerUniqueId];
+                    var uuid = channel.Headers[HeaderNames.CallerUniqueId];
                     await client.MyEvents(uuid);
                     await client.Linger();
                     var evt =
@@ -131,9 +131,10 @@ namespace NEventSocket.Example
                             uuid,
                             "playback",
                             "$${base_dir}/sounds/en/us/callie/ivr/8000/ivr-all_your_call_are_belong_to_us.wav");
-                    Console.WriteLine("Finished playback {0}", evt.EventHeaders[HeaderNames.ApplicationResponse]);
 
-                    if (evt.AnswerState != "hangup")
+                    Console.WriteLine("Finished playback {0}", evt.Headers[HeaderNames.ApplicationResponse]);
+
+                    if (evt.AnswerState != AnswerState.Hangup)
                     {
                         await client.Hangup(uuid, "NORMAL_CLEARING");
                     }
@@ -149,14 +150,14 @@ namespace NEventSocket.Example
             };
 
             client.EventsReceived.Where(x => x.EventType == EventType.DTMF)
-                  .Subscribe(e => Console.WriteLine("DTMF: {0}", e.EventHeaders["DTMF-Digit"]));
+                  .Subscribe(e => Console.WriteLine("DTMF: {0}", e.Headers["DTMF-Digit"]));
 
             client.EventsReceived.Where(x => x.EventType == EventType.CHANNEL_PROGRESS).Subscribe(
                 e =>
                     {
                         using (Colour.Use(ConsoleColor.DarkGreen))
                         {
-                            Console.WriteLine("Progress {0} {1}", e.EventHeaders[HeaderNames.CallerUniqueId], e.AnswerState);
+                            Console.WriteLine("Progress {0} {1}", e.Headers[HeaderNames.CallerUniqueId], e.AnswerState);
                         }
                     });
 
@@ -165,7 +166,7 @@ namespace NEventSocket.Example
                 {
                     using (Colour.Use(ConsoleColor.Red))
                     {
-                        Console.WriteLine("HANGUP DETECTED {0} {1}", e.EventHeaders[HeaderNames.CallerUniqueId], e.EventType);
+                        Console.WriteLine("HANGUP DETECTED {0} {1}", e.Headers[HeaderNames.CallerUniqueId], e.EventType);
                     }
 
                     client.Exit();

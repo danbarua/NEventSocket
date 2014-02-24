@@ -58,6 +58,7 @@
       <Link>Properties\CommonAssemblyInfo.cs</Link>
     </Compile>
     <Compile Include="FreeSwitch\Api\Originate.cs" />
+    <Compile Include="FreeSwitch\AnswerState.cs" />
     <Compile Include="OutboundListener.cs" />
     <Compile Include="Sockets\EventSocket.cs" />
     <Compile Include="InboundSocket.cs" />

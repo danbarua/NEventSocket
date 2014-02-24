@@ -28,12 +28,7 @@
                 this.MessagesReceived
                     .Where(x => x.ContentType == ContentTypes.DisconnectNotice)
                     .Take(1)
-                    .Subscribe(
-                        _ =>
-                            {
-                                Log.Trace("Disconnect Notice received.");
-                                Dispose();
-                            }));
+                    .Subscribe(_ => Log.Trace("Disconnect Notice received.")));
 
             return result;
         }
