@@ -66,6 +66,7 @@
   <ItemGroup>
     <Compile Include="Class1.cs" />
     <Compile Include="FakeOutboundSocket.cs" />
+    <Compile Include="OriginateTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Sockets\ObservableSocketTests.cs" />
     <Compile Include="Sockets\OutboundListenerTests.cs" />

@@ -31,7 +31,7 @@
         {
             get
             {
-                return this.BodyText != null && this.BodyText.StartsWith("-ERR ") ? this.BodyText.Substring(5, this.BodyText.Length - 5) : string.Empty;
+                return this.BodyText != null && this.BodyText.StartsWith("-ERR ") ? this.BodyText.Substring(5, this.BodyText.Length - 5) : this.BodyText;
             }
         }
     }

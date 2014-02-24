@@ -7,8 +7,9 @@
     {
         public OriginateResult(EventMessage answerEvent)
         {
-            this.Success = true;
-            this.HangupCause = null;
+            this.Success = answerEvent.Headers[HeaderNames.AnswerState] != AnswerState.Hangup;
+            if (!Success)
+                this.HangupCause = answerEvent.Headers[HeaderNames.HangupCause];
             this.ChannelData = answerEvent;
         }
 

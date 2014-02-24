@@ -30,7 +30,14 @@
         private readonly Queue<TaskCompletionSource<ApiResponse>> apiCallbacks = new Queue<TaskCompletionSource<ApiResponse>>();
         
         // minimum events required for this class to do its job
-        private readonly HashSet<EventType> events = new HashSet<EventType>() { EventType.CHANNEL_EXECUTE_COMPLETE, EventType.BACKGROUND_JOB };
+        private readonly HashSet<EventType> events = new HashSet<EventType>()
+                                                         {
+                                                             EventType.CHANNEL_EXECUTE_COMPLETE,
+                                                             EventType.BACKGROUND_JOB,
+                                                             EventType.CHANNEL_HANGUP,
+                                                             EventType.CHANNEL_ANSWER,
+                                                             EventType.CHANNEL_PROGRESS
+                                                         };
 
         private CancellationTokenSource cts = new CancellationTokenSource();
 

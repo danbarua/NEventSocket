@@ -61,6 +61,8 @@
     <Compile Include="FreeSwitch\AnswerState.cs" />
     <Compile Include="FreeSwitch\Api\OriginateOptions.cs" />
     <Compile Include="FreeSwitch\Api\OriginateResult.cs" />
+    <Compile Include="FreeSwitch\ChannelVariable.cs" />
+    <Compile Include="FreeSwitch\Sofia.cs" />
     <Compile Include="OutboundListener.cs" />
     <Compile Include="Sockets\EventSocket.cs" />
     <Compile Include="InboundSocket.cs" />
