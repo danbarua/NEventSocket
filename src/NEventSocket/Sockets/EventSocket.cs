@@ -121,20 +121,7 @@
                         });
 
             SendCommandAsync("sendmsg {0}\ncall-command: execute\nexecute-app-name: {1}\nexecute-app-arg: {2}".Fmt(uuid, appName, appArg))
-                .ContinueWith(t =>
-                {
-                    if (!t.IsCompleted)
-                    {
-                        //we're never going to get a CHANNEL_EXECUTE_COMPLETE event for this call because we didn't send the command successfully
-                        subscription.Dispose();
-
-                        if (t.Exception != null)
-                        {
-                            //fail the parent task
-                            tcs.SetException(t.Exception);
-                        }
-                    }
-                });
+                .ContinueWithNotComplete(tcs, subscription.Dispose);
 
             return tcs.Task;
         }
@@ -183,20 +170,7 @@
             SendCommandAsync(arg != null
                                  ? "bgapi {0} {1}\nJob-UUID: {2}".Fmt(command, arg, jobUUID)
                                  : "bgapi {0}\nJob-UUID: {1}".Fmt(command, jobUUID))
-                .ContinueWith(t =>
-                {
-                    if (!t.IsCompleted)
-                    {
-                        //we're never going to get a BACKGROUND_JOB event because we didn't send the command successfully
-                        subscription.Dispose();
-
-                        if (t.Exception != null)
-                        {
-                            //fail the parent task
-                            tcs.SetException(t.Exception);
-                        }
-                    }
-                });
+                            .ContinueWithNotComplete(tcs, subscription.Dispose);
 
             return tcs.Task;
         }
@@ -204,7 +178,6 @@
         public Task<CommandReply> SendCommandAsync(string command)
         {
             var tcs = new TaskCompletionSource<CommandReply>();
-
             try
             {
                 Monitor.Enter(commandCallbacks);

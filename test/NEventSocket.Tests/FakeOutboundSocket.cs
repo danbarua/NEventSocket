@@ -14,7 +14,6 @@
         public FakeOutboundSocket(int port)
             : base(new TcpClient("127.0.0.1", port))
         {
-
         }
     }
 }

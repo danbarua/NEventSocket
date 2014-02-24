@@ -59,6 +59,8 @@
     </Compile>
     <Compile Include="FreeSwitch\Api\Originate.cs" />
     <Compile Include="FreeSwitch\AnswerState.cs" />
+    <Compile Include="FreeSwitch\Api\OriginateOptions.cs" />
+    <Compile Include="FreeSwitch\Api\OriginateResult.cs" />
     <Compile Include="OutboundListener.cs" />
     <Compile Include="Sockets\EventSocket.cs" />
     <Compile Include="InboundSocket.cs" />
@@ -103,6 +105,7 @@
     <Compile Include="Sockets\Parser.cs" />
     <Compile Include="Util\ObservableExtensions.cs" />
     <Compile Include="Util\StringExtensions.cs" />
+    <Compile Include="Util\TaskHelper.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

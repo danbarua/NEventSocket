@@ -9,7 +9,9 @@
     using Common.Logging;
 
     using NEventSocket.FreeSwitch;
+    using NEventSocket.FreeSwitch.Api;
     using NEventSocket.Sockets;
+    using NEventSocket.Util;
 
     public class InboundSocket : EventSocket
     {
@@ -30,30 +32,31 @@
 
         public event EventHandler Authenticated = (sender, args) => { };
 
-        public Task<EventMessage> Originate(string args)
+        public Task<OriginateResult> Originate(string args)
         {
-            var tcs = new TaskCompletionSource<EventMessage>();
+            var tcs = new TaskCompletionSource<OriginateResult>();
 
             //we'll get an event in the future for this channel and we'll use that to complete the task
             var subscription = this.EventsReceived.Where(
-                x => x.EventType == EventType.CHANNEL_ANSWER || x.EventType == EventType.CHANNEL_DESTROY || x.EventType == EventType.CHANNEL_HANGUP_COMPLETE)
+                x => x.EventType == EventType.CHANNEL_ANSWER)// || x.EventType == EventType.CHANNEL_DESTROY) // || x.EventType == EventType.CHANNEL_HANGUP_COMPLETE)
                                              .Take(1) //will auto terminate the subscription
                                              .Subscribe(x =>
                                                  {
                                                      Log.TraceFormat("Originate {0} complete - {1}", args, x.Headers[HeaderNames.AnswerState]);
-                                                     tcs.SetResult(x);
+                                                     tcs.SetResult(new OriginateResult(x));
                                                  });
 
-            this.BgApi("originate", args)
-                .ContinueWith(
-                    t =>
+            this.BgApi("originate", args).ContinueWith(
+                t =>
+                    {
+                        if (t.Result != null && !t.Result.Success)
                         {
-                            if ((t.IsFaulted && t.Exception != null) || (t.Result != null && !t.Result.Success))
-                            {
-                                subscription.Dispose();
-                                tcs.SetResult(null);
-                            }
-                        });
+                            subscription.Dispose();
+                            tcs.SetResult(new OriginateResult(t.Result));
+                        }
+                    },
+                TaskContinuationOptions.OnlyOnRanToCompletion)
+                .ContinueWithNotComplete(tcs, subscription.Dispose);
 
             return tcs.Task;
         }
