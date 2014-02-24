@@ -51,7 +51,7 @@
             // some messages will be received in reply to a command that we sent earlier through the socket
             // we'll parse those into the appropriate message and complete the outstanding task associated with that command
 
-            disposables.Add(MessagesReceived
+            disposables.Add(Messages
                                     .Where(x => x.ContentType == ContentTypes.CommandReply)
                                     .Subscribe(response =>
                                         {
@@ -70,7 +70,7 @@
                                                          }
                                                      }));
 
-            disposables.Add(MessagesReceived
+            disposables.Add(Messages
                                     .Where(x => x.ContentType == ContentTypes.ApiResponse)
                                     .Subscribe(response =>
                                                  {
@@ -92,14 +92,14 @@
         }
 
         /// <summary> Gets an observable stream of BasicMessages </summary>
-        public IObservable<BasicMessage> MessagesReceived { get { return incomingMessages; } }
+        public IObservable<BasicMessage> Messages { get { return incomingMessages; } }
 
         /// <summary>Observable of all Events received on this connection</summary>
-        public IObservable<EventMessage> EventsReceived
+        public IObservable<EventMessage> Events
         {
             get
             {
-                return MessagesReceived
+                return Messages
                             .Where(x => x.ContentType == ContentTypes.EventPlain)
                             .Select(x => new EventMessage(x));
             }
@@ -112,7 +112,7 @@
 
             var tcs = new TaskCompletionSource<EventMessage>();
 
-            var subscription = EventsReceived.Where(
+            var subscription = Events.Where(
                 x =>
                 x.EventType == EventType.CHANNEL_EXECUTE_COMPLETE
                 && x.Headers[HeaderNames.Application] == appName)
@@ -164,7 +164,7 @@
             var tcs = new TaskCompletionSource<BackgroundJobResult>();
 
             //we'll get an event in the future for this JobUUID and we'll use that to complete the task
-            var subscription = EventsReceived.Where(
+            var subscription = Events.Where(
                 x => x.EventType == EventType.BACKGROUND_JOB && x.Headers["Job-UUID"] == jobUUID.ToString())
                                              .Take(1) //will auto terminate the subscription when received
                                              .Subscribe(x =>
@@ -204,7 +204,7 @@
             return tcs.Task;
         }
 
-        public Task<CommandReply> Events(params EventType[] events)
+        public Task<CommandReply> SubscribeEvents(params EventType[] events)
         {
             this.events.UnionWith(events); //ensures we are always at least using the default minimum events
             return this.SendCommandAsync("event plain {0}".Fmt(string.Join(" ", this.events)));
@@ -212,9 +212,9 @@
 
         public IDisposable SubscribeEvent(EventType eventType, Action<EventMessage> handler)
         {
-            if (!events.Contains(eventType)) Events(eventType).Wait();
+            if (!events.Contains(eventType)) SubscribeEvents(eventType).Wait();
 
-            return EventsReceived.Where(x => x.EventType == eventType).Subscribe(handler);
+            return Events.Where(x => x.EventType == eventType).Subscribe(handler);
         }
 
         protected override void Dispose(bool disposing)

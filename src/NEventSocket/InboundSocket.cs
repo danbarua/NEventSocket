@@ -27,7 +27,7 @@
             var tcs = new TaskCompletionSource<InboundSocket>();
             var socket = new InboundSocket(host, port);
 
-            socket.MessagesReceived
+            socket.Messages
                     .Where(x => x.ContentType == ContentTypes.AuthRequest)
                     .Take(1)
                     .Subscribe(async x =>
@@ -53,7 +53,7 @@
             var tcs = new TaskCompletionSource<OriginateResult>();
 
             //we'll get an event in the future for this channel and we'll use that to complete the task
-            var subscription = this.EventsReceived.Where(
+            var subscription = this.Events.Where(
                 x => (x.EventType == EventType.CHANNEL_ANSWER || x.EventType == EventType.CHANNEL_HANGUP)
                                              || (options.ReturnRingReady && x.EventType == EventType.CHANNEL_PROGRESS))
                                              .Take(1) //will auto terminate the subscription

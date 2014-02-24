@@ -20,6 +20,6 @@ namespace NEventSocket
         bool IsConnected { get; }
 
         /// <summary>Gets the stream of incoming messages.</summary>
-        IObservable<BasicMessage> MessagesReceived { get; }
+        IObservable<BasicMessage> Messages { get; }
     }
 }

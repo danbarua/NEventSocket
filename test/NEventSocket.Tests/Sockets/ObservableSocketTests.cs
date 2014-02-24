@@ -28,7 +28,7 @@
             listener.Connections.Subscribe((connection) =>
                 { 
                     connected = true;
-                    connection.MessagesReceived.Subscribe(_ => { }, () => completed = true);
+                    connection.Messages.Subscribe(_ => { }, () => completed = true);
                 });
 
             var client = new FakeOutboundSocket(8084);

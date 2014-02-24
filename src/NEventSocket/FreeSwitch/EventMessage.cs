@@ -34,15 +34,15 @@
                 {
                     if (!basicMessage.BodyText.Contains(HeaderNames.ContentLength))
                     {
-                        // Normally the body text consists of key-value-pair event headers
+                        //body text consists of key-value-pair event headers
                         this.Headers = new Dictionary<string, string>(
                             basicMessage.BodyText.ParseKeyValuePairs("\n", ": "), StringComparer.OrdinalIgnoreCase);
                         this.BodyText = null;
                     }
                     else
                     {
-                        //...but some Event Messages also carry a body payload, eg. BACKGROUND_JOB events 
-                        // a message inside an EventMessage inside a BasicMessage...
+                        //...but some Event Messages also carry a body payload, eg. a BACKGROUND_JOB event
+                        // which is a message carried inside an EventMessage carried inside a BasicMessage...
 
                         //todo: this is really inefficient but a quick lazy way of turning a string into a message.
                         var parser = new Parser();

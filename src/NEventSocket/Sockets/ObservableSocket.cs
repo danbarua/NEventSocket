@@ -44,7 +44,7 @@
                 () =>
                     {
                         var stream = tcpClient.GetStream();
-                        var buffer = new byte[8192];
+                        var buffer = new byte[8192]; //todo: use bufferpool or socketasynceventargs
                         return
                             Observable.FromAsync(() => stream.ReadAsync(buffer, 0, buffer.Length))
                                       .Select(x => buffer.Take(x).ToArray());
@@ -119,10 +119,9 @@
 
         protected virtual void Dispose(bool disposing)
         {
-            Log.Trace("Disposing");
-
             if (!disposed)
             {
+                Log.Trace("Disposing");
                 if (disposing)
                 {
                     if (readSubscription != null)
@@ -154,10 +153,10 @@
                         Log.Trace("Client closed.");
                     }
                 }
+                
+                disposed = true;
 
                 Disposed(this, EventArgs.Empty);
-
-                disposed = true;
             }
         }
     }

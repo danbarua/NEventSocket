@@ -45,7 +45,7 @@ namespace NEventSocket.Example
                     {
                         Console.WriteLine("New Socket connected");
 
-                        connection.EventsReceived.Where(x => x.EventType == EventType.CHANNEL_HANGUP)
+                        connection.Events.Where(x => x.EventType == EventType.CHANNEL_HANGUP)
                                   .Take(1)
                                   .Subscribe(
                                       e =>
@@ -65,7 +65,7 @@ namespace NEventSocket.Example
                         Console.WriteLine(uuid);
 
                         await
-                            connection.Events(
+                            connection.SubscribeEvents(
                                 EventType.PLAYBACK_START, 
                                 EventType.PLAYBACK_STOP, 
                                 EventType.DTMF, 
@@ -99,7 +99,7 @@ namespace NEventSocket.Example
 
                 var result =
                     await
-                    client.Events(
+                    client.SubscribeEvents(
                         EventType.CHANNEL_HANGUP,
                         EventType.CHANNEL_HANGUP_COMPLETE,
                         EventType.DTMF,
@@ -116,7 +116,7 @@ namespace NEventSocket.Example
                         {
                             CallerIdNumber = "123456789",
                             CallerIdName = "Dan B",
-                            ReturnRingReady = false,
+                            ReturnRingReady = true,
                             Timeout = 20
                         });
 
@@ -137,10 +137,10 @@ namespace NEventSocket.Example
                     await client.MyEvents(uuid);
                     await client.Linger();
 
-                    client.EventsReceived.Where(x => x.EventType == EventType.DTMF)
+                    client.Events.Where(x => x.EventType == EventType.DTMF)
                           .Subscribe(e => Console.WriteLine("DTMF: {0}", e.Headers["DTMF-Digit"]));
 
-                    client.EventsReceived.Where(x => x.EventType == EventType.CHANNEL_HANGUP).Take(1).Subscribe(
+                    client.Events.Where(x => x.EventType == EventType.CHANNEL_HANGUP).Take(1).Subscribe(
                         e =>
                         {
                             using (Colour.Use(ConsoleColor.Red))
