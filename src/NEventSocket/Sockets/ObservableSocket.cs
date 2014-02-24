@@ -51,8 +51,9 @@
                     })
                     .Repeat()
                     .TakeWhile(x => x.Any())
+                    .Do((bytes) => received.Add(bytes))
                     .Subscribe(
-                        bytes => received.Add(bytes),
+                        _ => { },
                         ex =>
                             {
                                 Log.Error("Read Failed", ex);

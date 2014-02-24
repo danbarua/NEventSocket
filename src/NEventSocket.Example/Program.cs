@@ -6,11 +6,11 @@
 //   The program.
 // </summary>
 // --------------------------------------------------------------------------------------------------------------------
-
 namespace NEventSocket.Example
 {
     using System;
     using System.Reactive.Linq;
+    using System.Security;
 
     using Common.Logging;
     using Common.Logging.Simple;
@@ -29,14 +29,14 @@ namespace NEventSocket.Example
 
             Console.WriteLine("Starting...");
 
-            OutboundSocket();
-            InboundSocket();
+            OutboundSocketTest();
+            InboundSocketTest();
 
             Console.WriteLine("Press [Enter] to exit.");
             Console.ReadLine();
         }
 
-        private static void OutboundSocket()
+        private static void OutboundSocketTest()
         {
             var listener = new OutboundListener(8084);
 
@@ -44,16 +44,6 @@ namespace NEventSocket.Example
                 async connection =>
                     {
                         Console.WriteLine("New Socket connected");
-
-                        connection.MessagesReceived.Subscribe(
-                            _ => { }, 
-                            () =>
-                                {
-                                    using (Colour.Use(ConsoleColor.Yellow))
-                                    {
-                                        Console.WriteLine("MESSAGES_OBS_COMPLETE");
-                                    }
-                                });
 
                         connection.EventsReceived.Where(x => x.EventType == EventType.CHANNEL_HANGUP)
                                   .Take(1)
@@ -65,13 +55,11 @@ namespace NEventSocket.Example
                                                   Console.WriteLine(
                                                       "HANGUP DETECTED {0} {1}", 
                                                       e.Headers[HeaderNames.CallerUniqueId], 
-                                                      e.EventType);
+                                                      e.Headers[HeaderNames.HangupCause]);
                                               }
 
                                               connection.Exit();
                                           });
-
-                        connection.Disposed += (o, e) => Console.WriteLine("connection disposed");
 
                         var uuid = connection.ChannelData.Headers["Unique-Id"];
                         Console.WriteLine(uuid);
@@ -86,8 +74,8 @@ namespace NEventSocket.Example
 
                         await connection.Linger();
                         await connection.SendMessage(uuid, "call-command: execute\nexecute-app-name: answer");
-                            
-                            // ExecuteAppAsync(uuid, "answer"); //
+
+                        // ExecuteAppAsync(uuid, "answer"); //
                         var result =
                             await
                             connection.ExecuteAppAsync(
@@ -102,93 +90,86 @@ namespace NEventSocket.Example
             listener.Start();
         }
 
-        private static void InboundSocket()
+        private static async void InboundSocketTest()
         {
-            var client = new InboundSocket("localhost", 8021, "ClueCon");
-            client.Disposed += (o, e) => Console.WriteLine("client disposed");
+            try
+            {
+                var client = await InboundSocket.Connect("127.0.0.1", 8021, "ClueCon");
+                Console.WriteLine("Authenticated!");
 
-            client.MessagesReceived.Subscribe(
-                _ => { }, 
-                () =>
-                    {
-                        using (Colour.Use(ConsoleColor.Yellow))
+                var result =
+                    await
+                    client.Events(
+                        EventType.CHANNEL_HANGUP,
+                        EventType.CHANNEL_HANGUP_COMPLETE,
+                        EventType.DTMF,
+                        EventType.CHANNEL_STATE,
+                        EventType.CHANNEL_PROGRESS,
+                        EventType.CHANNEL_DESTROY,
+                        EventType.CHANNEL_ANSWER);
+
+                var originateResult =
+                    await
+                    client.Originate(
+                        Sofia.External("1000@172.16.50.128:5070"),
+                        new OriginateOptions
                         {
-                            Console.WriteLine("MESSAGES_OBS_COMPLETE");
-                        }
-                    });
+                            CallerIdNumber = "123456789",
+                            CallerIdName = "Dan B",
+                            ReturnRingReady = false,
+                            Timeout = 20
+                        });
 
-            client.Authenticated += async (sender, eventArgs) =>
+                if (!originateResult.Success)
                 {
-                    Console.WriteLine("Authenticated!");
-
-                    var result =
-                        await
-                        client.Events(
-                            EventType.CHANNEL_HANGUP,
-                            EventType.CHANNEL_HANGUP_COMPLETE,
-                            EventType.DTMF,
-                            EventType.CHANNEL_STATE,
-                            EventType.CHANNEL_PROGRESS,
-                            EventType.CHANNEL_DESTROY,
-                            EventType.CHANNEL_ANSWER);
-
-                    var originateResult =
-                        await
-                        client.Originate(
-                            Sofia.External("1000@172.16.50.128:5070"),
-                            new OriginateOptions
-                                {
-                                    CallerIdNumber = "123456789",
-                                    CallerIdName = "Dan B",
-                                    ReturnRingReady = false,
-                                    Timeout = 20
-                                });
-
-                    if (originateResult.Success)
+                    using (Colour.Use(ConsoleColor.DarkRed))
                     {
-                        var uuid = originateResult.ChannelData.Headers[HeaderNames.CallerUniqueId];
-                        Console.WriteLine(
-                            "Originate success {0}", originateResult.ChannelData.Headers[HeaderNames.AnswerState]);
-                        await client.MyEvents(uuid);
-                        //await client.Linger();
-
-                        client.EventsReceived.Where(x => x.EventType == EventType.DTMF)
-                              .Subscribe(e => Console.WriteLine("DTMF: {0}", e.Headers["DTMF-Digit"]));
-
-                        client.EventsReceived.Where(x => x.EventType == EventType.CHANNEL_HANGUP).Subscribe(
-                            e =>
-                                {
-                                    using (Colour.Use(ConsoleColor.Red))
-                                    {
-                                        Console.WriteLine(
-                                            "HANGUP DETECTED {0} {1}",
-                                            e.Headers[HeaderNames.CallerUniqueId],
-                                            e.EventType);
-                                    }
-
-                                    //client.Exit();
-                                });
-
-                        var evt =
-                            await
-                            client.ExecuteAppAsync(
-                                uuid,
-                                "playback",
-                                "$${base_dir}/sounds/en/us/callie/ivr/8000/ivr-all_your_call_are_belong_to_us.wav");
-
-                        Console.WriteLine("Finished playback {0}", evt.Headers[HeaderNames.ApplicationResponse]);
-
-                        if (evt.AnswerState != AnswerState.Hangup) await client.Hangup(uuid, "NORMAL_CLEARING");
+                        Console.WriteLine("Originate Failed {0}", originateResult.HangupCause);
+                        client.Exit();
                     }
-                    else
-                    {
-                        using (Colour.Use(ConsoleColor.DarkRed))
+                }
+                else
+                {
+                    var uuid = originateResult.ChannelData.Headers[HeaderNames.CallerUniqueId];
+                    Console.WriteLine(
+                        "Originate success {0}", originateResult.ChannelData.Headers[HeaderNames.AnswerState]);
+
+                    await client.MyEvents(uuid);
+                    await client.Linger();
+
+                    client.EventsReceived.Where(x => x.EventType == EventType.DTMF)
+                          .Subscribe(e => Console.WriteLine("DTMF: {0}", e.Headers["DTMF-Digit"]));
+
+                    client.EventsReceived.Where(x => x.EventType == EventType.CHANNEL_HANGUP).Take(1).Subscribe(
+                        e =>
                         {
-                            Console.WriteLine("Originate Failed {0}", originateResult.HangupCause);
+                            using (Colour.Use(ConsoleColor.Red))
+                            {
+                                Console.WriteLine(
+                                    "HANGUP DETECTED {0} {1}",
+                                    e.Headers[HeaderNames.CallerUniqueId],
+                                    e.Headers[HeaderNames.HangupCause]);
+                            }
+
                             client.Exit();
-                        }
-                    }
-                };
+                        });
+
+                    var evt =
+                        await
+                        client.ExecuteAppAsync(
+                            uuid,
+                            "playback",
+                            "$${base_dir}/sounds/en/us/callie/ivr/8000/ivr-all_your_call_are_belong_to_us.wav");
+
+                    Console.WriteLine("Finished playback {0}", evt.Headers[HeaderNames.ApplicationResponse]);
+
+                    if (evt.AnswerState != AnswerState.Hangup) await client.Hangup(uuid, "NORMAL_CLEARING");
+                }
+            }
+            catch (SecurityException ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
         }
     }
 }

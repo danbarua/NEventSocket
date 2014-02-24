@@ -17,20 +17,29 @@
     {
         private static readonly ILog Log = LogManager.GetCurrentClassLogger();
 
-        private readonly string password;
-
-        public InboundSocket(string host = "localhost", int port = 8021, string password = "ClueCon")
+        protected InboundSocket(string host = "localhost", int port = 8021)
             : base(new TcpClient(host, port))
         {
-            this.password = password;
-
-            this.MessagesReceived
-                    .Where(x => x.ContentType == ContentTypes.AuthRequest)
-                    .Take(1)
-                    .Subscribe(x => this.Authenticate());
         }
 
-        public event EventHandler Authenticated = (sender, args) => { };
+        public static Task<InboundSocket> Connect(string host = "localhost", int port = 8021, string password = "ClueCon")
+        {
+            var tcs = new TaskCompletionSource<InboundSocket>();
+            var socket = new InboundSocket(host, port);
+
+            socket.MessagesReceived
+                    .Where(x => x.ContentType == ContentTypes.AuthRequest)
+                    .Take(1)
+                    .Subscribe(async x =>
+                        {
+                            var result = await socket.Auth(password);
+                            if (result.Success) tcs.SetResult(socket);
+                            else tcs.SetException(new SecurityException("Invalid password"));
+                        },
+                        ex => tcs.SetException(ex));
+
+            return tcs.Task;
+        }
 
         public Task<OriginateResult> Originate(IEndpoint endpoint, string application = "park")
         {
@@ -67,21 +76,6 @@
                 .ContinueWithNotComplete(tcs, subscription.Dispose);
 
             return tcs.Task;
-        }
-
-        private async Task Authenticate()
-        {
-            var result = await this.Auth(this.password);
-            if (result.Success)
-            {
-                Log.Trace("Authenticated.");
-                this.Authenticated(this, EventArgs.Empty);
-            }
-            else
-            {
-                Log.ErrorFormat("Invalid Password [{0}]", result.BodyText);
-                throw new SecurityException("Invalid Password");
-            }
         }
     }
 }
