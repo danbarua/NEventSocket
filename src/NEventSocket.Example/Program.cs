@@ -17,6 +17,7 @@ namespace NEventSocket.Example
 
     using NEventSocket.FreeSwitch;
     using NEventSocket.FreeSwitch.Api;
+    using NEventSocket.Util;
 
     /// <summary>The program.</summary>
     internal class Program
@@ -134,11 +135,9 @@ namespace NEventSocket.Example
                     Console.WriteLine(
                         "Originate success {0}", originateResult.ChannelData.Headers[HeaderNames.AnswerState]);
 
+                    var recordingPath = "c:/temp/recording_{0}.wav".Fmt(uuid);
                     await client.MyEvents(uuid);
                     await client.Linger();
-
-                    client.Events.Where(x => x.EventType == EventType.DTMF)
-                          .Subscribe(e => Console.WriteLine("DTMF: {0}", e.Headers["DTMF-Digit"]));
 
                     client.Events.Where(x => x.EventType == EventType.CHANNEL_HANGUP).Take(1).Subscribe(
                         e =>
@@ -163,7 +162,37 @@ namespace NEventSocket.Example
 
                     Console.WriteLine("Finished playback {0}", evt.Headers[HeaderNames.ApplicationResponse]);
 
-                    if (evt.AnswerState != AnswerState.Hangup) await client.Hangup(uuid, "NORMAL_CLEARING");
+                    await client.SetChannelVariable(uuid, "RECORD_ARTIST", "'Opex Hosting Ltd'");
+                    await client.SetChannelVariable(uuid, "RECORD_MIN_SEC", 0); //freeswitch discards recordings under 3 seconds
+
+                    var recordingResult = await client.Api("uuid_record {0} start {1}".Fmt(uuid, recordingPath));
+                    Console.WriteLine("Recording... " + recordingResult.Success);
+
+                    if (recordingResult.Success)
+                    {
+                        client.Events.Where(x => x.EventType == EventType.DTMF)
+                          .Subscribe(async (e) =>
+                          {
+                              var dtmf = e.Headers["DTMF-Digit"];
+                              switch (dtmf)
+                              {
+                                  case "1":
+                                      Console.WriteLine("Mask recording");
+                                      await client.Api("uuid_record {0} mask {1}".Fmt(uuid, recordingPath));
+                                      break;
+                                  case "2":
+                                      Console.WriteLine("Unmask recording");
+                                      await client.Api("uuid_record {0} unmask {1}".Fmt(uuid, recordingPath));
+                                      break;
+                                  case "3":
+                                      Console.WriteLine("stop recording");
+                                      await client.Api("uuid_record {0} stop {1}".Fmt(uuid, recordingPath));
+                                      break;
+                              }
+                          });
+                    }
+
+                    // if (evt.AnswerState != AnswerState.Hangup) await client.Hangup(uuid, "NORMAL_CLEARING");
                 }
             }
             catch (SecurityException ex)
