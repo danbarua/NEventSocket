@@ -57,6 +57,7 @@
     <Compile Include="..\CommonAssemblyInfo.cs">
       <Link>Properties\CommonAssemblyInfo.cs</Link>
     </Compile>
+    <Compile Include="FreeSwitch\Api\User.cs" />
     <Compile Include="FreeSwitch\Applications\BridgeResult.cs" />
     <Compile Include="FreeSwitch\Applications\Leg.cs" />
     <Compile Include="FreeSwitch\Applications\PlayGetDigitsOptions.cs" />

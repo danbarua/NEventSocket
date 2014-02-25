@@ -28,9 +28,14 @@
             return eventSocket.ExecuteAppAsync(uuid, "set", "{0}={1}".Fmt(variable, value));
         }
 
-        public static async Task<ApplicationResult> Play(this IEventSocketCommands eventSocket, string uuid, string file, PlayOptions options = null)
+        public static async Task<PlayResult> Play(this IEventSocketCommands eventSocket, string uuid, string file, PlayOptions options = null)
         {
             return new PlayResult(await eventSocket.ExecuteAppAsync(uuid, "playback", file));
+        }
+
+        public static Task<EventMessage> StartDtmf(this IEventSocketCommands eventSocket, string uuid)
+        {
+            return eventSocket.ExecuteAppAsync(uuid, "start_dtmf");
         }
 
         public static Task<CommandReply> Linger(this IEventSocketCommands eventSocket)

@@ -2,6 +2,11 @@
 {
     public class Sofia
     {
+          public static IEndpoint User(string user)
+          {
+              return new User(user);
+          }
+
          public static IEndpoint Extension(string profile, string extension)
          {
              return new SofiaProfileUser(profile, extension);

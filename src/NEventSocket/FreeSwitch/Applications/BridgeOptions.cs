@@ -57,7 +57,7 @@ namespace NEventSocket.FreeSwitch.Api
             sb.Append("{");
           
             if (Timeout > 0) sb.AppendFormat("call_timeout={0},", this.Timeout);
-
+            
             sb.AppendFormat("ignore_early_media={0},", IgnoreEarlyMedia.ToString().ToLower());
             sb.AppendFormat("hangup_after_bridge={0},", HangupAfterBridge.ToString().ToLower());
             sb.AppendFormat("continue_on_fail={0},", ContinueOnFail.ToString().ToLower());
