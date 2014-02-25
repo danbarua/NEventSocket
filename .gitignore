@@ -8,3 +8,5 @@ Thumbs.db
 packages/*
 */obj/*
 *.suo
+*.suo
+**/obj/**
