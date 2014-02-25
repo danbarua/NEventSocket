@@ -140,10 +140,17 @@
             return tcs.Task;
         }
 
-        public Task<BridgeResult> Bridge(string uuid, IEndpoint endpoint, BridgeOptions options = null)
+        public async Task<BridgeResult> Bridge(string uuid, IEndpoint endpoint, BridgeOptions options = null)
         {
             if (options == null) options = new BridgeOptions();
             var bridgeString = string.Format("{0}{1}", options, endpoint);
+
+            /* https://wiki.freeswitch.org/wiki/Variable_effective_caller_id_name
+            /*  sets the effective callerid name. This is automatically exported to the B-leg; however, it is not valid in an origination string.
+             * In other words, set this before calling bridge, otherwise use origination_caller_id_name */
+
+            if (!string.IsNullOrEmpty(options.CallerIdName)) await this.SetChannelVariable(uuid, "effective_caller_id_name", "'{0}'".Fmt(options.CallerIdName));
+            if (!string.IsNullOrEmpty(options.CallerIdNumber)) await this.SetChannelVariable(uuid, "effective_caller_id_number", options.CallerIdNumber);
 
             var tcs = new TaskCompletionSource<BridgeResult>();
 
@@ -155,10 +162,10 @@
                     tcs.SetResult(new BridgeResult(x));
                 });
 
-            this.ExecuteAppAsync(uuid, "bridge", bridgeString, eventLock: true)
+            await this.ExecuteAppAsync(uuid, "bridge", bridgeString, eventLock: true)
                 .ContinueWithNotComplete(tcs, subscription.Dispose);
 
-            return tcs.Task;
+            return await tcs.Task;
         }
 
         public Task<ApiResponse> SendApiAsync(string command)

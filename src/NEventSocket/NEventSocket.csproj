@@ -58,6 +58,10 @@
       <Link>Properties\CommonAssemblyInfo.cs</Link>
     </Compile>
     <Compile Include="FreeSwitch\Applications\BridgeResult.cs" />
+    <Compile Include="FreeSwitch\Applications\Leg.cs" />
+    <Compile Include="FreeSwitch\Applications\PlayGetDigitsOptions.cs" />
+    <Compile Include="FreeSwitch\Applications\PlayGetDigitsResult.cs" />
+    <Compile Include="FreeSwitch\Applications\PlayOptions.cs" />
     <Compile Include="FreeSwitch\Applications\PlayResult.cs" />
     <Compile Include="FreeSwitch\FreeSwitchException.cs" />
     <Compile Include="FreeSwitch\AnswerState.cs" />

@@ -2,18 +2,6 @@
 {
     using System.IO;
 
-    public enum Leg
-    {
-        Both,
-        ALeg,
-        BLeg,
-    }
-
-    public class PlayOptions
-    {
-        public Leg Leg { get; set; }
-    }
-
     public class PlayResult : ApplicationResult
     {
         public PlayResult(EventMessage eventMessage)

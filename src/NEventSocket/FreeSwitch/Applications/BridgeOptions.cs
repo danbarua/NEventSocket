@@ -49,26 +49,18 @@ namespace NEventSocket.FreeSwitch.Api
         /// </summary>
         public int Timeout { get; set; }
 
+        public bool ContinueOnFail { get; set; }
+
         public override string ToString()
         {
             var sb = new StringBuilder();
             sb.Append("{");
-
-            if (!string.IsNullOrEmpty(CallerIdName)) sb.AppendFormat("effective_caller_id_name='{0}',", CallerIdName);
-            if (!string.IsNullOrEmpty(CallerIdNumber)) sb.AppendFormat("effective_caller_id_number={0},", CallerIdNumber);
-
-
-            if (!string.IsNullOrEmpty(this.CallerIdName)) sb.AppendFormat("origination_caller_id_name='{0}',", this.CallerIdName);
-            if (!string.IsNullOrEmpty(this.CallerIdNumber)) sb.AppendFormat("origination_caller_id_number={0},", this.CallerIdNumber);
-
-
-            if (!string.IsNullOrEmpty(this.CallerIdName)) sb.AppendFormat("caller_id_name='{0}',", this.CallerIdName);
-            if (!string.IsNullOrEmpty(this.CallerIdNumber)) sb.AppendFormat("caller_id_number={0},", this.CallerIdNumber);
-
+          
             if (Timeout > 0) sb.AppendFormat("call_timeout={0},", this.Timeout);
 
-            sb.AppendFormat("ignore_early_media=true{0},", IgnoreEarlyMedia.ToString().ToLower());
+            sb.AppendFormat("ignore_early_media={0},", IgnoreEarlyMedia.ToString().ToLower());
             sb.AppendFormat("hangup_after_bridge={0},", HangupAfterBridge.ToString().ToLower());
+            sb.AppendFormat("continue_on_fail={0},", ContinueOnFail.ToString().ToLower());
 
             if (sb.Length > 1) sb.Remove(sb.Length - 1, 1);
 

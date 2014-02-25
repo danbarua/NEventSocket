@@ -22,7 +22,7 @@
 
         Task Hangup();
 
-        Task PlayFile(string file, string terminator = null);
+        Task PlayFile(string file, Leg leg = Leg.Both, string terminator = null);
 
         Task<string> PlayGetDigits(string file, int numDigits, int timeout);
 

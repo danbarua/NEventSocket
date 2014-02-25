@@ -156,19 +156,20 @@ namespace NEventSocket.Example
                     {
                         Console.WriteLine("Played ok!");
                     }
-
-                    await client.SetChannelVariable(uuid, "continue_on_fail", "true");
+                    
                     var bridge =
                         await
                         client.Bridge(
                             uuid,
                             Sofia.Extension("internal", "1000@172.16.50.128"),
-                            new BridgeOptions() { CallerIdName = "Click2Dial", CallerIdNumber = "Click2Dial", HangupAfterBridge = false, IgnoreEarlyMedia = false });
+                            new BridgeOptions() { CallerIdName = "Click2Dial", CallerIdNumber = "Click2Dial", HangupAfterBridge = false, IgnoreEarlyMedia = true, ContinueOnFail = true });
+
 
                     if (bridge.Success)
                     {
                         await client.SetChannelVariable(uuid, "RECORD_ARTIST", "'Opex Hosting Ltd'");
                         await client.SetChannelVariable(uuid, "RECORD_MIN_SEC", 0); //freeswitch discards recordings under 3 seconds
+                        await client.SetChannelVariable(uuid, "RECORD_STEREO", "true");
 
                         var recordingResult = await client.Api("uuid_record {0} start {1}".Fmt(uuid, recordingPath));
                         Console.WriteLine("Recording... " + recordingResult.Success);
@@ -184,28 +185,25 @@ namespace NEventSocket.Example
                                       case "1":
                                           Console.WriteLine("Mask recording");
                                           await client.Api("uuid_record {0} mask {1}".Fmt(uuid, recordingPath));
-                                          await client.ExecuteAppAsync(uuid,"displace_session","{0}".Fmt("ivr/8000/ivr-recording_paused.wav"));
-                                          // await client.Play(uuid, "$${base_dir}/sounds/en/us/callie/ivr/8000/ivr-recording_paused.wav");
+                                          await client.ExecuteAppAsync(uuid, "displace_session", "{0}".Fmt("ivr/8000/ivr-recording_paused.wav"));
                                           break;
                                       case "2":
                                           Console.WriteLine("Unmask recording");
                                           await client.Api("uuid_record {0} unmask {1}".Fmt(uuid, recordingPath));
                                           await client.ExecuteAppAsync(uuid, "displace_session", "{0}".Fmt("ivr/8000/ivr-begin_recording.wav"));
-                                          // await client.Api("uuid_displace {0} start {1}  mux".Fmt(uuid, "$${base_dir}/sounds/en/us/callie/ivr/8000/ivr-begin_recording.wav"));
-                                          // await client.Play(uuid, "$${base_dir}/sounds/en/us/callie/ivr/8000/ivr-begin_recording.wav");
                                           break;
                                       case "3":
                                           Console.WriteLine("stop recording");
                                           await client.Api("uuid_record {0} stop {1}".Fmt(uuid, recordingPath));
                                           await client.ExecuteAppAsync(uuid, "displace_session", "{0}".Fmt("ivr/8000/ivr-recording_stopped.wav"));
-                                          // await client.Api("uuid_displace {0} start {1}  mux".Fmt(uuid, "$${base_dir}/sounds/en/us/callie/ivr/8000/ivr-recording_stopped.wav"));
-                                          // await client.Play(uuid, "$${base_dir}/sounds/en/us/callie/ivr/8000/ivr-recording_stopped.wav");
                                           break;
                                   }
                               });
                         }
+
+                        
                     }
-                    // if (evt.AnswerState != AnswerState.Hangup) await client.Hangup(uuid, "NORMAL_CLEARING");
+                    // if (bridge.ChannelData.AnswerState != AnswerState.Hangup) await client.Hangup(uuid, "NORMAL_CLEARING");
                 }
             }
             catch (SecurityException ex)
