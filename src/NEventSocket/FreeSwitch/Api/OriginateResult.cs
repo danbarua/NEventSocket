@@ -5,12 +5,12 @@
     /// </summary>
     public class OriginateResult
     {
-        public OriginateResult(EventMessage answerEvent)
+        public OriginateResult(EventMessage channelEvent)
         {
-            this.Success = answerEvent.Headers[HeaderNames.AnswerState] != AnswerState.Hangup;
+            this.Success = channelEvent.AnswerState != AnswerState.Hangup;
             if (!Success)
-                this.HangupCause = answerEvent.Headers[HeaderNames.HangupCause];
-            this.ChannelData = answerEvent;
+                this.HangupCause = channelEvent.Headers[HeaderNames.HangupCause];
+            this.ChannelData = channelEvent;
         }
 
         public OriginateResult(BackgroundJobResult backgroundJobResult)

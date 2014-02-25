@@ -32,5 +32,7 @@
         public const string HangupCause = "Hangup-Cause";
 
         public const string EventSubclass = "Event-Subclass";
+
+        public const string UniqueId = "Unique-ID";
     }
 }

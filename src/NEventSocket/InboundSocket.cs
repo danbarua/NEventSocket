@@ -55,10 +55,11 @@
             if (string.IsNullOrEmpty(options.UUID)) options.UUID = Guid.NewGuid().ToString();
 
             var args = string.Format("{0}{1} &{2}", options, endpoint, application);
-            var subscription = this.Events.Where(
-                x => (x.Headers.ContainsKey("Unique-ID") && x.Headers["Unique-ID"] == options.UUID && 
-                    (x.EventType == EventType.CHANNEL_ANSWER || x.EventType == EventType.CHANNEL_HANGUP || (options.ReturnRingReady && x.EventType == EventType.CHANNEL_PROGRESS))))
-                                             .Take(1) //will auto terminate the subscription
+
+            var subscription = this.Events.Where(x => x.UUID == options.UUID
+                                    && (x.EventType == EventType.CHANNEL_ANSWER || x.EventType == EventType.CHANNEL_HANGUP
+                                        || (options.ReturnRingReady && x.EventType == EventType.CHANNEL_PROGRESS)))
+                                             .Take(1)
                                              .Subscribe(x =>
                                              {
                                                  Log.TraceFormat("Originate {0} complete - {1}", args, x.Headers[HeaderNames.AnswerState]);
@@ -71,6 +72,7 @@
                 {
                     if (t.Result != null && !t.Result.Success)
                     {
+                        //the bgapi originate call failed
                         Log.TraceFormat("Originate {0} failed - {1}", args, t.Result.ErrorMessage);
                         subscription.Dispose();
                         tcs.SetResult(new OriginateResult(t.Result));

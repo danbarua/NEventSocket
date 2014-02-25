@@ -18,7 +18,12 @@
         public static Task<ApiResponse> Api(this IEventSocketCommands eventSocket, string command, string arg = null)
         {
             if (command == null) throw new ArgumentNullException("command");
-            return eventSocket.SendApiAsync(arg != null ? "{0} {1}".Fmt(command, arg) : "api {0}".Fmt(command));
+            return eventSocket.SendApiAsync(arg != null ? "{0} {1}".Fmt(command, arg) : command);
+        }
+
+        public static Task<EventMessage> SetChannelVariable(this IEventSocketCommands eventSocket, string uuid, string variable, object value)
+        {
+            return eventSocket.ExecuteAppAsync(uuid, "set", "{0}={1}".Fmt(variable, value));
         }
 
         public static Task<CommandReply> Linger(this IEventSocketCommands eventSocket)

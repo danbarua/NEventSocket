@@ -56,6 +56,18 @@
         /// </summary>
         public bool IgnoreEarlyMedia { get; set; }
 
+
+        /// <summary>
+        /// When bridging a call, No media mode is an SDP Passthrough feature that permits two endpoints that can see each other (no funky NAT's) to connect their media sessions directly while FreeSWITCH maintains control of the SIP signaling.
+        /// </summary>
+        /// <remarks>
+        /// Before executing the bridge action you must set the "bypass_media" flag to true. bypass_media must only be set on the A leg of a call.
+        /// https://wiki.freeswitch.org/wiki/Misc._Dialplan_Tools_bridge
+        /// https://wiki.freeswitch.org/wiki/Bypass_Media
+        /// </remarks>
+        public bool BypassMedia { get; set; }
+
+
         public override string ToString()
         {
             var sb = new StringBuilder();
@@ -77,6 +89,8 @@
             if (ReturnRingReady) sb.Append("return_ring_ready=true,");
 
             if (IgnoreEarlyMedia) sb.Append("ignore_early_media=true,");
+
+            if (BypassMedia) sb.Append("bypass_media=true,");
             
             if (sb.Length > 1)
                 sb.Remove(sb.Length - 1, 1);

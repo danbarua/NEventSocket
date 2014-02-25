@@ -58,6 +58,7 @@
       <Link>Properties\CommonAssemblyInfo.cs</Link>
     </Compile>
     <Compile Include="FreeSwitch\AnswerState.cs" />
+    <Compile Include="FreeSwitch\Api\BridgeOptions.cs" />
     <Compile Include="FreeSwitch\Api\IEndpoint.cs" />
     <Compile Include="FreeSwitch\Api\OriginateOptions.cs" />
     <Compile Include="FreeSwitch\Api\OriginateResult.cs" />

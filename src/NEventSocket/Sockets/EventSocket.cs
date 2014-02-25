@@ -36,8 +36,12 @@
                                                              EventType.BACKGROUND_JOB,
                                                              EventType.CHANNEL_HANGUP,
                                                              EventType.CHANNEL_ANSWER,
-                                                             EventType.CHANNEL_PROGRESS
+                                                             EventType.CHANNEL_PROGRESS,
+                                                             EventType.CHANNEL_PROGRESS_MEDIA,
+                                                             EventType.RECORD_STOP 
                                                          };
+
+        private readonly HashSet<string> customEvents = new HashSet<string>() { "conference::maintenance" }; 
 
         private CancellationTokenSource cts = new CancellationTokenSource();
 
@@ -207,14 +211,13 @@
         public Task<CommandReply> SubscribeEvents(params EventType[] events)
         {
             this.events.UnionWith(events); //ensures we are always at least using the default minimum events
-            return this.SendCommandAsync("event plain {0}".Fmt(string.Join(" ", this.events)));
+            return SendCommandAsync("event plain {0} CUSTOM {1}".Fmt(string.Join(" ", this.events), string.Join(" ", customEvents)));
         }
 
-        public IDisposable SubscribeEvent(EventType eventType, Action<EventMessage> handler)
+        public Task<CommandReply> SubscribeCustomEvents(params string[] events)
         {
-            if (!events.Contains(eventType)) SubscribeEvents(eventType).Wait();
-
-            return Events.Where(x => x.EventType == eventType).Subscribe(handler);
+            this.customEvents.UnionWith(events); //ensures we are always at least using the default minimum events
+            return this.SubscribeEvents();
         }
 
         protected override void Dispose(bool disposing)

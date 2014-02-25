@@ -107,7 +107,15 @@
             get
             {
                 //possible values: answered, hangup, ringing
-                return Headers[HeaderNames.AnswerState];
+                return Headers.ContainsKey(HeaderNames.AnswerState) ? Headers[HeaderNames.AnswerState] : null;
+            }
+        }
+
+        public string UUID
+        {
+            get
+            {
+                return Headers.ContainsKey(HeaderNames.UniqueId) ? Headers[HeaderNames.UniqueId] : null;
             }
         }
 
