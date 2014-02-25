@@ -7,7 +7,7 @@
 
     using Common.Logging;
 
-    using NEventSocket.Sockets.Protocol;
+    using NEventSocket.Sockets;
     using NEventSocket.Util;
 
     /// <summary>

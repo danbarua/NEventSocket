@@ -10,6 +10,7 @@
 
     using NEventSocket.FreeSwitch;
     using NEventSocket.FreeSwitch.Api;
+    using NEventSocket.FreeSwitch.Applications;
     using NEventSocket.Sockets;
     using NEventSocket.Util;
 
@@ -41,20 +42,17 @@
             return tcs.Task;
         }
 
-        public Task<OriginateResult> Originate(IEndpoint endpoint, string application = "park")
+        public Task<OriginateResult> Originate(IEndpoint endpoint, OriginateOptions options = null, string application = "park")
         {
-            return Originate(endpoint, new OriginateOptions(), application);
-        }
-
-        public Task<OriginateResult> Originate(IEndpoint endpoint, OriginateOptions options, string application = "park")
-        {
-            var tcs = new TaskCompletionSource<OriginateResult>();
+            if (options == null) options = new OriginateOptions();
 
             // if no UUID provided, we'll set one now and use that to filter for the correct channel events
             // this way, one inbound socket can originate many calls
             if (string.IsNullOrEmpty(options.UUID)) options.UUID = Guid.NewGuid().ToString();
 
-            var args = string.Format("{0}{1} &{2}", options, endpoint, application);
+            var originateString = string.Format("{0}{1} &{2}", options, endpoint, application);
+
+            var tcs = new TaskCompletionSource<OriginateResult>();
 
             var subscription = this.Events.Where(x => x.UUID == options.UUID
                                     && (x.EventType == EventType.CHANNEL_ANSWER || x.EventType == EventType.CHANNEL_HANGUP
@@ -62,18 +60,18 @@
                                              .Take(1)
                                              .Subscribe(x =>
                                              {
-                                                 Log.TraceFormat("Originate {0} complete - {1}", args, x.Headers[HeaderNames.AnswerState]);
+                                                 Log.TraceFormat("Originate {0} complete - {1}", originateString, x.Headers[HeaderNames.AnswerState]);
                                                  tcs.SetResult(new OriginateResult(x));
                                              });
 
-            this.BgApi("originate", args)
+            this.BgApi("originate", originateString)
                 .ContinueWith(
                 t =>
                 {
                     if (t.Result != null && !t.Result.Success)
                     {
                         //the bgapi originate call failed
-                        Log.TraceFormat("Originate {0} failed - {1}", args, t.Result.ErrorMessage);
+                        Log.TraceFormat("Originate {0} failed - {1}", originateString, t.Result.ErrorMessage);
                         subscription.Dispose();
                         tcs.SetResult(new OriginateResult(t.Result));
                     }

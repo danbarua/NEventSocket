@@ -7,7 +7,7 @@
 
     public interface IEventSocketCommands
     {
-        Task<EventMessage> ExecuteAppAsync(string uuid, string appName, string appArg);
+        Task<EventMessage> ExecuteAppAsync(string uuid, string appName, string appArg, bool eventLock = false);
 
         Task<ApiResponse> SendApiAsync(string command);
 

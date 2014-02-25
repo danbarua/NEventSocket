@@ -7,7 +7,7 @@
 // </summary>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace NEventSocket.Sockets.Protocol
+namespace NEventSocket.Sockets
 {
     using System;
     using System.Collections.Generic;
@@ -45,7 +45,7 @@ namespace NEventSocket.Sockets.Protocol
         {
             get
             {
-                return contentLength.HasValue;
+                return this.contentLength.HasValue;
             }
         }
 
@@ -56,46 +56,46 @@ namespace NEventSocket.Sockets.Protocol
         /// <returns>The same instance of the <see cref="Parser"/>.</returns>
         public Parser Append(char next)
         {
-            if (Completed)
+            if (this.Completed)
             {
                 return new Parser().Append(next);
             }
 
-            buffer.Append(next);
+            this.buffer.Append(next);
 
-            if (!HasBody)
+            if (!this.HasBody)
             {
                 // we're parsing the headers
-                if (previous == '\n' && next == '\n')
+                if (this.previous == '\n' && next == '\n')
                 {
                     // \n\n denotes the end of the Headers
-                    headers = buffer.ToString().ParseKeyValuePairs("\n", ": ");
+                    this.headers = this.buffer.ToString().ParseKeyValuePairs("\n", ": ");
 
-                    if (headers.ContainsKey(HeaderNames.ContentLength))
+                    if (this.headers.ContainsKey(HeaderNames.ContentLength))
                     {
-                        contentLength = int.Parse(headers[HeaderNames.ContentLength]);
+                        this.contentLength = int.Parse(this.headers[HeaderNames.ContentLength]);
 
                         // start parsing the body content
-                        buffer.Clear();
+                        this.buffer.Clear();
 
                         // allocate the buffer up front given that we now know the expected size
-                        buffer.EnsureCapacity(contentLength.Value);
+                        this.buffer.EnsureCapacity(this.contentLength.Value);
                     }
                     else
                     {
                         // end of message
-                        Completed = true;
+                        this.Completed = true;
                     }
                 }
                 else
                 {
-                    previous = next;
+                    this.previous = next;
                 }
             }
             else
             {
                 // if we've read the Content-Length amount of bytes then we're done
-                Completed = buffer.Length == contentLength.GetValueOrDefault();
+                this.Completed = this.buffer.Length == this.contentLength.GetValueOrDefault();
             }
 
             return this;
@@ -103,10 +103,10 @@ namespace NEventSocket.Sockets.Protocol
 
         public BasicMessage ParseMessage()
         {
-            if (!Completed)
+            if (!this.Completed)
                 throw new InvalidOperationException("The message was not completely parsed.");
 
-            return HasBody ? new BasicMessage(headers, buffer.ToString()) : new BasicMessage(headers);
+            return this.HasBody ? new BasicMessage(this.headers, this.buffer.ToString()) : new BasicMessage(this.headers);
         }
     }
 }

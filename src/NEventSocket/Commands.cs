@@ -5,6 +5,8 @@
     using System.Threading.Tasks;
 
     using NEventSocket.FreeSwitch;
+    using NEventSocket.FreeSwitch.Api;
+    using NEventSocket.FreeSwitch.Applications;
     using NEventSocket.Util;
 
     public static class Commands
@@ -24,6 +26,11 @@
         public static Task<EventMessage> SetChannelVariable(this IEventSocketCommands eventSocket, string uuid, string variable, object value)
         {
             return eventSocket.ExecuteAppAsync(uuid, "set", "{0}={1}".Fmt(variable, value));
+        }
+
+        public static async Task<ApplicationResult> Play(this IEventSocketCommands eventSocket, string uuid, string file, PlayOptions options = null)
+        {
+            return new PlayResult(await eventSocket.ExecuteAppAsync(uuid, "playback", file));
         }
 
         public static Task<CommandReply> Linger(this IEventSocketCommands eventSocket)

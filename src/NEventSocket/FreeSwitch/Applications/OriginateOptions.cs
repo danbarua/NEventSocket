@@ -1,4 +1,4 @@
-﻿namespace NEventSocket.FreeSwitch.Api
+﻿namespace NEventSocket.FreeSwitch.Applications
 {
     using System.Text;
 
@@ -43,6 +43,12 @@
         /// </summary>
         public string ExecuteOnOriginate { get; set; }
 
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public bool HangupAfterBridge { get; set; }
+
         /// <summary>
         /// 
         /// </summary>
@@ -73,24 +79,26 @@
             var sb = new StringBuilder();
             sb.Append("{");
 
-            if (!string.IsNullOrEmpty(UUID)) sb.AppendFormat("origination_uuid='{0}',", UUID);
+            if (!string.IsNullOrEmpty(this.UUID)) sb.AppendFormat("origination_uuid='{0}',", this.UUID);
 
-            if (!string.IsNullOrEmpty(CallerIdName)) sb.AppendFormat("origination_caller_id_name='{0}',", CallerIdName);
-            if (!string.IsNullOrEmpty(CallerIdNumber)) sb.AppendFormat("origination_caller_id_number={0},", CallerIdNumber);
+            if (!string.IsNullOrEmpty(this.CallerIdName)) sb.AppendFormat("origination_caller_id_name='{0}',", this.CallerIdName);
+            if (!string.IsNullOrEmpty(this.CallerIdNumber)) sb.AppendFormat("origination_caller_id_number={0},", this.CallerIdNumber);
 
-            if (!string.IsNullOrEmpty(ExecuteOnOriginate)) sb.AppendFormat("execute_on_originate='{0}',", ExecuteOnOriginate);
+            if (!string.IsNullOrEmpty(this.ExecuteOnOriginate)) sb.AppendFormat("execute_on_originate='{0}',", this.ExecuteOnOriginate);
 
-            if (Retries > 0) sb.AppendFormat("originate_retries={0},", Retries);
+            if (this.Retries > 0) sb.AppendFormat("originate_retries={0},", this.Retries);
 
-            if (RetrySleepMs > 0) sb.AppendFormat("originate_retry_sleep_ms={0},", RetrySleepMs);
+            if (this.RetrySleepMs > 0) sb.AppendFormat("originate_retry_sleep_ms={0},", this.RetrySleepMs);
 
-            if (Timeout > 0) sb.AppendFormat("originate_timeout={0},", Timeout);
+            if (this.Timeout > 0) sb.AppendFormat("originate_timeout={0},", this.Timeout);
 
-            if (ReturnRingReady) sb.Append("return_ring_ready=true,");
+            if (this.ReturnRingReady) sb.Append("return_ring_ready=true,");
 
-            if (IgnoreEarlyMedia) sb.Append("ignore_early_media=true,");
+            if (this.IgnoreEarlyMedia) sb.Append("ignore_early_media=true,");
 
-            if (BypassMedia) sb.Append("bypass_media=true,");
+            if (this.BypassMedia) sb.Append("bypass_media=true,");
+
+            sb.AppendFormat("hangup_after_bridge={0},", HangupAfterBridge.ToString().ToLower());
             
             if (sb.Length > 1)
                 sb.Remove(sb.Length - 1, 1);

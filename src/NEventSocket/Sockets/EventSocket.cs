@@ -14,7 +14,8 @@
     using Common.Logging;
 
     using NEventSocket.FreeSwitch;
-    using NEventSocket.Sockets.Protocol;
+    using NEventSocket.FreeSwitch.Api;
+    using NEventSocket.FreeSwitch.Applications;
     using NEventSocket.Util;
 
     public abstract class EventSocket : ObservableSocket, IEventSocket, IEventSocketCommands
@@ -38,7 +39,9 @@
                                                              EventType.CHANNEL_ANSWER,
                                                              EventType.CHANNEL_PROGRESS,
                                                              EventType.CHANNEL_PROGRESS_MEDIA,
-                                                             EventType.RECORD_STOP 
+                                                             EventType.RECORD_STOP,
+                                                             EventType.CHANNEL_BRIDGE,
+                                                             EventType.CHANNEL_UNBRIDGE
                                                          };
 
         private readonly HashSet<string> customEvents = new HashSet<string>() { "conference::maintenance" }; 
@@ -109,7 +112,7 @@
             }
         }
 
-        public Task<EventMessage> ExecuteAppAsync(string uuid, string appName, string appArg = null)
+        public Task<EventMessage> ExecuteAppAsync(string uuid, string appName, string appArg = null, bool eventLock = false)
         {
             if (uuid == null) throw new ArgumentNullException("uuid");
             if (appName == null) throw new ArgumentNullException("appName");           
@@ -131,7 +134,28 @@
                             tcs.SetResult(x);
                         });
 
-            SendCommandAsync("sendmsg {0}\ncall-command: execute\nexecute-app-name: {1}\nexecute-app-arg: {2}".Fmt(uuid, appName, appArg))
+            SendCommandAsync("sendmsg {0}\ncall-command: execute\nexecute-app-name: {1}\nexecute-app-arg: {2}\nevent-lock: {3}".Fmt(uuid, appName, appArg, eventLock))
+                .ContinueWithNotComplete(tcs, subscription.Dispose);
+
+            return tcs.Task;
+        }
+
+        public Task<BridgeResult> Bridge(string uuid, IEndpoint endpoint, BridgeOptions options = null)
+        {
+            if (options == null) options = new BridgeOptions();
+            var bridgeString = string.Format("{0}{1}", options, endpoint);
+
+            var tcs = new TaskCompletionSource<BridgeResult>();
+
+            var subscription = this.Events.Where(x => x.UUID == uuid && (x.EventType == EventType.CHANNEL_BRIDGE || x.EventType == EventType.CHANNEL_UNBRIDGE))
+                .Take(1)
+                .Subscribe(x =>
+                {
+                    Log.TraceFormat("Bridge {0} complete - {1}", bridgeString, x.Headers[HeaderNames.AnswerState]);
+                    tcs.SetResult(new BridgeResult(x));
+                });
+
+            this.ExecuteAppAsync(uuid, "bridge", bridgeString, eventLock: true)
                 .ContinueWithNotComplete(tcs, subscription.Dispose);
 
             return tcs.Task;

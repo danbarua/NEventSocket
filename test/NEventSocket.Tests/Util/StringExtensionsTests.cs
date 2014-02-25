@@ -2,7 +2,6 @@
 {
     using System.Threading.Tasks;
 
-    using NEventSocket.Sockets.Protocol;
     using NEventSocket.Util;
 
     using Xunit;
@@ -18,10 +17,5 @@
             Assert.Equal("1 2 3", output);
         }
 
-        [Fact]
-        public async Task can_connect()
-        {
-            
-        }
     }
 }

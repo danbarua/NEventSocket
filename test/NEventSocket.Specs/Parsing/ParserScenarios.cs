@@ -8,7 +8,7 @@
     using FluentAssertions;
 
     using NEventSocket.FreeSwitch;
-    using NEventSocket.Sockets.Protocol;
+    using NEventSocket.Sockets;
     using NEventSocket.Util;
 
     using Xbehave;
