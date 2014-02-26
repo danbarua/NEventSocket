@@ -47,7 +47,7 @@ namespace NEventSocket.Example
             var originate =
                 await
                 client.Originate(
-                    Sofia.User("1001"), 
+                    Sofia.User("1000"), 
                     new OriginateOptions
                         {
                             CallerIdNumber = "123456789", 
@@ -67,6 +67,8 @@ namespace NEventSocket.Example
             else
             {
                 var uuid = originate.ChannelData.Headers[HeaderNames.CallerUniqueId];
+                await client.StartDtmf(uuid);
+
                 Console.WriteLine("Originate success {0}", originate.ChannelData.Headers[HeaderNames.AnswerState]);
 
                 var recordingPath = "c:/temp/recording_{0}.wav".Fmt(uuid);
@@ -76,7 +78,9 @@ namespace NEventSocket.Example
                               {
                                   using (Colour.Use(ConsoleColor.Red))
                                   {
-                                      Console.WriteLine("Hangup Detected on A-Leg {0} {1}", e.Headers[HeaderNames.CallerUniqueId], e.Headers[HeaderNames.HangupCause]);
+                                      Console.WriteLine("Hangup Detected on A-Leg {0} {1}",
+                                                        e.Headers[HeaderNames.CallerUniqueId],
+                                                        e.Headers[HeaderNames.HangupCause]);
                                   }
 
                                   client.Exit();
@@ -89,7 +93,7 @@ namespace NEventSocket.Example
                     await
                     client.Bridge(
                         uuid, 
-                        Sofia.User("1000"), 
+                        Sofia.User("1001"), 
                         new BridgeOptions()
                             {
                                 Timeout = 10, 
@@ -131,6 +135,7 @@ namespace NEventSocket.Example
                                               }
 
                                               await client.Play(uuid, "ivr/8000/ivr-you_may_exit_by_hanging_up.wav");
+                                              await client.Hangup(uuid, "NORMAL_CLEARING");
                                           });
 
                     await client.SetChannelVariable(uuid, "RECORD_ARTIST", "'Opex Hosting Ltd'");
@@ -142,29 +147,41 @@ namespace NEventSocket.Example
 
                     if (recordingResult.Success)
                     {
-                        client.Events.Where(x => x.UUID == uuid && x.EventType == EventType.DTMF)
-                            .Subscribe(async (e) =>
-                                            {
-                                                var dtmf = e.Headers[HeaderNames.DTMFDigit];
-                                                switch (dtmf)
-                                                {
-                                                    case "1":
-                                                        Console.WriteLine("Mask recording");
-                                                        await client.Api("uuid_record {0} mask {1}".Fmt(uuid, recordingPath));
-                                                        await client.ExecuteAppAsync(uuid, "displace_session", "{0}".Fmt("ivr/8000/ivr-recording_paused.wav"));
-                                                        break;
-                                                    case "2":
-                                                        Console.WriteLine("Unmask recording");
-                                                        await client.Api("uuid_record {0} unmask {1}".Fmt(uuid, recordingPath));
-                                                        await client.ExecuteAppAsync(uuid, "displace_session", "{0}".Fmt("ivr/8000/ivr-begin_recording.wav"));
-                                                        break;
-                                                    case "3":
-                                                        Console.WriteLine("Stop recording");
-                                                        await client.Api("uuid_record {0} stop {1}".Fmt(uuid, recordingPath));
-                                                        await client.ExecuteAppAsync(uuid, "displace_session", "{0}".Fmt("ivr/8000/ivr-recording_stopped.wav"));
-                                                        break;
-                                                }
-                                            });
+                        client.Events.Where(x => x.UUID == uuid && x.EventType == EventType.DTMF).Subscribe(
+                            async (e) =>
+                                {
+                                    var dtmf = e.Headers[HeaderNames.DTMFDigit];
+                                    switch (dtmf)
+                                    {
+                                        case "1":
+                                            Console.WriteLine("Mask recording");
+                                            await client.Api("uuid_record {0} mask {1}".Fmt(uuid, recordingPath));
+                                            await
+                                                client.ExecuteAppAsync(
+                                                    uuid,
+                                                    "displace_session",
+                                                    "{0} m".Fmt("ivr/8000/ivr-recording_paused.wav"));
+                                            break;
+                                        case "2":
+                                            Console.WriteLine("Unmask recording");
+                                            await client.Api("uuid_record {0} unmask {1}".Fmt(uuid, recordingPath));
+                                            await
+                                                client.ExecuteAppAsync(
+                                                    uuid,
+                                                    "displace_session",
+                                                    "{0} m".Fmt("ivr/8000/ivr-begin_recording.wav"));
+                                            break;
+                                        case "3":
+                                            Console.WriteLine("Stop recording");
+                                            await client.Api("uuid_record {0} stop {1}".Fmt(uuid, recordingPath));
+                                            await
+                                                client.ExecuteAppAsync(
+                                                    uuid,
+                                                    "displace_session",
+                                                    "{0} m".Fmt("ivr/8000/ivr-recording_stopped.wav"));
+                                            break;
+                                    }
+                                });
                     }
                 }
             }
