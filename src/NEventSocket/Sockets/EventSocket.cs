@@ -276,6 +276,8 @@
                   .Subscribe(action);
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2213:DisposableFieldsShouldBeDisposed", MessageId = "cts",
+        Justification = "Need to keep hold of the CancellationTokenSource in case callers try to use the socket after it has been disposed.")]
         protected override void Dispose(bool disposing)
         {
             if (!disposed)
@@ -286,7 +288,6 @@
                     if (cts != null)
                     {
                         cts.Cancel();
-                        cts.Dispose();
                     }
 
                     incomingMessages.OnCompleted();
