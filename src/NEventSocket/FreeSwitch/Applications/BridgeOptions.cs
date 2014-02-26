@@ -21,6 +21,11 @@ namespace NEventSocket.FreeSwitch.Api
     public class BridgeOptions
     {
         /// <summary>
+        /// Optionally set the UUID of the outbound leg before initiating the bridge.
+        /// </summary>
+        public string UUID { get; set; }
+
+        /// <summary>
         /// Sets the outbound callerid name
         /// </summary>
         /// <remarks>
@@ -37,17 +42,21 @@ namespace NEventSocket.FreeSwitch.Api
         public string CallerIdNumber { get; set; }
 
         /// <summary>
-        /// By default when bridging, the first endpoint to provide media (as opposed to actually answering) will win, and the other endpoints will stop ringing. For internal endpoints, this usually doesn't matter. However, in the case of cell phone providers, any custom music that plays for the caller while ringing counts as media. In some cases, the ringing sound itself is media. If your bridge command includes a cell phone number and your internal endpoints stop ringing as soon as the cell phone starts, you will need to enable the 'ignore_early_media' option
+        /// By default when bridging, the first endpoint to provide media (as opposed to actually answering) 
+        /// will win, and the other endpoints will stop ringing. For internal endpoints, this usually doesn't matter. 
+        /// However, in the case of cell phone providers, any custom music that plays for the caller while ringing counts as media. 
+        /// In some cases, the ringing sound itself is media. If your bridge command includes a cell phone number and your internal endpoints
+        /// stop ringing as soon as the cell phone starts, you will need to enable the 'ignore_early_media' option
         /// </summary>
         public bool IgnoreEarlyMedia { get; set; }
 
         /// <summary>
-        /// 
+        /// If set to true, the call will terminate when the bridge completes.
         /// </summary>
         public bool HangupAfterBridge { get; set; }
 
         /// <summary>
-        /// 
+        /// If not null, will set the ringback channel variable on the A-Leg to the given sound.
         /// </summary>
         public string RingBack { get; set; }
 
@@ -56,6 +65,9 @@ namespace NEventSocket.FreeSwitch.Api
         /// </summary>
         public int Timeout { get; set; }
 
+        /// <summary>
+        /// If set to true, the call will not terminate when the bridge fails.
+        /// </summary>
         public bool ContinueOnFail { get; set; }
 
         public override string ToString()
@@ -64,8 +76,17 @@ namespace NEventSocket.FreeSwitch.Api
             sb.Append("{");
           
             if (Timeout > 0) sb.AppendFormat("call_timeout={0},", this.Timeout);
-            
-            sb.AppendFormat("ignore_early_media={0},", IgnoreEarlyMedia.ToString().ToLower());
+
+            if (!string.IsNullOrEmpty(this.UUID)) sb.AppendFormat("origination_uuid='{0}',", this.UUID);
+
+            /* https://wiki.freeswitch.org/wiki/Variable_effective_caller_id_name
+            /*  sets the effective callerid name. This is automatically exported to the B-leg; however, it is not valid in an origination string.
+             * In other words, set this before calling bridge, otherwise use origination_caller_id_name */
+            if (!string.IsNullOrEmpty(this.CallerIdName)) sb.AppendFormat("origination_caller_id_name='{0}',", this.CallerIdName);
+            if (!string.IsNullOrEmpty(this.CallerIdNumber)) sb.AppendFormat("origination_caller_id_number={0},", this.CallerIdNumber);
+
+            if (this.Timeout > 0) sb.AppendFormat("originate_timeout={0},", this.Timeout);
+            if (this.IgnoreEarlyMedia) sb.Append("ignore_early_media=true,");
 
             if (sb.Length > 1) sb.Remove(sb.Length - 1, 1);
 

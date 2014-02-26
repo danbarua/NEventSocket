@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
     using System.Threading.Tasks;
 
     using NEventSocket.FreeSwitch;
@@ -25,12 +26,25 @@
 
         public static Task<EventMessage> SetChannelVariable(this IEventSocketCommands eventSocket, string uuid, string variable, object value)
         {
-            return eventSocket.ExecuteAppAsync(uuid, "set", "{0}={1}".Fmt(variable, value));
+            return eventSocket.ExecuteAppAsync(uuid, "set", appArg: "{0}={1}".Fmt(variable, value));
+        }
+
+        /// <summary>
+        /// Set Multiple Channel Variables in one go
+        /// </summary>
+        /// <param name="eventSocket">The EventSocket instance.</param>
+        /// <param name="uuid">The Channel UUID</param>
+        /// <param name="assignments">Array of assignments in the form "foo=value", "bar=value".</param>
+        /// <returns>A Task[EventMessage] representing the CHANNEL_EXECUTE_COMPLETE event.</returns>
+        public static Task<EventMessage> SetMultipleChannelVariables(
+            this IEventSocketCommands eventSocket, string uuid, params string[] assignments)
+        {
+            return eventSocket.ExecuteAppAsync(uuid, "multiset", "^^:" + assignments.Aggregate(string.Empty, (a, s) => a += s.Replace(":", @"\:") + ":", s => s));
         }
 
         public static async Task<PlayResult> Play(this IEventSocketCommands eventSocket, string uuid, string file, PlayOptions options = null)
         {
-            return new PlayResult(await eventSocket.ExecuteAppAsync(uuid, "playback", file));
+            return new PlayResult(await eventSocket.ExecuteAppAsync(uuid, "playback", appArg: file));
         }
 
         public static Task<EventMessage> StartDtmf(this IEventSocketCommands eventSocket, string uuid)

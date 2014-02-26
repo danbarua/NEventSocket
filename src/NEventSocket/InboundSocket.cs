@@ -64,7 +64,7 @@
                                                  tcs.SetResult(new OriginateResult(x));
                                              });
 
-            this.BgApi("originate", originateString)
+            this.BackgroundJob("originate", originateString)
                 .ContinueWith(
                 t =>
                 {

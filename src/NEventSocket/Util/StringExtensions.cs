@@ -20,6 +20,17 @@
         }
 
         /// <summary>
+        /// Returns a lower-case boolean string
+        /// </summary>
+        /// <param name="input">The boolean</param>
+        /// <returns>A lower-case string.</returns>
+        [DebuggerStepThrough]
+        public static string ToLower(this bool input)
+        {
+            return input.ToString().ToLowerInvariant();
+        }
+
+        /// <summary>
         /// Parses a string of delimited key-value pairs into an <see cref="IDictionary{string,string}"/>.
         /// </summary>
         /// <param name="inputString">The input string.</param>

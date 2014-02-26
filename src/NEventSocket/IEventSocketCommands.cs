@@ -7,11 +7,11 @@
 
     public interface IEventSocketCommands
     {
-        Task<EventMessage> ExecuteAppAsync(string uuid, string appName, string appArg = null, bool eventLock = false);
+        Task<EventMessage> ExecuteAppAsync(string uuid, string appName, string appArg = null);
 
         Task<ApiResponse> SendApiAsync(string command);
 
-        Task<BackgroundJobResult> BgApi(string command, string arg = null, Guid? jobUUID = null);
+        Task<BackgroundJobResult> BackgroundJob(string command, string arg = null, Guid? jobUUID = null);
 
         Task<CommandReply> SendCommandAsync(string command);
     }

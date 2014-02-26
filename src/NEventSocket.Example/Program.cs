@@ -89,6 +89,15 @@ namespace NEventSocket.Example
                 var playResult = await client.Play(uuid, "ivr/8000/ivr-call_being_transferred.wav");
                 if (playResult.Success) Console.WriteLine("Played ok!");
 
+                var bridgeUUID = Guid.NewGuid().ToString();
+
+                var ringingHandler = client.Events.Where(x => x.UUID == bridgeUUID && x.EventType == EventType.CHANNEL_PROGRESS)
+                      .Take(1)
+                      .Subscribe(
+                          e =>
+                              {
+                                  using (Colour.Use(ConsoleColor.Blue)) Console.WriteLine("Progress {0} on {1}", e.AnswerState, e.UUID); });
+
                 var bridge =
                     await
                     client.Bridge(
@@ -96,9 +105,10 @@ namespace NEventSocket.Example
                         Sofia.User("1001"), 
                         new BridgeOptions()
                             {
-                                Timeout = 10, 
-                                CallerIdName = "Click2Dial", 
-                                CallerIdNumber = "Click2Dial", 
+                                UUID = bridgeUUID,
+                                Timeout = 20, 
+                                CallerIdName = "Dan B Leg", 
+                                CallerIdNumber = "987654321", 
                                 HangupAfterBridge = false, 
                                 IgnoreEarlyMedia = true, 
                                 ContinueOnFail = true, 
@@ -107,6 +117,8 @@ namespace NEventSocket.Example
 
                 if (!bridge.Success)
                 {
+                    ringingHandler.Dispose();
+
                     using (Colour.Use(ConsoleColor.Red))
                     {
                         Console.WriteLine("Bridge failed {0}",  bridge.ResponseText);
@@ -160,7 +172,7 @@ namespace NEventSocket.Example
                                                 client.ExecuteAppAsync(
                                                     uuid,
                                                     "displace_session",
-                                                    "{0} m".Fmt("ivr/8000/ivr-recording_paused.wav"));
+                                                    appArg: "{0} m".Fmt("ivr/8000/ivr-recording_paused.wav"));
                                             break;
                                         case "2":
                                             Console.WriteLine("Unmask recording");
@@ -169,7 +181,7 @@ namespace NEventSocket.Example
                                                 client.ExecuteAppAsync(
                                                     uuid,
                                                     "displace_session",
-                                                    "{0} m".Fmt("ivr/8000/ivr-begin_recording.wav"));
+                                                    appArg: "{0} m".Fmt("ivr/8000/ivr-begin_recording.wav"));
                                             break;
                                         case "3":
                                             Console.WriteLine("Stop recording");
@@ -178,7 +190,7 @@ namespace NEventSocket.Example
                                                 client.ExecuteAppAsync(
                                                     uuid,
                                                     "displace_session",
-                                                    "{0} m".Fmt("ivr/8000/ivr-recording_stopped.wav"));
+                                                    appArg: "{0} m".Fmt("ivr/8000/ivr-recording_stopped.wav"));
                                             break;
                                     }
                                 });

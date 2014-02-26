@@ -112,7 +112,7 @@
             }
         }
 
-        public Task<EventMessage> ExecuteAppAsync(string uuid, string appName, string appArg = null, bool eventLock = false)
+        public Task<EventMessage> ExecuteAppAsync(string uuid, string appName, string appArg = null)
         {
             if (uuid == null) throw new ArgumentNullException("uuid");
             if (appName == null) throw new ArgumentNullException("appName");           
@@ -133,7 +133,6 @@
                         });
 
             var appCmd = "sendmsg {0}\ncall-command: execute\nexecute-app-name: {1}\nexecute-app-arg: {2}".Fmt(uuid, appName, appArg);
-            //if (eventLock) appCmd += "\nevent-lock: true";
 
             SendCommandAsync(appCmd).ContinueOnFaultedOrCancelled(tcs, subscription.Dispose);
 
@@ -143,24 +142,14 @@
         public Task<BridgeResult> Bridge(string uuid, IEndpoint endpoint, BridgeOptions options = null)
         {
             if (options == null) options = new BridgeOptions();
+            if (string.IsNullOrEmpty(options.UUID)) options.UUID = Guid.NewGuid().ToString();
+
             var bridgeString = string.Format("{0}{1}", options, endpoint);
 
-            /* https://wiki.freeswitch.org/wiki/Variable_effective_caller_id_name
-            /*  sets the effective callerid name. This is automatically exported to the B-leg; however, it is not valid in an origination string.
-             * In other words, set this before calling bridge, otherwise use origination_caller_id_name */
-
-            if (!string.IsNullOrEmpty(options.CallerIdName)) this.SetChannelVariable(uuid, "effective_caller_id_name", "'{0}'".Fmt(options.CallerIdName));
-            if (!string.IsNullOrEmpty(options.CallerIdNumber)) this.SetChannelVariable(uuid, "effective_caller_id_number", options.CallerIdNumber);
-
-            //for some reason bridge is ignoring options passed in the dial string.. setting channel vars for now
-
+            ///for some reason bridge is ignoring options passed in the dial string.. setting channel vars for now
             this.SetChannelVariable(uuid, "hangup_after_bridge", options.HangupAfterBridge.ToString().ToLowerInvariant());
-            this.SetChannelVariable(uuid, "continue_on_fail", options.ContinueOnFail.ToString().ToLowerInvariant());
-            this.SetChannelVariable(uuid, "ignore_early_media", options.IgnoreEarlyMedia.ToString().ToLowerInvariant());
             this.SetChannelVariable(uuid, "ringback", options.RingBack);
-
-            if (options.Timeout > 0) this.SetChannelVariable(uuid, "call_timeout", options.Timeout);
-
+            this.SetChannelVariable(uuid, "continue_on_fail", options.ContinueOnFail.ToLower());
 
             var tcs = new TaskCompletionSource<BridgeResult>();
 
@@ -172,9 +161,14 @@
                     tcs.SetResult(new BridgeResult(x));
                 });
 
-            this.ExecuteAppAsync(uuid, "bridge", bridgeString, eventLock: true)
+            this.ExecuteAppAsync(uuid, "bridge", appArg: bridgeString)
                 .ContinueWith(t =>
                     {
+                        /* If the bridge fails, we'll get a CHANNEL_EXECUTE_COMPLETE event immediately.
+                         * If the bridge succeeds, we won't get the CHANNEL_EXECUTE_COMPLETE event until
+                         * the bridged call completes, at which point we'll already have completed the outstanding
+                         * task with the CHANNEL_BRIDGE event.*/
+
                         if (!tcs.Task.IsCompleted)
                         {
                             tcs.SetResult(new BridgeResult(t.Result));
@@ -209,7 +203,7 @@
             return tcs.Task;
         }
 
-        public Task<BackgroundJobResult> BgApi(string command, string arg = null, Guid? jobUUID = null)
+        public Task<BackgroundJobResult> BackgroundJob(string command, string arg = null, Guid? jobUUID = null)
         {
             if (jobUUID == null)
                 jobUUID = Guid.NewGuid();
