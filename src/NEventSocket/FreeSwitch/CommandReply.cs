@@ -28,7 +28,7 @@
 
         public string ReplyText
         {
-            get { return this.Headers["Reply-Text"]; }
+            get { return this.Headers[HeaderNames.ReplyText]; }
         }
     }
 }

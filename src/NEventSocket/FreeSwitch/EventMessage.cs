@@ -121,7 +121,8 @@
 
         public string GetVariable(string variable)
         {
-            return Headers["variable_" + variable];
+            var variableKey = "variable_" + variable;
+            return Headers.ContainsKey(variableKey) ? Headers["variable_" + variable] : null;
         }
 
         public override string ToString()

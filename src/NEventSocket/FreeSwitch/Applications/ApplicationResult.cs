@@ -15,6 +15,9 @@ namespace NEventSocket.FreeSwitch.Applications
         protected ApplicationResult(EventMessage eventMessage)
         {
             this.ChannelData = eventMessage;
+
+            if (ChannelData.Headers.ContainsKey(HeaderNames.ApplicationResponse))
+                this.ResponseText = ChannelData.Headers[HeaderNames.ApplicationResponse];
         }
 
         /// <summary>
@@ -25,13 +28,7 @@ namespace NEventSocket.FreeSwitch.Applications
         /// <summary>
         /// Gets the response text from the application
         /// </summary>
-        public string ResponseText
-        {
-            get
-            {
-                return ChannelData.Headers[HeaderNames.ApplicationResponse];
-            }
-        }
+        public string ResponseText { get; protected set; }
 
         /// <summary>
         /// Gets an <see cref="EventMessage">EventMessage</see> contanining the ChannelData for the call.

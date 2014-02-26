@@ -120,9 +120,7 @@
             var tcs = new TaskCompletionSource<EventMessage>();
 
             var subscription = Events.Where(
-                x =>
-                x.EventType == EventType.CHANNEL_EXECUTE_COMPLETE
-                && x.Headers[HeaderNames.Application] == appName)
+                x => x.UUID == uuid && x.EventType == EventType.CHANNEL_EXECUTE_COMPLETE && x.Headers[HeaderNames.Application] == appName)
                 .Take(1)
                 .Subscribe(
                     x =>
@@ -134,13 +132,15 @@
                             tcs.SetResult(x);
                         });
 
-            SendCommandAsync("sendmsg {0}\ncall-command: execute\nexecute-app-name: {1}\nexecute-app-arg: {2}\nevent-lock: {3}".Fmt(uuid, appName, appArg, eventLock))
-                .ContinueWithNotComplete(tcs, subscription.Dispose);
+            var appCmd = "sendmsg {0}\ncall-command: execute\nexecute-app-name: {1}\nexecute-app-arg: {2}".Fmt(uuid, appName, appArg);
+            //if (eventLock) appCmd += "\nevent-lock: true";
+
+            SendCommandAsync(appCmd).ContinueOnFaultedOrCancelled(tcs, subscription.Dispose);
 
             return tcs.Task;
         }
 
-        public async Task<BridgeResult> Bridge(string uuid, IEndpoint endpoint, BridgeOptions options = null)
+        public Task<BridgeResult> Bridge(string uuid, IEndpoint endpoint, BridgeOptions options = null)
         {
             if (options == null) options = new BridgeOptions();
             var bridgeString = string.Format("{0}{1}", options, endpoint);
@@ -149,23 +149,39 @@
             /*  sets the effective callerid name. This is automatically exported to the B-leg; however, it is not valid in an origination string.
              * In other words, set this before calling bridge, otherwise use origination_caller_id_name */
 
-            if (!string.IsNullOrEmpty(options.CallerIdName)) await this.SetChannelVariable(uuid, "effective_caller_id_name", "'{0}'".Fmt(options.CallerIdName));
-            if (!string.IsNullOrEmpty(options.CallerIdNumber)) await this.SetChannelVariable(uuid, "effective_caller_id_number", options.CallerIdNumber);
+            if (!string.IsNullOrEmpty(options.CallerIdName)) this.SetChannelVariable(uuid, "effective_caller_id_name", "'{0}'".Fmt(options.CallerIdName));
+            if (!string.IsNullOrEmpty(options.CallerIdNumber)) this.SetChannelVariable(uuid, "effective_caller_id_number", options.CallerIdNumber);
+
+            this.SetChannelVariable(uuid, "hangup_after_bridge", options.HangupAfterBridge.ToString().ToLowerInvariant());
+            this.SetChannelVariable(uuid, "continue_on_fail", options.ContinueOnFail.ToString().ToLowerInvariant());
+            this.SetChannelVariable(uuid, "ignore_early_media", options.IgnoreEarlyMedia.ToString().ToLowerInvariant());
+            this.SetChannelVariable(uuid, "ringback", options.RingBack);
+
+            if (options.Timeout > 0) this.SetChannelVariable(uuid, "call_timeout", options.Timeout);
+
 
             var tcs = new TaskCompletionSource<BridgeResult>();
 
-            var subscription = this.Events.Where(x => x.UUID == uuid && (x.EventType == EventType.CHANNEL_BRIDGE || x.EventType == EventType.CHANNEL_UNBRIDGE))
+            var subscription = this.Events.Where(x => x.UUID == uuid && x.EventType == EventType.CHANNEL_BRIDGE)
                 .Take(1)
                 .Subscribe(x =>
                 {
-                    Log.TraceFormat("Bridge {0} complete - {1}", bridgeString, x.Headers[HeaderNames.AnswerState]);
+                    Log.TraceFormat("Bridge {0} complete - {1}", bridgeString, x.Headers[HeaderNames.OtherLegUniqueId]);
                     tcs.SetResult(new BridgeResult(x));
                 });
 
-            await this.ExecuteAppAsync(uuid, "bridge", bridgeString, eventLock: true)
-                .ContinueWithNotComplete(tcs, subscription.Dispose);
+            this.ExecuteAppAsync(uuid, "bridge", bridgeString, eventLock: true)
+                .ContinueWith(t =>
+                    {
+                        if (!tcs.Task.IsCompleted)
+                        {
+                            tcs.SetResult(new BridgeResult(t.Result));
+                        }
+                    },
+                    TaskContinuationOptions.OnlyOnRanToCompletion)
+                .ContinueOnFaultedOrCancelled(tcs, subscription.Dispose);
 
-            return await tcs.Task;
+            return tcs.Task;
         }
 
         public Task<ApiResponse> SendApiAsync(string command)
@@ -200,7 +216,7 @@
 
             //we'll get an event in the future for this JobUUID and we'll use that to complete the task
             var subscription = Events.Where(
-                x => x.EventType == EventType.BACKGROUND_JOB && x.Headers["Job-UUID"] == jobUUID.ToString())
+                x => x.EventType == EventType.BACKGROUND_JOB && x.Headers[HeaderNames.JobUUID] == jobUUID.ToString())
                                              .Take(1) //will auto terminate the subscription when received
                                              .Subscribe(x =>
                                                  {
@@ -212,7 +228,7 @@
             SendCommandAsync(arg != null
                                  ? "bgapi {0} {1}\nJob-UUID: {2}".Fmt(command, arg, jobUUID)
                                  : "bgapi {0}\nJob-UUID: {1}".Fmt(command, jobUUID))
-                            .ContinueWithNotComplete(tcs, subscription.Dispose);
+                            .ContinueOnFaultedOrCancelled(tcs, subscription.Dispose);
 
             return tcs.Task;
         }
@@ -249,6 +265,13 @@
         {
             this.customEvents.UnionWith(events); //ensures we are always at least using the default minimum events
             return this.SubscribeEvents();
+        }
+
+        public void OnHangup(string uuid, Action<EventMessage> action)
+        {
+            Events.Where(x => x.UUID == uuid && x.EventType == EventType.CHANNEL_HANGUP)
+                  .Take(1)
+                  .Subscribe(action);
         }
 
         protected override void Dispose(bool disposing)

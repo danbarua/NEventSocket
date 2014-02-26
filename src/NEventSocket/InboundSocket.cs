@@ -77,7 +77,7 @@
                     }
                 },
                 TaskContinuationOptions.OnlyOnRanToCompletion)
-                .ContinueWithNotComplete(tcs, subscription.Dispose);
+                .ContinueOnFaultedOrCancelled(tcs, subscription.Dispose);
 
             return tcs.Task;
         }

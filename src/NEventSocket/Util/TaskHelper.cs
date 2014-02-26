@@ -13,7 +13,7 @@
         /// <param name="tcs">The TaskCompletionSource</param>
         /// <param name="onFailure">Failure callback to be invoked on failure, usually for cleanup.</param>
         /// <returns>The Task</returns>
-        public static Task ContinueWithNotComplete<TResult>(this Task task, TaskCompletionSource<TResult> tcs, Action onFailure)
+        public static Task ContinueOnFaultedOrCancelled<TResult>(this Task task, TaskCompletionSource<TResult> tcs, Action onFailure)
         {
             if (task == null) throw new ArgumentNullException("task");
             if (tcs == null) throw new ArgumentNullException("tcs");
@@ -24,15 +24,14 @@
                 if (t.IsFaulted && t.Exception != null)
                 {
                     tcs.SetException(t.Exception);
+                onFailure();
                 }
                 else if (t.IsCanceled)
                 {
                     tcs.SetCanceled();
+                    onFailure();
                 }
-
-                onFailure();
-            },
-            TaskContinuationOptions.NotOnRanToCompletion);
+            });
 
             return task;
         }

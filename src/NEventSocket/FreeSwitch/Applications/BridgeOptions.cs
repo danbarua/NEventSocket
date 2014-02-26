@@ -10,6 +10,8 @@ namespace NEventSocket.FreeSwitch.Api
     using System.Linq;
     using System.Text;
 
+    using NEventSocket.Util;
+
     /// <summary>
     /// Defines options for executing a bridge
     /// </summary>
@@ -45,6 +47,11 @@ namespace NEventSocket.FreeSwitch.Api
         public bool HangupAfterBridge { get; set; }
 
         /// <summary>
+        /// 
+        /// </summary>
+        public string RingBack { get; set; }
+
+        /// <summary>
         /// The maximum number of seconds to wait for an answer state from a remote endpoint.
         /// </summary>
         public int Timeout { get; set; }
@@ -59,8 +66,6 @@ namespace NEventSocket.FreeSwitch.Api
             if (Timeout > 0) sb.AppendFormat("call_timeout={0},", this.Timeout);
             
             sb.AppendFormat("ignore_early_media={0},", IgnoreEarlyMedia.ToString().ToLower());
-            sb.AppendFormat("hangup_after_bridge={0},", HangupAfterBridge.ToString().ToLower());
-            sb.AppendFormat("continue_on_fail={0},", ContinueOnFail.ToString().ToLower());
 
             if (sb.Length > 1) sb.Remove(sb.Length - 1, 1);
 

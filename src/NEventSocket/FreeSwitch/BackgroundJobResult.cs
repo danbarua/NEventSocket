@@ -15,7 +15,7 @@
         {
             get
             {
-                return this.Headers["Job-UUID"];
+                return this.Headers[HeaderNames.JobUUID];
             }
         }
 

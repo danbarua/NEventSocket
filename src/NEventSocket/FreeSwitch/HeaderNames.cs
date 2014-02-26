@@ -1,5 +1,7 @@
 ﻿namespace NEventSocket.FreeSwitch
 {
+    using NEventSocket.FreeSwitch.Applications;
+
     public static class HeaderNames
     {
         public const string ContentLength = "Content-Length";
@@ -34,5 +36,13 @@
         public const string EventSubclass = "Event-Subclass";
 
         public const string UniqueId = "Unique-ID";
+
+        public const string OtherLegUniqueId = "Other-Leg-Unique-ID";
+
+        public const string JobUUID = "Job-UUID";
+
+        public const string ReplyText = "Reply-Text";
+
+        public const string DTMFDigit = "DTMF-Digit";
     }
 }
