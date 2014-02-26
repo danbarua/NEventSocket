@@ -46,7 +46,7 @@
 
         private readonly HashSet<string> customEvents = new HashSet<string>() { "conference::maintenance" }; 
 
-        private CancellationTokenSource cts = new CancellationTokenSource();
+        private readonly CancellationTokenSource cts = new CancellationTokenSource();
 
         protected EventSocket(TcpClient tcpClient) : base(tcpClient)
         {
@@ -151,6 +151,8 @@
 
             if (!string.IsNullOrEmpty(options.CallerIdName)) this.SetChannelVariable(uuid, "effective_caller_id_name", "'{0}'".Fmt(options.CallerIdName));
             if (!string.IsNullOrEmpty(options.CallerIdNumber)) this.SetChannelVariable(uuid, "effective_caller_id_number", options.CallerIdNumber);
+
+            //for some reason bridge is ignoring options passed in the dial string.. setting channel vars for now
 
             this.SetChannelVariable(uuid, "hangup_after_bridge", options.HangupAfterBridge.ToString().ToLowerInvariant());
             this.SetChannelVariable(uuid, "continue_on_fail", options.ContinueOnFail.ToString().ToLowerInvariant());
@@ -285,7 +287,6 @@
                     {
                         cts.Cancel();
                         cts.Dispose();
-                        cts = null;
                     }
 
                     incomingMessages.OnCompleted();
