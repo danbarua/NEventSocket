@@ -30,16 +30,144 @@ namespace NEventSocket.Example
 
             Console.WriteLine("Starting...");
 
-            OutboundSocketTest();
-            InboundSocketTest();
+            //OutboundSocketTest();
+            //InboundSocketTest();
+
+            //DtmfTest();
+            PlayGetDigitsTest();
 
             Console.WriteLine("Press [Enter] to exit.");
             Console.ReadLine();
         }
 
+        private static async void PlayGetDigitsTest()
+        {
+            //ivr-please_enter_pin_followed_by_pound
+
+            var client = await InboundSocket.Connect("10.10.10.36", 8021, "ClueCon");
+            Console.WriteLine("Authenticated!");
+
+            await client.SubscribeEvents(EventType.DTMF);
+
+            var originate =
+                await
+                client.Originate(
+                    Sofia.User("1000"), 
+                    new OriginateOptions
+                        {
+                            CallerIdNumber = "123456789", 
+                            CallerIdName = "Dan Leg A", 
+                            HangupAfterBridge = false,
+                            Timeout = 20
+                        });
+
+            if (!originate.Success)
+            {
+                using (Colour.Use(ConsoleColor.DarkRed))
+                {
+                    Console.WriteLine("Originate Failed {0}", originate.HangupCause);
+                    client.Exit();
+                }
+            }
+            else
+            {
+                var uuid = originate.ChannelData.UUID;
+                client.StartDtmf(uuid);
+                client.OnHangup(uuid,
+                          e =>
+                          {
+                              using (Colour.Use(ConsoleColor.Red))
+                              {
+                                  Console.WriteLine("Hangup Detected on A-Leg {0} {1}",
+                                                    e.Headers[HeaderNames.CallerUniqueId],
+                                                    e.Headers[HeaderNames.HangupCause]);
+                              }
+
+                              client.Exit();
+                          });
+
+
+                await client.SubscribeEvents(EventType.DTMF);
+                var pagdResult = await
+                     client.PlayGetDigits(
+                         uuid,
+                         new PlayGetDigitsOptions()
+                             {
+                                 MinDigits = 4,
+                                 MaxDigits = 8,
+                                 MaxTries = 3,
+                                 TimeoutMs = 4000,
+                                 TerminatorDigits = "#",
+                                 PromptAudioFile =
+                                     "ivr/8000/ivr-please_enter_pin_followed_by_pound.wav",
+                                 BadInputAudioFile = "ivr/8000/ivr-that_was_an_invalid_entry.wav",
+                                 DigitsRegex = @"\d+",
+                                 DigitTimeoutMs = 4000,
+                                 TransferOnFailure = "1 XML hangup"
+                             });
+
+                Console.WriteLine(pagdResult.Digits);
+            }
+        }
+
+        private static async void DtmfTest()
+        {
+            var client = await InboundSocket.Connect("10.10.10.36", 8021, "ClueCon");
+            Console.WriteLine("Authenticated!");
+
+            var originate =
+                await
+                client.Originate(
+                    Sofia.User("1000"), 
+                    new OriginateOptions
+                        {
+                            CallerIdNumber = "123456789", 
+                            CallerIdName = "Dan Leg A", 
+                            HangupAfterBridge = false,
+                            Timeout = 20
+                        });
+
+            if (!originate.Success)
+            {
+                using (Colour.Use(ConsoleColor.DarkRed))
+                {
+                    Console.WriteLine("Originate Failed {0}", originate.HangupCause);
+                    client.Exit();
+                }
+            }
+            else
+            {
+                var uuid = originate.ChannelData.UUID;
+                await client.SubscribeEvents(EventType.DTMF);
+
+                await client.SetMultipleChannelVariables(uuid, "dtmf_verbose=true", "drop_dtmf=true" );
+                        //"min_dup_digit_spacing_ms=500",
+                        //"spandsp_dtmf_rx_threshold=-32");
+                    //"spandsp_dtmf_rx_twist=32",
+                    //"spandsp_dtmf_rx_reverse_twist=7");
+                await client.ExecuteAppAsync(uuid, "spandsp_start_dtmf");
+
+                client.OnHangup(uuid,
+                          e =>
+                          {
+                              using (Colour.Use(ConsoleColor.Red))
+                              {
+                                  Console.WriteLine("Hangup Detected on A-Leg {0} {1}",
+                                                    e.Headers[HeaderNames.CallerUniqueId],
+                                                    e.Headers[HeaderNames.HangupCause]);
+                              }
+
+                              client.Exit();
+                          });
+
+                client.Events.Where(x => x.UUID == uuid && x.EventType == EventType.DTMF)
+                      .Subscribe(e => Console.WriteLine(e.Headers[HeaderNames.DTMFDigit]));
+            }
+        }
+
         private static async void InboundSocketTest()
         {
-            var client = await InboundSocket.Connect("localhost", 8021, "ClueCon");
+            var client = await InboundSocket.Connect("10.10.10.36", 8021, "ClueCon");
             Console.WriteLine("Authenticated!");
 
             await client.SubscribeEvents(EventType.DTMF);
@@ -67,11 +195,11 @@ namespace NEventSocket.Example
             else
             {
                 var uuid = originate.ChannelData.Headers[HeaderNames.CallerUniqueId];
-                await client.StartDtmf(uuid);
+                //await client.ExecuteAppAsync(uuid, "start_dtmf_generate");
 
                 Console.WriteLine("Originate success {0}", originate.ChannelData.Headers[HeaderNames.AnswerState]);
 
-                var recordingPath = "c:/temp/recording_{0}.wav".Fmt(uuid);
+                var recordingPath = "/usr/local/freeswitch/recordings/{0}.wav".Fmt(uuid); //"c:/temp/recording_{0}.wav".Fmt(uuid);
 
                 client.OnHangup(uuid,
                           e =>
@@ -133,6 +261,8 @@ namespace NEventSocket.Example
                     {
                         Console.WriteLine("Bridge succeeded from {0} to {1} - {2}", bridge.ChannelData.UUID, bridge.BridgeUUID, bridge.ResponseText);
                     }
+
+                    await client.StartDtmf(uuid);
 
                     //when b-leg hangs up, play a notification to a-leg
                     client.OnHangup(bridge.BridgeUUID,
@@ -243,7 +373,9 @@ namespace NEventSocket.Example
                                 "$${base_dir}/sounds/en/us/callie/misc/8000/misc-freeswitch_is_state_of_the_art.wav");
                         Console.WriteLine("Playback : {0}", result.Success);
 
-                        if (result.ChannelData.AnswerState != AnswerState.Hangup) await connection.Hangup(uuid, "NORMAL_CLEARING");
+
+                        await connection.ExecuteAppAsync(uuid, "conference", "test+1234");
+                        //if (result.ChannelData.AnswerState != AnswerState.Hangup) await connection.Hangup(uuid, "NORMAL_CLEARING");
                     });
 
             listener.Start();

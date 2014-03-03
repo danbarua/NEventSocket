@@ -44,12 +44,20 @@
 
         public static async Task<PlayResult> Play(this IEventSocketCommands eventSocket, string uuid, string file, PlayOptions options = null)
         {
+            //todo: implement options for playback eg a-leg, b-leg, both, using uuid_displace
             return new PlayResult(await eventSocket.ExecuteAppAsync(uuid, "playback", appArg: file));
+        }
+
+        public static async Task<PlayGetDigitsResult> PlayGetDigits(
+            this IEventSocketCommands eventSocket, string uuid, PlayGetDigitsOptions options)
+        {
+            return new PlayGetDigitsResult(
+                await eventSocket.ExecuteAppAsync(uuid, "play_and_get_digits", options.ToString()), options.ChannelVariableName);
         }
 
         public static Task<EventMessage> StartDtmf(this IEventSocketCommands eventSocket, string uuid)
         {
-            return eventSocket.ExecuteAppAsync(uuid, "start_dtmf");
+            return eventSocket.ExecuteAppAsync(uuid, "spandsp_start_dtmf");
         }
 
         public static Task<CommandReply> Linger(this IEventSocketCommands eventSocket)
