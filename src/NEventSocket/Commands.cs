@@ -55,6 +55,11 @@
                 await eventSocket.ExecuteAppAsync(uuid, "play_and_get_digits", options.ToString()), options.ChannelVariableName);
         }
 
+        public static Task<EventMessage> Say(this IEventSocketCommands eventSocket, string uuid, SayOptions options)
+        {
+            return eventSocket.ExecuteAppAsync(uuid, "say", options.ToString());
+        }
+
         public static Task<EventMessage> StartDtmf(this IEventSocketCommands eventSocket, string uuid)
         {
             return eventSocket.ExecuteAppAsync(uuid, "spandsp_start_dtmf");

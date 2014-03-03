@@ -72,7 +72,8 @@ namespace NEventSocket.Example
             else
             {
                 var uuid = originate.ChannelData.UUID;
-                client.StartDtmf(uuid);
+                await client.SetChannelVariable(uuid, "dtmf_verbose", "true");
+                await client.StartDtmf(uuid);
                 client.OnHangup(uuid,
                           e =>
                           {
@@ -101,12 +102,24 @@ namespace NEventSocket.Example
                                  PromptAudioFile =
                                      "ivr/8000/ivr-please_enter_pin_followed_by_pound.wav",
                                  BadInputAudioFile = "ivr/8000/ivr-that_was_an_invalid_entry.wav",
-                                 DigitsRegex = @"\d+",
-                                 DigitTimeoutMs = 4000,
-                                 TransferOnFailure = "1 XML hangup"
+                                 DigitTimeoutMs = 2000,
                              });
 
                 Console.WriteLine(pagdResult.Digits);
+                if (pagdResult.Success)
+                {
+                    await client.Play(uuid, "ivr/8000/ivr-you_entered.wav");
+                    await
+                        client.Say(
+                            uuid,
+                            new SayOptions()
+                            {
+                                Text = pagdResult.Digits,
+                                Type = SayType.NUMBER,
+                                Method = SayMethod.iterated
+                            });
+                    await client.Play(uuid, "ivr/8000/ivr-you_may_exit_by_hanging_up.wav");
+                }
             }
         }
 

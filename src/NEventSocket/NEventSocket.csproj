@@ -64,6 +64,7 @@
     <Compile Include="FreeSwitch\Applications\PlayGetDigitsResult.cs" />
     <Compile Include="FreeSwitch\Applications\PlayOptions.cs" />
     <Compile Include="FreeSwitch\Applications\PlayResult.cs" />
+    <Compile Include="FreeSwitch\Applications\SayOptions.cs" />
     <Compile Include="FreeSwitch\FreeSwitchException.cs" />
     <Compile Include="FreeSwitch\AnswerState.cs" />
     <Compile Include="FreeSwitch\Applications\BridgeOptions.cs" />

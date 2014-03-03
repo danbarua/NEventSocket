@@ -40,6 +40,7 @@
             {
                 return this.maxDigits;
             }
+
             set
             {
                 this.maxDigits = value;
@@ -107,6 +108,7 @@
             {
                 return this.digitsRegex;
             }
+
             set
             {
                 this.digitsRegex = value;
