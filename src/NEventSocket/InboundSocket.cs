@@ -18,7 +18,7 @@
     {
         private static readonly ILog Log = LogManager.GetCurrentClassLogger();
 
-        protected InboundSocket(string host = "localhost", int port = 8021)
+        protected InboundSocket(string host, int port)
             : base(new TcpClient(host, port))
         {
         }
