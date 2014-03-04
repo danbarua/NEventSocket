@@ -55,8 +55,8 @@
             var tcs = new TaskCompletionSource<OriginateResult>();
 
             var subscription = this.Events.Where(x => x.UUID == options.UUID
-                                    && (x.EventType == EventType.CHANNEL_ANSWER || x.EventType == EventType.CHANNEL_HANGUP
-                                        || (options.ReturnRingReady && x.EventType == EventType.CHANNEL_PROGRESS)))
+                                    && (x.EventType == EventType.ChannelAnswer || x.EventType == EventType.ChannelHangup
+                                        || (options.ReturnRingReady && x.EventType == EventType.ChannelProgress)))
                                              .Take(1)
                                              .Subscribe(x =>
                                              {

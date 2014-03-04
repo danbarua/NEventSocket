@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
     using System.Net.Sockets;
     using System.Reactive.Concurrency;
     using System.Reactive.Disposables;
@@ -33,15 +34,14 @@
         // minimum events required for this class to do its job
         private readonly HashSet<EventType> events = new HashSet<EventType>()
                                                          {
-                                                             EventType.CHANNEL_EXECUTE_COMPLETE,
-                                                             EventType.BACKGROUND_JOB,
-                                                             EventType.CHANNEL_HANGUP,
-                                                             EventType.CHANNEL_ANSWER,
-                                                             EventType.CHANNEL_PROGRESS,
-                                                             EventType.CHANNEL_PROGRESS_MEDIA,
-                                                             EventType.RECORD_STOP,
-                                                             EventType.CHANNEL_BRIDGE,
-                                                             EventType.CHANNEL_UNBRIDGE
+                                                             EventType.ChannelExecuteComplete,
+                                                             EventType.BackgroundJob,
+                                                             EventType.ChannelHangup,
+                                                             EventType.ChannelAnswer,
+                                                             EventType.ChannelProgress,
+                                                             EventType.ChannelProgressMedia,
+                                                             EventType.ChannelBridge,
+                                                             EventType.ChannelUnbridge
                                                          };
 
         private readonly HashSet<string> customEvents = new HashSet<string>() { "conference::maintenance" }; 
@@ -120,7 +120,7 @@
             var tcs = new TaskCompletionSource<EventMessage>();
 
             var subscription = Events.Where(
-                x => x.UUID == uuid && x.EventType == EventType.CHANNEL_EXECUTE_COMPLETE && x.Headers[HeaderNames.Application] == appName)
+                x => x.UUID == uuid && x.EventType == EventType.ChannelExecuteComplete && x.Headers[HeaderNames.Application] == appName)
                 .Take(1)
                 .Subscribe(
                     x =>
@@ -153,7 +153,7 @@
 
             var tcs = new TaskCompletionSource<BridgeResult>();
 
-            var subscription = this.Events.Where(x => x.UUID == uuid && x.EventType == EventType.CHANNEL_BRIDGE)
+            var subscription = this.Events.Where(x => x.UUID == uuid && x.EventType == EventType.ChannelBridge)
                 .Take(1)
                 .Subscribe(x =>
                 {
@@ -212,7 +212,7 @@
 
             //we'll get an event in the future for this JobUUID and we'll use that to complete the task
             var subscription = Events.Where(
-                x => x.EventType == EventType.BACKGROUND_JOB && x.Headers[HeaderNames.JobUUID] == jobUUID.ToString())
+                x => x.EventType == EventType.BackgroundJob && x.Headers[HeaderNames.JobUUID] == jobUUID.ToString())
                                              .Take(1) //will auto terminate the subscription when received
                                              .Subscribe(x =>
                                                  {
@@ -258,7 +258,8 @@
         public Task<CommandReply> SubscribeEvents(params EventType[] events)
         {
             this.events.UnionWith(events); //ensures we are always at least using the default minimum events
-            return SendCommandAsync("event plain {0} CUSTOM {1}".Fmt(string.Join(" ", this.events), string.Join(" ", customEvents)));
+            return SendCommandAsync("event plain {0} CUSTOM {1}"
+                .Fmt(string.Join(" ", this.events.Select(x => x.ToString().ToUpperWithUnderscores())), string.Join(" ", customEvents)));
         }
 
         public Task<CommandReply> SubscribeCustomEvents(params string[] events)
@@ -269,7 +270,7 @@
 
         public void OnHangup(string uuid, Action<EventMessage> action)
         {
-            Events.Where(x => x.UUID == uuid && x.EventType == EventType.CHANNEL_HANGUP)
+            Events.Where(x => x.UUID == uuid && x.EventType == EventType.ChannelHangup)
                   .Take(1)
                   .Subscribe(action);
         }

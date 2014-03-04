@@ -66,6 +66,7 @@ namespace NEventSocket.Example
             }
             else
             {
+                Console.WriteLine("{0} {1} {2}", originate.ChannelData.EventType, originate.ChannelData.AnswerState, originate.ChannelData.ChannelState);
                 var uuid = originate.ChannelData.UUID;
                 await client.SetChannelVariable(uuid, "dtmf_verbose", "true");
                 await client.StartDtmf(uuid);
@@ -144,7 +145,7 @@ namespace NEventSocket.Example
             else
             {
                 var uuid = originate.ChannelData.UUID;
-                await client.SubscribeEvents(EventType.DTMF);
+                await client.SubscribeEvents(EventType.Dtmf);
 
                 await client.SetMultipleChannelVariables(uuid, "dtmf_verbose=true", "drop_dtmf=true" );
                         //"min_dup_digit_spacing_ms=500",
@@ -166,7 +167,7 @@ namespace NEventSocket.Example
                               client.Exit();
                           });
 
-                client.Events.Where(x => x.UUID == uuid && x.EventType == EventType.DTMF)
+                client.Events.Where(x => x.UUID == uuid && x.EventType == EventType.Dtmf)
                       .Subscribe(e => Console.WriteLine(e.Headers[HeaderNames.DTMFDigit]));
             }
         }
@@ -176,7 +177,7 @@ namespace NEventSocket.Example
             var client = await InboundSocket.Connect("10.10.10.36", 8021, "ClueCon");
             Console.WriteLine("Authenticated!");
 
-            await client.SubscribeEvents(EventType.DTMF);
+            await client.SubscribeEvents(EventType.Dtmf);
 
             var originate =
                 await
@@ -225,7 +226,7 @@ namespace NEventSocket.Example
 
                 var bridgeUUID = Guid.NewGuid().ToString();
 
-                var ringingHandler = client.Events.Where(x => x.UUID == bridgeUUID && x.EventType == EventType.CHANNEL_PROGRESS)
+                var ringingHandler = client.Events.Where(x => x.UUID == bridgeUUID && x.EventType == EventType.ChannelProgress)
                       .Take(1)
                       .Subscribe(
                           e =>
@@ -295,7 +296,7 @@ namespace NEventSocket.Example
 
                     if (recordingResult.Success)
                     {
-                        client.Events.Where(x => x.UUID == uuid && x.EventType == EventType.DTMF).Subscribe(
+                        client.Events.Where(x => x.UUID == uuid && x.EventType == EventType.Dtmf).Subscribe(
                             async (e) =>
                                 {
                                     var dtmf = e.Headers[HeaderNames.DTMFDigit];
@@ -344,7 +345,7 @@ namespace NEventSocket.Example
                     {
                         Console.WriteLine("New Socket connected");
 
-                        connection.Events.Where(x => x.EventType == EventType.CHANNEL_HANGUP).Take(1).Subscribe(
+                        connection.Events.Where(x => x.EventType == EventType.ChannelHangup).Take(1).Subscribe(
                             e =>
                                 {
                                     using (Colour.Use(ConsoleColor.Red))
@@ -363,11 +364,7 @@ namespace NEventSocket.Example
 
                         await
                             connection.SubscribeEvents(
-                                EventType.PLAYBACK_START, 
-                                EventType.PLAYBACK_STOP, 
-                                EventType.DTMF, 
-                                EventType.CHANNEL_HANGUP_COMPLETE, 
-                                EventType.CHANNEL_HANGUP);
+                                EventType.Dtmf);
 
                         await connection.Linger();
                         await connection.SendMessage(uuid, "call-command: execute\nexecute-app-name: answer");

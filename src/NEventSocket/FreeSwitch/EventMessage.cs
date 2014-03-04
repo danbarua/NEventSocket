@@ -90,7 +90,7 @@
         {
             get
             {
-                return (EventType)Enum.Parse(typeof(EventType), Headers[HeaderNames.EventName]);
+                return (EventType)Enum.Parse(typeof(EventType), Headers[HeaderNames.EventName].ToCamelCase());
             }
         }
 
@@ -98,16 +98,19 @@
         {
             get
             {
-                return (ChannelState)Enum.Parse(typeof(ChannelState), Headers[HeaderNames.ChannelState]);
+                //eg channel state = CS_NEW
+                //strip first 3 chars and convert to camelcase
+                var channelState = Headers[HeaderNames.ChannelState];
+                return (ChannelState)Enum.Parse(typeof(ChannelState), channelState.Substring(3, channelState.Length - 3).ToCamelCase());
             }
         }
 
-        public string AnswerState
+        public AnswerState AnswerState
         {
             get
             {
                 //possible values: answered, hangup, ringing
-                return Headers.ContainsKey(HeaderNames.AnswerState) ? Headers[HeaderNames.AnswerState] : null;
+                return (AnswerState)Enum.Parse(typeof(AnswerState), Headers[HeaderNames.AnswerState].ToCamelCase());
             }
         }
 
