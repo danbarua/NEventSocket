@@ -66,20 +66,27 @@
 
             this.BackgroundJob("originate", originateString)
                 .ContinueWith(
-                t =>
-                {
-                    if (t.Result != null && !t.Result.Success)
-                    {
-                        //the bgapi originate call failed
-                        Log.TraceFormat("Originate {0} failed - {1}", originateString, t.Result.ErrorMessage);
-                        subscription.Dispose();
-                        tcs.SetResult(new OriginateResult(t.Result));
-                    }
-                },
-                TaskContinuationOptions.OnlyOnRanToCompletion)
-                .ContinueOnFaultedOrCancelled(tcs, subscription.Dispose);
+                    t =>
+                        {
+                            if (tcs.Task.IsCompleted) return;
+
+                            if (t.Result != null && !t.Result.Success)
+                            {
+                                //the bgapi originate call failed
+                                Log.TraceFormat("Originate {0} failed - {1}", originateString, t.Result.ErrorMessage);
+                                subscription.Dispose();
+                                tcs.SetResult(new OriginateResult(t.Result));
+                            }
+                        },
+                        TaskContinuationOptions.OnlyOnRanToCompletion)
+                        .ContinueOnFaultedOrCancelled(tcs, subscription.Dispose);
 
             return tcs.Task;
+        }
+
+        public IDisposable On(string uuid, EventType eventType, Action<EventMessage> handler)
+        {
+            return this.Events.Where(x => x.UUID == uuid && x.EventType == eventType).Subscribe(handler);
         }
     }
 }

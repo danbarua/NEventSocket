@@ -125,7 +125,7 @@
                 .Subscribe(
                     x =>
                         {
-                            Log.TraceFormat("CHANNEL_EXECUTE_COMPLETE [{0} {1} {2}]",
+                            Log.TraceFormat("ChannelExecuteComplete [{0} {1} {2}]",
                                 x.Headers[HeaderNames.AnswerState],
                                 x.Headers[HeaderNames.Application],
                                 x.Headers[HeaderNames.ApplicationResponse]);

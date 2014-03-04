@@ -43,7 +43,8 @@ namespace NEventSocket.Example
         private static async void PlayGetDigitsTest()
         {
             var client = await InboundSocket.Connect("10.10.10.36", 8021, "ClueCon");
-            await client.SubscribeEvents();
+            await client.SubscribeEvents(EventType.Dtmf);
+
             var originate =
                 await
                 client.Originate(
@@ -70,9 +71,12 @@ namespace NEventSocket.Example
                 var uuid = originate.ChannelData.UUID;
                 await client.SetChannelVariable(uuid, "dtmf_verbose", "true");
                 await client.StartDtmf(uuid);
-                client.OnHangup(uuid,
-                          e =>
-                          {
+
+                client.On(
+                    uuid,
+                    EventType.ChannelHangup,
+                    e =>
+                        {
                               using (Colour.Use(ConsoleColor.Red))
                               {
                                   Console.WriteLine("Hangup Detected on A-Leg {0} {1}",
@@ -82,6 +86,17 @@ namespace NEventSocket.Example
 
                               client.Exit();
                           });
+
+                client.On(
+                    uuid,
+                    EventType.Dtmf,
+                    e =>
+                        {
+                            using (Colour.Use(ConsoleColor.DarkGreen))
+                            {
+                                Console.WriteLine(e.Headers[HeaderNames.DTMFDigit]);
+                            } 
+                        });
 
                 var playGetDigitsResult = await
                      client.PlayGetDigits(
@@ -99,7 +114,9 @@ namespace NEventSocket.Example
                                  DigitTimeoutMs = 2000,
                              });
 
-                Console.WriteLine(playGetDigitsResult.Digits);
+                using (Colour.Use(ConsoleColor.Green))
+                    Console.WriteLine("Got digits: {0}", playGetDigitsResult.Digits);
+
                 if (playGetDigitsResult.Success)
                 {
                     await client.Play(uuid, "ivr/8000/ivr-you_entered.wav");
@@ -202,7 +219,6 @@ namespace NEventSocket.Example
             else
             {
                 var uuid = originate.ChannelData.Headers[HeaderNames.CallerUniqueId];
-                //await client.ExecuteAppAsync(uuid, "start_dtmf_generate");
 
                 Console.WriteLine("Originate success {0}", originate.ChannelData.Headers[HeaderNames.AnswerState]);
 
@@ -260,7 +276,7 @@ namespace NEventSocket.Example
                     }
 
                     await client.Play(uuid, "ivr/8000/ivr-call_rejected.wav");
-                    await client.Hangup(uuid, "CALL_REJECTED");
+                    await client.Hangup(uuid, HangupCause.CallRejected);
                 }
                 else
                 {
@@ -284,7 +300,7 @@ namespace NEventSocket.Example
                                               }
 
                                               await client.Play(uuid, "ivr/8000/ivr-you_may_exit_by_hanging_up.wav");
-                                              await client.Hangup(uuid, "NORMAL_CLEARING");
+                                              await client.Hangup(uuid, HangupCause.NormalClearing);
                                           });
 
                     await client.SetChannelVariable(uuid, "RECORD_ARTIST", "'Opex Hosting Ltd'");

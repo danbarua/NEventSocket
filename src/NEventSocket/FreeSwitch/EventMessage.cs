@@ -114,6 +114,15 @@
             }
         }
 
+        public HangupCause? HangupCause
+        {
+            get
+            {
+                if (!Headers.ContainsKey(HeaderNames.HangupCause)) return null;
+                return (HangupCause)Enum.Parse(typeof(HangupCause), Headers[HeaderNames.HangupCause].ToCamelCase());
+            }
+        }
+
         public string UUID
         {
             get

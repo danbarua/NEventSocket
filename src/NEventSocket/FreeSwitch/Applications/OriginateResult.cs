@@ -1,5 +1,9 @@
 ﻿namespace NEventSocket.FreeSwitch.Applications
 {
+    using System;
+
+    using NEventSocket.Util;
+
     /// <summary>
     /// Represents the result of an originate command
     /// </summary>
@@ -8,19 +12,22 @@
         public OriginateResult(EventMessage channelEvent) : base(channelEvent)
         {
             this.Success = channelEvent.AnswerState != AnswerState.Hangup;
-            if (!this.Success)
-                this.HangupCause = channelEvent.Headers[HeaderNames.HangupCause];
+            this.HangupCause = channelEvent.HangupCause;
         }
 
         public OriginateResult(BackgroundJobResult backgroundJobResult)
         {
             this.Success = backgroundJobResult.Success;
-            this.HangupCause = backgroundJobResult.ErrorMessage;
+
+            HangupCause hangupCause;
+            if (Enum.TryParse(backgroundJobResult.ErrorMessage.ToCamelCase(), out hangupCause)) this.HangupCause = hangupCause;
+
+            ResponseText = backgroundJobResult.ErrorMessage;
         }
 
         /// <summary>
         /// Gets a string indicating why the originate command failed
         /// </summary>
-        public string HangupCause { get; private set; }
+        public HangupCause? HangupCause { get; private set; }
     }
 }

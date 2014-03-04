@@ -72,16 +72,19 @@
 
         public static Task<CommandReply> Linger(this IEventSocketCommands eventSocket)
         {
+            //todo: move to outbound socket
             return eventSocket.SendCommandAsync("linger");
         }
 
         public static Task<CommandReply> NoLinger(this IEventSocketCommands eventSocket)
         {
+            //todo: move to outbound socket
             return eventSocket.SendCommandAsync("nolinger");
         }
 
         public static Task<CommandReply> MyEvents(this IEventSocketCommands eventSocket, string uuid)
         {
+            //todo: move to inbound socket
             return eventSocket.SendCommandAsync("myevents {0} plain".Fmt(uuid));
         }
 
@@ -97,7 +100,7 @@
 
         public static Task<CommandReply> Filter(this IEventSocketCommands eventSocket, EventType eventType)
         {
-            return eventSocket.Filter(eventType.ToString());
+            return eventSocket.Filter(eventType.ToString().ToUpperWithUnderscores());
         }
 
         public static Task<CommandReply> Filter(this IEventSocketCommands eventSocket, string eventName)
@@ -114,7 +117,7 @@
 
         public static Task<CommandReply> FilterDelete(this IEventSocketCommands eventSocket, EventType eventType)
         {
-            return eventSocket.FilterDelete("Event-Name", eventType.ToString());
+            return eventSocket.FilterDelete("Event-Name", eventType.ToString().ToUpperWithUnderscores());
         }
 
         public static Task<CommandReply> FilterDelete(this IEventSocketCommands eventSocket, string header)
@@ -146,11 +149,10 @@
             return eventSocket.SendCommandAsync("sendmsg {0}\n{1}".Fmt(uuid, message));
         }
 
-        public static Task<CommandReply> Hangup(this IEventSocketCommands eventSocket, string uuid, string hangupCause)
+        public static Task<CommandReply> Hangup(this IEventSocketCommands eventSocket, string uuid, HangupCause hangupCause = HangupCause.NormalClearing)
         {
             if (uuid == null) throw new ArgumentNullException("uuid");
-            if (hangupCause == null) throw new ArgumentNullException("hangupCause");
-            return eventSocket.SendMessage(uuid, "call-command: hangup\nhangup-cause: " + hangupCause);
+            return eventSocket.SendMessage(uuid, "call-command: hangup\nhangup-cause: " + hangupCause.ToString().ToUpperWithUnderscores());
         }
 
         public static void Exit(this IEventSocketCommands eventSocket)
