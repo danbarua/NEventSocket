@@ -32,16 +32,16 @@
         private readonly Queue<TaskCompletionSource<ApiResponse>> apiCallbacks = new Queue<TaskCompletionSource<ApiResponse>>();
         
         // minimum events required for this class to do its job
-        private readonly HashSet<EventType> events = new HashSet<EventType>()
+        private readonly HashSet<EventName> events = new HashSet<EventName>()
                                                          {
-                                                             EventType.ChannelExecuteComplete,
-                                                             EventType.BackgroundJob,
-                                                             EventType.ChannelHangup,
-                                                             EventType.ChannelAnswer,
-                                                             EventType.ChannelProgress,
-                                                             EventType.ChannelProgressMedia,
-                                                             EventType.ChannelBridge,
-                                                             EventType.ChannelUnbridge
+                                                             EventName.ChannelExecuteComplete,
+                                                             EventName.BackgroundJob,
+                                                             EventName.ChannelHangup,
+                                                             EventName.ChannelAnswer,
+                                                             EventName.ChannelProgress,
+                                                             EventName.ChannelProgressMedia,
+                                                             EventName.ChannelBridge,
+                                                             EventName.ChannelUnbridge
                                                          };
 
         private readonly HashSet<string> customEvents = new HashSet<string>() { "conference::maintenance" }; 
@@ -120,7 +120,7 @@
             var tcs = new TaskCompletionSource<EventMessage>();
 
             var subscription = Events.Where(
-                x => x.UUID == uuid && x.EventType == EventType.ChannelExecuteComplete && x.Headers[HeaderNames.Application] == appName)
+                x => x.UUID == uuid && x.EventType == EventName.ChannelExecuteComplete && x.Headers[HeaderNames.Application] == appName)
                 .Take(1)
                 .Subscribe(
                     x =>
@@ -153,7 +153,7 @@
 
             var tcs = new TaskCompletionSource<BridgeResult>();
 
-            var subscription = this.Events.Where(x => x.UUID == uuid && x.EventType == EventType.ChannelBridge)
+            var subscription = this.Events.Where(x => x.UUID == uuid && x.EventType == EventName.ChannelBridge)
                 .Take(1)
                 .Subscribe(x =>
                 {
@@ -212,7 +212,7 @@
 
             //we'll get an event in the future for this JobUUID and we'll use that to complete the task
             var subscription = Events.Where(
-                x => x.EventType == EventType.BackgroundJob && x.Headers[HeaderNames.JobUUID] == jobUUID.ToString())
+                x => x.EventType == EventName.BackgroundJob && x.Headers[HeaderNames.JobUUID] == jobUUID.ToString())
                                              .Take(1) //will auto terminate the subscription when received
                                              .Subscribe(x =>
                                                  {
@@ -255,7 +255,7 @@
             return tcs.Task;
         }
 
-        public Task<CommandReply> SubscribeEvents(params EventType[] events)
+        public Task<CommandReply> SubscribeEvents(params EventName[] events)
         {
             this.events.UnionWith(events); //ensures we are always at least using the default minimum events
             return SendCommandAsync("event plain {0} CUSTOM {1}"
@@ -270,7 +270,7 @@
 
         public void OnHangup(string uuid, Action<EventMessage> action)
         {
-            Events.Where(x => x.UUID == uuid && x.EventType == EventType.ChannelHangup)
+            Events.Where(x => x.UUID == uuid && x.EventType == EventName.ChannelHangup)
                   .Take(1)
                   .Subscribe(action);
         }

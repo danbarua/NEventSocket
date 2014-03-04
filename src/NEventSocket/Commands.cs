@@ -98,9 +98,9 @@
             return eventSocket.SendCommandAsync("divert_events off");
         }
 
-        public static Task<CommandReply> Filter(this IEventSocketCommands eventSocket, EventType eventType)
+        public static Task<CommandReply> Filter(this IEventSocketCommands eventSocket, EventName eventName)
         {
-            return eventSocket.Filter(eventType.ToString().ToUpperWithUnderscores());
+            return eventSocket.Filter(eventName.ToString().ToUpperWithUnderscores());
         }
 
         public static Task<CommandReply> Filter(this IEventSocketCommands eventSocket, string eventName)
@@ -115,9 +115,9 @@
             return eventSocket.SendCommandAsync("filter {0} {1}".Fmt(header, value));
         }
 
-        public static Task<CommandReply> FilterDelete(this IEventSocketCommands eventSocket, EventType eventType)
+        public static Task<CommandReply> FilterDelete(this IEventSocketCommands eventSocket, EventName eventName)
         {
-            return eventSocket.FilterDelete("Event-Name", eventType.ToString().ToUpperWithUnderscores());
+            return eventSocket.FilterDelete("Event-Name", eventName.ToString().ToUpperWithUnderscores());
         }
 
         public static Task<CommandReply> FilterDelete(this IEventSocketCommands eventSocket, string header)

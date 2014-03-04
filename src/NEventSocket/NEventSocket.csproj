@@ -108,7 +108,7 @@
     <Compile Include="FreeSwitch\EventSocketLogLevel.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="FreeSwitch\EventType.cs">
+    <Compile Include="FreeSwitch\EventName.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="FreeSwitch\FreeSwitchLogLevel.cs">

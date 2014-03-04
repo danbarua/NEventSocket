@@ -55,8 +55,8 @@
             var tcs = new TaskCompletionSource<OriginateResult>();
 
             var subscription = this.Events.Where(x => x.UUID == options.UUID
-                                    && (x.EventType == EventType.ChannelAnswer || x.EventType == EventType.ChannelHangup
-                                        || (options.ReturnRingReady && x.EventType == EventType.ChannelProgress)))
+                                    && (x.EventType == EventName.ChannelAnswer || x.EventType == EventName.ChannelHangup
+                                        || (options.ReturnRingReady && x.EventType == EventName.ChannelProgress)))
                                              .Take(1)
                                              .Subscribe(x =>
                                              {
@@ -84,9 +84,9 @@
             return tcs.Task;
         }
 
-        public IDisposable On(string uuid, EventType eventType, Action<EventMessage> handler)
+        public IDisposable On(string uuid, EventName eventName, Action<EventMessage> handler)
         {
-            return this.Events.Where(x => x.UUID == uuid && x.EventType == eventType).Subscribe(handler);
+            return this.Events.Where(x => x.UUID == uuid && x.EventType == eventName).Subscribe(handler);
         }
     }
 }

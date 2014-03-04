@@ -43,7 +43,7 @@ namespace NEventSocket.Example
         private static async void PlayGetDigitsTest()
         {
             var client = await InboundSocket.Connect("10.10.10.36", 8021, "ClueCon");
-            await client.SubscribeEvents(EventType.Dtmf);
+            await client.SubscribeEvents(EventName.Dtmf);
 
             var originate =
                 await
@@ -74,7 +74,7 @@ namespace NEventSocket.Example
 
                 client.On(
                     uuid,
-                    EventType.ChannelHangup,
+                    EventName.ChannelHangup,
                     e =>
                         {
                               using (Colour.Use(ConsoleColor.Red))
@@ -89,7 +89,7 @@ namespace NEventSocket.Example
 
                 client.On(
                     uuid,
-                    EventType.Dtmf,
+                    EventName.Dtmf,
                     e =>
                         {
                             using (Colour.Use(ConsoleColor.DarkGreen))
@@ -162,7 +162,7 @@ namespace NEventSocket.Example
             else
             {
                 var uuid = originate.ChannelData.UUID;
-                await client.SubscribeEvents(EventType.Dtmf);
+                await client.SubscribeEvents(EventName.Dtmf);
 
                 await client.SetMultipleChannelVariables(uuid, "dtmf_verbose=true", "drop_dtmf=true" );
                         //"min_dup_digit_spacing_ms=500",
@@ -184,7 +184,7 @@ namespace NEventSocket.Example
                               client.Exit();
                           });
 
-                client.Events.Where(x => x.UUID == uuid && x.EventType == EventType.Dtmf)
+                client.Events.Where(x => x.UUID == uuid && x.EventType == EventName.Dtmf)
                       .Subscribe(e => Console.WriteLine(e.Headers[HeaderNames.DTMFDigit]));
             }
         }
@@ -194,7 +194,7 @@ namespace NEventSocket.Example
             var client = await InboundSocket.Connect("10.10.10.36", 8021, "ClueCon");
             Console.WriteLine("Authenticated!");
 
-            await client.SubscribeEvents(EventType.Dtmf);
+            await client.SubscribeEvents(EventName.Dtmf);
 
             var originate =
                 await
@@ -242,7 +242,7 @@ namespace NEventSocket.Example
 
                 var bridgeUUID = Guid.NewGuid().ToString();
 
-                var ringingHandler = client.Events.Where(x => x.UUID == bridgeUUID && x.EventType == EventType.ChannelProgress)
+                var ringingHandler = client.Events.Where(x => x.UUID == bridgeUUID && x.EventType == EventName.ChannelProgress)
                       .Take(1)
                       .Subscribe(
                           e =>
@@ -312,7 +312,7 @@ namespace NEventSocket.Example
 
                     if (recordingResult.Success)
                     {
-                        client.Events.Where(x => x.UUID == uuid && x.EventType == EventType.Dtmf).Subscribe(
+                        client.Events.Where(x => x.UUID == uuid && x.EventType == EventName.Dtmf).Subscribe(
                             async (e) =>
                                 {
                                     var dtmf = e.Headers[HeaderNames.DTMFDigit];
@@ -361,7 +361,7 @@ namespace NEventSocket.Example
                     {
                         Console.WriteLine("New Socket connected");
 
-                        connection.Events.Where(x => x.EventType == EventType.ChannelHangup).Take(1).Subscribe(
+                        connection.Events.Where(x => x.EventType == EventName.ChannelHangup).Take(1).Subscribe(
                             e =>
                                 {
                                     using (Colour.Use(ConsoleColor.Red))
@@ -380,7 +380,7 @@ namespace NEventSocket.Example
 
                         await
                             connection.SubscribeEvents(
-                                EventType.Dtmf);
+                                EventName.Dtmf);
 
                         await connection.Linger();
                         await connection.SendMessage(uuid, "call-command: execute\nexecute-app-name: answer");

@@ -1,6 +1,6 @@
 ﻿namespace NEventSocket.FreeSwitch
 {
-    public enum EventType
+    public enum EventName
     {
         Custom,
         Clone,

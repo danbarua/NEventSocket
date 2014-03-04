@@ -86,11 +86,11 @@
             }
         }
 
-        public EventType EventType
+        public EventName EventType
         {
             get
             {
-                return (EventType)Enum.Parse(typeof(EventType), Headers[HeaderNames.EventName].ToCamelCase());
+                return (EventName)Enum.Parse(typeof(EventName), Headers[HeaderNames.EventName].ToCamelCase());
             }
         }
 
