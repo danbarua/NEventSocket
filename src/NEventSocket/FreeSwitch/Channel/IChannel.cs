@@ -14,7 +14,7 @@
 
         string AnswerState { get; }
 
-        Task<OriginateResult> Bridge(IEndpoint destination, BridgeOptions options = null);
+        Task<OriginateResult> Bridge(string destination, BridgeOptions options = null);
 
         Task Hold();
 

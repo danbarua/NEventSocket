@@ -57,24 +57,23 @@
     <Compile Include="..\CommonAssemblyInfo.cs">
       <Link>Properties\CommonAssemblyInfo.cs</Link>
     </Compile>
-    <Compile Include="FreeSwitch\Api\User.cs" />
     <Compile Include="FreeSwitch\Applications\BridgeResult.cs" />
     <Compile Include="FreeSwitch\Applications\Leg.cs" />
     <Compile Include="FreeSwitch\Applications\PlayGetDigitsOptions.cs" />
     <Compile Include="FreeSwitch\Applications\PlayGetDigitsResult.cs" />
     <Compile Include="FreeSwitch\Applications\PlayOptions.cs" />
     <Compile Include="FreeSwitch\Applications\PlayResult.cs" />
+    <Compile Include="FreeSwitch\Applications\SayGender.cs" />
+    <Compile Include="FreeSwitch\Applications\SayMethod.cs" />
     <Compile Include="FreeSwitch\Applications\SayOptions.cs" />
+    <Compile Include="FreeSwitch\Applications\SayType.cs" />
     <Compile Include="FreeSwitch\FreeSwitchException.cs" />
     <Compile Include="FreeSwitch\AnswerState.cs" />
     <Compile Include="FreeSwitch\Applications\BridgeOptions.cs" />
-    <Compile Include="FreeSwitch\Api\IEndpoint.cs" />
     <Compile Include="FreeSwitch\Applications\OriginateOptions.cs" />
     <Compile Include="FreeSwitch\Applications\OriginateResult.cs" />
-    <Compile Include="FreeSwitch\Api\SofiaGatewayDestination.cs" />
-    <Compile Include="FreeSwitch\Api\SofiaProfileUser.cs" />
     <Compile Include="FreeSwitch\Applications\ApplicationResult.cs" />
-    <Compile Include="FreeSwitch\Api\Sofia.cs" />
+    <Compile Include="FreeSwitch\Endpoint.cs" />
     <Compile Include="FreeSwitch\Channel\IChannel.cs" />
     <Compile Include="OutboundListener.cs" />
     <Compile Include="Sockets\EventSocket.cs" />

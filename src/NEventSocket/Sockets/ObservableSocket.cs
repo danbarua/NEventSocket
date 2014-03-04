@@ -94,6 +94,28 @@
                 var stream = GetStream();
                 return stream.WriteAsync(bytes, 0, bytes.Length, cancellationToken);
             }
+            catch (IOException ex)
+            {
+                if (ex.InnerException is SocketException && ((SocketException)ex.InnerException).SocketErrorCode == SocketError.ConnectionAborted)
+                {
+                    Log.Warn("Socket disconnected");
+                    this.Dispose();
+                    return Task.FromResult<object>(null);
+                }
+
+                throw;
+            }
+            catch (SocketException ex)
+            {
+                if (ex.SocketErrorCode == SocketError.ConnectionAborted)
+                {
+                    Log.Warn("Socket disconnected");
+                    this.Dispose();
+                    return Task.FromResult<object>(null);                    
+                }
+
+                throw;
+            }
             catch (Exception ex)
             {
                 Log.Error("Error writing.", ex);

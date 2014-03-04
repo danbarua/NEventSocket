@@ -42,23 +42,18 @@ namespace NEventSocket.Example
 
         private static async void PlayGetDigitsTest()
         {
-            //ivr-please_enter_pin_followed_by_pound
-
             var client = await InboundSocket.Connect("10.10.10.36", 8021, "ClueCon");
-            Console.WriteLine("Authenticated!");
-
-            await client.SubscribeEvents(EventType.DTMF);
-
+            await client.SubscribeEvents();
             var originate =
                 await
                 client.Originate(
-                    Sofia.User("1000"), 
+                    Endpoint.User("1005"),
                     new OriginateOptions
                         {
                             CallerIdNumber = "123456789", 
                             CallerIdName = "Dan Leg A", 
                             HangupAfterBridge = false,
-                            Timeout = 20
+                            TimeoutSeconds = 20
                         });
 
             if (!originate.Success)
@@ -87,9 +82,7 @@ namespace NEventSocket.Example
                               client.Exit();
                           });
 
-
-                await client.SubscribeEvents(EventType.DTMF);
-                var pagdResult = await
+                var playGetDigitsResult = await
                      client.PlayGetDigits(
                          uuid,
                          new PlayGetDigitsOptions()
@@ -105,8 +98,8 @@ namespace NEventSocket.Example
                                  DigitTimeoutMs = 2000,
                              });
 
-                Console.WriteLine(pagdResult.Digits);
-                if (pagdResult.Success)
+                Console.WriteLine(playGetDigitsResult.Digits);
+                if (playGetDigitsResult.Success)
                 {
                     await client.Play(uuid, "ivr/8000/ivr-you_entered.wav");
                     await
@@ -114,9 +107,9 @@ namespace NEventSocket.Example
                             uuid,
                             new SayOptions()
                             {
-                                Text = pagdResult.Digits,
-                                Type = SayType.NUMBER,
-                                Method = SayMethod.iterated
+                                Text = playGetDigitsResult.Digits,
+                                Type = SayType.Number,
+                                Method = SayMethod.Iterated
                             });
                     await client.Play(uuid, "ivr/8000/ivr-you_may_exit_by_hanging_up.wav");
                 }
@@ -131,13 +124,13 @@ namespace NEventSocket.Example
             var originate =
                 await
                 client.Originate(
-                    Sofia.User("1000"), 
+                    Endpoint.User("1005"), 
                     new OriginateOptions
                         {
                             CallerIdNumber = "123456789", 
                             CallerIdName = "Dan Leg A", 
                             HangupAfterBridge = false,
-                            Timeout = 20
+                            TimeoutSeconds = 20
                         });
 
             if (!originate.Success)
@@ -188,13 +181,13 @@ namespace NEventSocket.Example
             var originate =
                 await
                 client.Originate(
-                    Sofia.User("1000"), 
+                    Endpoint.User("1000"), 
                     new OriginateOptions
                         {
                             CallerIdNumber = "123456789", 
                             CallerIdName = "Dan Leg A", 
                             HangupAfterBridge = false,
-                            Timeout = 20
+                            TimeoutSeconds = 20
                         });
 
             if (!originate.Success)
@@ -243,7 +236,7 @@ namespace NEventSocket.Example
                     await
                     client.Bridge(
                         uuid, 
-                        Sofia.User("1001"), 
+                        Endpoint.User("1001"), 
                         new BridgeOptions()
                             {
                                 UUID = bridgeUUID,

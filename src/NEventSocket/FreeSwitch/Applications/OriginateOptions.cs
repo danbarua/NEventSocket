@@ -6,7 +6,7 @@
     /// Represents options that may be used with the Originate api command
     /// </summary>
     /// <remarks>
-    /// https://wiki.freeswitch.org/wiki/Channel_Variables#Originate_related_variables
+    /// See https://wiki.freeswitch.org/wiki/Channel_Variables#Originate_related_variables
     /// </remarks>
     public class OriginateOptions
     {
@@ -35,7 +35,7 @@
         /// <summary>
         /// Determines how long FreeSWITCH is going to wait for a response from the invite message sent to the gateway.
         /// </summary>
-        public int Timeout { get; set; }
+        public int TimeoutSeconds { get; set; }
 
         /// <summary>
         /// Executes code on successful origination. Use the '{app} {arg}' format to execute in the origination thread or use '{app}::{arg}' to execute asynchronously. 
@@ -45,7 +45,7 @@
 
 
         /// <summary>
-        /// 
+        /// Whether this call should hang up after completing a bridge to another leg
         /// </summary>
         public bool HangupAfterBridge { get; set; }
 
@@ -58,10 +58,9 @@
         public bool ReturnRingReady { get; set; }
 
         /// <summary>
-        /// 
+        /// Whether Early Media responses should be ignored when determining whether an originate or bridge has completed successfully.
         /// </summary>
         public bool IgnoreEarlyMedia { get; set; }
-
 
         /// <summary>
         /// When bridging a call, No media mode is an SDP Passthrough feature that permits two endpoints that can see each other (no funky NAT's) to connect their media sessions directly while FreeSWITCH maintains control of the SIP signaling.
@@ -90,7 +89,7 @@
 
             if (this.RetrySleepMs > 0) sb.AppendFormat("originate_retry_sleep_ms={0},", this.RetrySleepMs);
 
-            if (this.Timeout > 0) sb.AppendFormat("originate_timeout={0},", this.Timeout);
+            if (this.TimeoutSeconds > 0) sb.AppendFormat("originate_timeout={0},", this.TimeoutSeconds);
 
             if (this.ReturnRingReady) sb.Append("return_ring_ready=true,");
 

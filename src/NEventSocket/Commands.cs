@@ -65,6 +65,11 @@
             return eventSocket.ExecuteAppAsync(uuid, "spandsp_start_dtmf");
         }
 
+        public static Task<EventMessage> Stoptmf(this IEventSocketCommands eventSocket, string uuid)
+        {
+            return eventSocket.ExecuteAppAsync(uuid, "spandsp_stop_dtmf");
+        }
+
         public static Task<CommandReply> Linger(this IEventSocketCommands eventSocket)
         {
             return eventSocket.SendCommandAsync("linger");

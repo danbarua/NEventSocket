@@ -84,22 +84,6 @@
         public string BadInputAudioFile { get; set; }
 
         /// <summary>
-        /// Channel variable into which digits should be placed
-        /// </summary>
-        public string ChannelVariableName
-        {
-            get
-            {
-                return this.channelVariableName;
-            }
-
-            set
-            {
-                this.channelVariableName = value;
-            }
-        }
-
-        /// <summary>
         /// Regular expression to match digits
         /// </summary>
         public string DigitsRegex
@@ -125,6 +109,17 @@
         /// </summary>
         public string TransferOnFailure { get; set; }
 
+        /// <summary>
+        /// Gets the name of the channel variable which will contain the result
+        /// </summary>
+        public string ChannelVariableName 
+        { 
+            get
+            {
+                return channelVariableName;
+            }
+        }
+
         public override string ToString()
         {
             return string.Format(
@@ -136,7 +131,7 @@
                 TerminatorDigits,
                 PromptAudioFile,
                 BadInputAudioFile,
-                ChannelVariableName,
+                channelVariableName,
                 DigitsRegex,
                 DigitTimeoutMs,
                 TransferOnFailure);

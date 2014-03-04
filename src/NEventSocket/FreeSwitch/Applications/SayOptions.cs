@@ -6,11 +6,13 @@
 
 namespace NEventSocket.FreeSwitch.Applications
 {
+    using NEventSocket.Util;
+
     public class SayOptions
     {
         private string moduleName = "en";
 
-        private SayGender gender = SayGender.NEUTER;
+        private SayGender gender = SayGender.Neuter;
 
         /// <summary>
         /// Module name is usually the channel language, e.g. "en" or "es" 
@@ -21,6 +23,7 @@ namespace NEventSocket.FreeSwitch.Applications
             {
                 return this.moduleName;
             }
+
             set
             {
                 this.moduleName = value;
@@ -63,44 +66,7 @@ namespace NEventSocket.FreeSwitch.Applications
 
         public override string ToString()
         {
-            return string.Format("{0} {1} {2} {3} {4}", ModuleName, Type, Method, Gender, Text);
+            return string.Format("{0} {1} {2} {3} {4}", ModuleName, Type.ToString().ToUpperWithUnderscores().ToUpperInvariant(), Method.ToString().ToLowerInvariant(), Gender.ToString().ToUpperInvariant(), Text);
         }
-    }
-
-    public enum SayGender
-    {
-        FEMININE,
-        MASCULINE,
-        NEUTER
-    }
-
-    public enum SayMethod
-    {
-        pronounced,
-        iterated,
-        counted
-    }
-
-    public enum SayType
-    {
-        NUMBER, 
-        ITEMS, 
-        PERSONS, 
-        MESSAGES, 
-        CURRENCY, 
-        TIME_MEASUREMENT, 
-        CURRENT_DATE, 
-        CURRENT_TIME, 
-        CURRENT_DATE_TIME, 
-        TELEPHONE_NUMBER, 
-        TELEPHONE_EXTENSION, 
-        URL, 
-        IP_ADDRESS, 
-        EMAIL_ADDRESS, 
-        POSTAL_ADDRESS, 
-        ACCOUNT_NUMBER, 
-        NAME_SPELLED, 
-        NAME_PHONETIC, 
-        SHORT_DATE_TIME
     }
 }

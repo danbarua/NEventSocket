@@ -64,6 +64,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Applications.cs" />
     <Compile Include="Class1.cs" />
     <Compile Include="FakeOutboundSocket.cs" />
     <Compile Include="OriginateTests.cs" />

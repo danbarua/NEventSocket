@@ -24,7 +24,7 @@
 
         private static readonly ILog Log = LogManager.GetCurrentClassLogger();
 
-        private readonly ISubject<BasicMessage> incomingMessages = new Subject<BasicMessage>();
+        private readonly ISubject<BasicMessage> incomingMessages = new ReplaySubject<BasicMessage>();
 
         private readonly Queue<TaskCompletionSource<CommandReply>> commandCallbacks = new Queue<TaskCompletionSource<CommandReply>>();
  
@@ -139,14 +139,14 @@
             return tcs.Task;
         }
 
-        public Task<BridgeResult> Bridge(string uuid, IEndpoint endpoint, BridgeOptions options = null)
+        public Task<BridgeResult> Bridge(string uuid, string endpoint, BridgeOptions options = null)
         {
             if (options == null) options = new BridgeOptions();
             if (string.IsNullOrEmpty(options.UUID)) options.UUID = Guid.NewGuid().ToString();
 
             var bridgeString = string.Format("{0}{1}", options, endpoint);
 
-            ///for some reason bridge is ignoring options passed in the dial string.. setting channel vars for now
+            //for some reason bridge is ignoring options passed in the dial string.. setting channel vars for now
             this.SetChannelVariable(uuid, "hangup_after_bridge", options.HangupAfterBridge.ToString().ToLowerInvariant());
             this.SetChannelVariable(uuid, "ringback", options.RingBack);
             this.SetChannelVariable(uuid, "continue_on_fail", options.ContinueOnFail.ToLower());
@@ -239,7 +239,11 @@
                 SendAsync(Encoding.ASCII.GetBytes(command + "\n\n")).Wait(cts.Token);
                 commandCallbacks.Enqueue(tcs);
             }
-            catch (Exception ex)
+            catch (OperationCanceledException ex)
+            {
+                tcs.SetResult(null);
+            }
+            catch (AggregateException ex)
             {
                 tcs.SetException(ex);
             }

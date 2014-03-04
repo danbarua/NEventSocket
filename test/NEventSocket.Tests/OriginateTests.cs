@@ -20,7 +20,7 @@
                                   Retries = 5,
                                   RetrySleepMs = 200,
                                   ReturnRingReady = true,
-                                  Timeout = 60,
+                                  TimeoutSeconds = 60,
                                   UUID = Guid.NewGuid().ToString(),
                                   IgnoreEarlyMedia = true,
                               };

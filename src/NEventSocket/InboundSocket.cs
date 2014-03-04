@@ -42,7 +42,7 @@
             return tcs.Task;
         }
 
-        public Task<OriginateResult> Originate(IEndpoint endpoint, OriginateOptions options = null, string application = "park")
+        public Task<OriginateResult> Originate(string endpoint, OriginateOptions options = null, string application = "park")
         {
             if (options == null) options = new OriginateOptions();
 

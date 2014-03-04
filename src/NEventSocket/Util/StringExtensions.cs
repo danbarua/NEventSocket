@@ -4,6 +4,7 @@
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Globalization;
+    using System.Text;
 
     public static class StringExtensions
     {
@@ -28,6 +29,54 @@
         public static string ToLower(this bool input)
         {
             return input.ToString().ToLowerInvariant();
+        }
+
+        [DebuggerStepThrough]
+        public static string ToUpperWithUnderscores(this string camelCaseString)
+        {
+            var sb = new StringBuilder(camelCaseString.Length);
+
+            for (int i = 0; i < camelCaseString.Length; i++)
+            {
+                var c = camelCaseString[i];
+                if (char.IsUpper(c))
+                {
+                    if (i != 0) sb.Append('_');
+                    sb.Append(char.ToUpper(c));
+                }
+                else sb.Append(char.ToUpper(c));
+            }
+
+            return sb.ToString();
+        }
+
+        [DebuggerStepThrough]
+        public static string ToCamelCase(this string underscoreString)
+        {
+            var sb = new StringBuilder(underscoreString.Length);
+            bool capitalizeNext = true;
+
+            foreach (var c in underscoreString)
+            {
+                if (capitalizeNext)
+                {
+                    sb.Append(char.ToUpper(c));
+                    capitalizeNext = false;
+                }
+                else
+                {
+                    if (c == '_')
+                    {
+                        capitalizeNext = true;
+                    }
+                    else
+                    {
+                        sb.Append(char.ToLowerInvariant(c));
+                    }
+                }
+            }
+
+            return sb.ToString();
         }
 
         /// <summary>
