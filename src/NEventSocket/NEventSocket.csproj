@@ -75,6 +75,7 @@
     <Compile Include="FreeSwitch\Applications\ApplicationResult.cs" />
     <Compile Include="FreeSwitch\Endpoint.cs" />
     <Compile Include="FreeSwitch\Channel\IChannel.cs" />
+    <Compile Include="FreeSwitch\HangupCause.cs" />
     <Compile Include="OutboundListener.cs" />
     <Compile Include="Sockets\EventSocket.cs" />
     <Compile Include="InboundSocket.cs" />
