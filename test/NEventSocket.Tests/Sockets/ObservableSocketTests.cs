@@ -1,6 +1,8 @@
 ﻿namespace NEventSocket.Tests.Sockets
 {
     using System;
+    using System.Net.Sockets;
+    using System.Text;
     using System.Threading;
 
     using Common.Logging;
@@ -31,9 +33,11 @@
                     connection.Messages.Subscribe(_ => { }, () => completed = true);
                 });
 
-            var client = new FakeOutboundSocket(8084);
-
-            Thread.Sleep(100);
+            var client = new TcpClient();
+            client.Connect("127.0.0.1", 8084);
+            client.Client.Send(Encoding.ASCII.GetBytes("Hello"));
+            
+            Thread.Sleep(500);
             listener.Dispose(); // will dispose the socket
 
             Assert.True(connected, "Expect a connection to have been made.");

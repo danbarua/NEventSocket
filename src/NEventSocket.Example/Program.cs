@@ -30,11 +30,11 @@ namespace NEventSocket.Example
 
             Console.WriteLine("Starting...");
 
-            //OutboundSocketTest();
+            OutboundSocketTest();
             //InboundSocketTest();
 
             //DtmfTest();
-            PlayGetDigitsTest();
+            //PlayGetDigitsTest();
 
             Console.WriteLine("Press [Enter] to exit.");
             Console.ReadLine();
@@ -360,6 +360,7 @@ namespace NEventSocket.Example
             listener.Connections.Subscribe(
                 async connection =>
                     {
+                        await connection.Connect();
                         Console.WriteLine("New Socket connected");
 
                         connection.Events.Where(x => x.EventName == EventName.ChannelHangup).Take(1).Subscribe(
@@ -394,7 +395,7 @@ namespace NEventSocket.Example
                         Console.WriteLine("Playback : {0}", result.Success);
 
 
-                        await connection.ExecuteAppAsync(uuid, "conference", "test+1234");
+                        //await connection.ExecuteAppAsync(uuid, "conference", "test+1234");
                         //if (result.ChannelData.AnswerState != AnswerState.Hangup) await connection.Hangup(uuid, "NORMAL_CLEARING");
                     });
 
