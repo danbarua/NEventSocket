@@ -25,7 +25,7 @@
 
         private static readonly ILog Log = LogManager.GetCurrentClassLogger();
 
-        private readonly ISubject<BasicMessage> incomingMessages = new ReplaySubject<BasicMessage>();
+        private readonly ISubject<BasicMessage> incomingMessages = new ReplaySubject<BasicMessage>(1);
 
         private readonly Queue<TaskCompletionSource<CommandReply>> commandCallbacks = new Queue<TaskCompletionSource<CommandReply>>();
  
@@ -120,7 +120,7 @@
             var tcs = new TaskCompletionSource<EventMessage>();
 
             var subscription = Events.Where(
-                x => x.UUID == uuid && x.EventType == EventName.ChannelExecuteComplete && x.Headers[HeaderNames.Application] == appName)
+                x => x.UUID == uuid && x.EventName == EventName.ChannelExecuteComplete && x.Headers[HeaderNames.Application] == appName)
                 .Take(1)
                 .Subscribe(
                     x =>
@@ -146,14 +146,15 @@
 
             var bridgeString = string.Format("{0}{1}", options, endpoint);
 
-            //for some reason bridge is ignoring options passed in the dial string.. setting channel vars for now
+            //some bridge options need to be set in channel vars
+            if (!string.IsNullOrEmpty(options.RingBack)) this.SetChannelVariable(uuid, "ringback", options.RingBack);
+
             this.SetChannelVariable(uuid, "hangup_after_bridge", options.HangupAfterBridge.ToString().ToLowerInvariant());
-            this.SetChannelVariable(uuid, "ringback", options.RingBack);
             this.SetChannelVariable(uuid, "continue_on_fail", options.ContinueOnFail.ToLower());
 
             var tcs = new TaskCompletionSource<BridgeResult>();
 
-            var subscription = this.Events.Where(x => x.UUID == uuid && x.EventType == EventName.ChannelBridge)
+            var subscription = this.Events.Where(x => x.UUID == uuid && x.EventName == EventName.ChannelBridge)
                 .Take(1)
                 .Subscribe(x =>
                 {
@@ -212,7 +213,7 @@
 
             //we'll get an event in the future for this JobUUID and we'll use that to complete the task
             var subscription = Events.Where(
-                x => x.EventType == EventName.BackgroundJob && x.Headers[HeaderNames.JobUUID] == jobUUID.ToString())
+                x => x.EventName == EventName.BackgroundJob && x.Headers[HeaderNames.JobUUID] == jobUUID.ToString())
                                              .Take(1) //will auto terminate the subscription when received
                                              .Subscribe(x =>
                                                  {
@@ -270,7 +271,7 @@
 
         public void OnHangup(string uuid, Action<EventMessage> action)
         {
-            Events.Where(x => x.UUID == uuid && x.EventType == EventName.ChannelHangup)
+            Events.Where(x => x.UUID == uuid && x.EventName == EventName.ChannelHangup)
                   .Take(1)
                   .Subscribe(action);
         }

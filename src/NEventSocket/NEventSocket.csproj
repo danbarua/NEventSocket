@@ -67,6 +67,7 @@
     <Compile Include="FreeSwitch\Applications\SayMethod.cs" />
     <Compile Include="FreeSwitch\Applications\SayOptions.cs" />
     <Compile Include="FreeSwitch\Applications\SayType.cs" />
+    <Compile Include="FreeSwitch\Channel\Channel.cs" />
     <Compile Include="FreeSwitch\FreeSwitchException.cs" />
     <Compile Include="FreeSwitch\AnswerState.cs" />
     <Compile Include="FreeSwitch\Applications\BridgeOptions.cs" />

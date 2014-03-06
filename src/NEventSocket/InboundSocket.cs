@@ -47,7 +47,8 @@
             if (options == null) options = new OriginateOptions();
 
             // if no UUID provided, we'll set one now and use that to filter for the correct channel events
-            // this way, one inbound socket can originate many calls
+            // this way, one inbound socket can originate many calls and we can complete the correct
+            // TaskCompletionSource for each originated call.
             if (string.IsNullOrEmpty(options.UUID)) options.UUID = Guid.NewGuid().ToString();
 
             var originateString = string.Format("{0}{1} &{2}", options, endpoint, application);
@@ -55,8 +56,8 @@
             var tcs = new TaskCompletionSource<OriginateResult>();
 
             var subscription = this.Events.Where(x => x.UUID == options.UUID
-                                    && (x.EventType == EventName.ChannelAnswer || x.EventType == EventName.ChannelHangup
-                                        || (options.ReturnRingReady && x.EventType == EventName.ChannelProgress)))
+                                    && (x.EventName == EventName.ChannelAnswer || x.EventName == EventName.ChannelHangup
+                                        || (options.ReturnRingReady && x.EventName == EventName.ChannelProgress)))
                                              .Take(1)
                                              .Subscribe(x =>
                                              {
@@ -68,13 +69,15 @@
                 .ContinueWith(
                     t =>
                         {
-                            if (tcs.Task.IsCompleted) return;
-
-                            if (t.Result != null && !t.Result.Success)
+                            if (!tcs.Task.IsCompleted && t.Result != null && !t.Result.Success)
                             {
-                                //the bgapi originate call failed
+                                //we got a BgApiResult before getting a ChannelAnswer or ChannelHangup event.
                                 Log.TraceFormat("Originate {0} failed - {1}", originateString, t.Result.ErrorMessage);
+
+                                //clean up the event handler, we don't need it now
                                 subscription.Dispose();
+
+                                //complete the task
                                 tcs.SetResult(new OriginateResult(t.Result));
                             }
                         },
@@ -86,7 +89,7 @@
 
         public IDisposable On(string uuid, EventName eventName, Action<EventMessage> handler)
         {
-            return this.Events.Where(x => x.UUID == uuid && x.EventType == eventName).Subscribe(handler);
+            return this.Events.Where(x => x.UUID == uuid && x.EventName == eventName).Subscribe(handler);
         }
     }
 }

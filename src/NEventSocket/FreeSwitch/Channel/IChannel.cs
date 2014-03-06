@@ -5,22 +5,30 @@
 
     using NEventSocket.FreeSwitch.Api;
     using NEventSocket.FreeSwitch.Applications;
-
-    public interface IChannel
+    
+    public interface IChannel : IDisposable
     {
         string UUID { get; }
 
         ChannelState ChannelState { get; }
 
-        string AnswerState { get; }
+        AnswerState AnswerState { get; }
 
-        Task<OriginateResult> Bridge(string destination, BridgeOptions options = null);
+        HangupCause? HangupCause { get; }
+
+        Action<EventMessage> HangupCallBack { set; }
+
+        string GetChannelVariable(string variableName);
+
+        Task SetChannelVariable(string variableName, string value);
+
+        Task<Channel> Bridge(string destination, BridgeOptions options = null);
 
         Task Hold();
 
         Task Park();
 
-        Task Hangup();
+        Task Hangup(HangupCause hangupCause);
 
         Task PlayFile(string file, Leg leg = Leg.Both, string terminator = null);
 
@@ -33,7 +41,5 @@
         Task UnmaskRecording();
 
         Task StopRecording();
-
-        IObservable<string> DTMF { get; }
     }
 }

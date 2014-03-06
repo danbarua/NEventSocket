@@ -86,43 +86,9 @@
             }
         }
 
-        public EventName EventType
-        {
-            get
-            {
-                return (EventName)Enum.Parse(typeof(EventName), Headers[HeaderNames.EventName].ToCamelCase());
-            }
-        }
-
-        public ChannelState ChannelState
-        {
-            get
-            {
-                //eg channel state = CS_NEW
-                //strip first 3 chars and convert to camelcase
-                var channelState = Headers[HeaderNames.ChannelState];
-                return (ChannelState)Enum.Parse(typeof(ChannelState), channelState.Substring(3, channelState.Length - 3).ToCamelCase());
-            }
-        }
-
-        public AnswerState AnswerState
-        {
-            get
-            {
-                //possible values: answered, hangup, ringing
-                return (AnswerState)Enum.Parse(typeof(AnswerState), Headers[HeaderNames.AnswerState].ToCamelCase());
-            }
-        }
-
-        public HangupCause? HangupCause
-        {
-            get
-            {
-                if (!Headers.ContainsKey(HeaderNames.HangupCause)) return null;
-                return (HangupCause)Enum.Parse(typeof(HangupCause), Headers[HeaderNames.HangupCause].ToCamelCase());
-            }
-        }
-
+        /// <summary>
+        /// Gets the Unique Id for the Channel.
+        /// </summary>
         public string UUID
         {
             get
@@ -131,10 +97,73 @@
             }
         }
 
+        /// <summary>
+        /// Gets the <see cref="EventName"/> of this instance.
+        /// </summary>
+        public EventName EventName
+        {
+            get
+            {
+                return (EventName)Enum.Parse(typeof(EventName), Headers[HeaderNames.EventName].ToCamelCase());
+            }
+        }
+
+        /// <summary>
+        /// Gets the <see cref="ChannelState"/> of the Channel.
+        /// </summary>
+        public ChannelState ChannelState
+        {
+            get
+            {
+                //channel state = CS_NEW
+                //strip first 3 chars and convert to camelcase
+                var channelState = Headers[HeaderNames.ChannelState];
+                return (ChannelState)Enum.Parse(typeof(ChannelState), channelState.Substring(3, channelState.Length - 3).ToCamelCase());
+            }
+        }
+
+        /// <summary>
+        /// Gets the <see cref="AnswerState"/> of the Channel.
+        /// </summary>
+        public AnswerState AnswerState
+        {
+            get
+            {
+                return (AnswerState)Enum.Parse(typeof(AnswerState), Headers[HeaderNames.AnswerState].ToCamelCase());
+            }
+        }
+
+        /// <summary>
+        /// Gets the <see cref="HangupCause"/> of the Channel, if it has been hung up otherwise null.
+        /// </summary>
+        public HangupCause? HangupCause
+        {
+            get
+            {
+                if (!Headers.ContainsKey(HeaderNames.HangupCause)) return null;
+                return (HangupCause)Enum.Parse(typeof(HangupCause), Headers[HeaderNames.HangupCause].ToCamelCase());
+            }
+        }
+        
+
+        /// <summary>
+        /// Retrieves a header from the Headers dictionary, returning null if the key is not found.
+        /// </summary>
+        /// <param name="header">The Header Name.</param>
+        /// <returns>The Header Value.</returns>
+        public string GetHeader(string header)
+        {
+            return Headers.ContainsKey(header) ? Headers[header] : null;
+        }
+
+        /// <summary>
+        /// Retrieves a Channel Variable from the Headers dictionary, returning null if the key is not found.
+        /// </summary>
+        /// <param name="variable">The Channel Variable Name</param>
+        /// <returns>The Channel Variable value.</returns>
         public string GetVariable(string variable)
         {
-            var variableKey = "variable_" + variable;
-            return Headers.ContainsKey(variableKey) ? Headers["variable_" + variable] : null;
+            return this.GetHeader("variable_" + variable);
         }
 
         public override string ToString()

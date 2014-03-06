@@ -43,6 +43,6 @@
 
         public const string ReplyText = "Reply-Text";
 
-        public const string DTMFDigit = "DTMF-Digit";
+        public const string DtmfDigit = "DTMF-Digit";
     }
 }

@@ -67,7 +67,7 @@ namespace NEventSocket.Example
             }
             else
             {
-                Console.WriteLine("{0} {1} {2}", originate.ChannelData.EventType, originate.ChannelData.AnswerState, originate.ChannelData.ChannelState);
+                Console.WriteLine("{0} {1} {2}", originate.ChannelData.EventName, originate.ChannelData.AnswerState, originate.ChannelData.ChannelState);
                 var uuid = originate.ChannelData.UUID;
                 await client.SetChannelVariable(uuid, "dtmf_verbose", "true");
                 await client.StartDtmf(uuid);
@@ -80,9 +80,10 @@ namespace NEventSocket.Example
                               using (Colour.Use(ConsoleColor.Red))
                               {
                                   Console.WriteLine("Hangup Detected on A-Leg {0} {1}",
-                                                    e.Headers[HeaderNames.CallerUniqueId],
-                                                    e.Headers[HeaderNames.HangupCause]);
+                                                    e.UUID,
+                                                    e.HangupCause);
                               }
+
 
                               client.Exit();
                           });
@@ -94,7 +95,7 @@ namespace NEventSocket.Example
                         {
                             using (Colour.Use(ConsoleColor.DarkGreen))
                             {
-                                Console.WriteLine(e.Headers[HeaderNames.DTMFDigit]);
+                                Console.WriteLine(e.Headers[HeaderNames.DtmfDigit]);
                             } 
                         });
 
@@ -184,8 +185,8 @@ namespace NEventSocket.Example
                               client.Exit();
                           });
 
-                client.Events.Where(x => x.UUID == uuid && x.EventType == EventName.Dtmf)
-                      .Subscribe(e => Console.WriteLine(e.Headers[HeaderNames.DTMFDigit]));
+                client.Events.Where(x => x.UUID == uuid && x.EventName == EventName.Dtmf)
+                      .Subscribe(e => Console.WriteLine(e.Headers[HeaderNames.DtmfDigit]));
             }
         }
 
@@ -242,7 +243,7 @@ namespace NEventSocket.Example
 
                 var bridgeUUID = Guid.NewGuid().ToString();
 
-                var ringingHandler = client.Events.Where(x => x.UUID == bridgeUUID && x.EventType == EventName.ChannelProgress)
+                var ringingHandler = client.Events.Where(x => x.UUID == bridgeUUID && x.EventName == EventName.ChannelProgress)
                       .Take(1)
                       .Subscribe(
                           e =>
@@ -312,10 +313,10 @@ namespace NEventSocket.Example
 
                     if (recordingResult.Success)
                     {
-                        client.Events.Where(x => x.UUID == uuid && x.EventType == EventName.Dtmf).Subscribe(
+                        client.Events.Where(x => x.UUID == uuid && x.EventName == EventName.Dtmf).Subscribe(
                             async (e) =>
                                 {
-                                    var dtmf = e.Headers[HeaderNames.DTMFDigit];
+                                    var dtmf = e.Headers[HeaderNames.DtmfDigit];
                                     switch (dtmf)
                                     {
                                         case "1":
@@ -361,7 +362,7 @@ namespace NEventSocket.Example
                     {
                         Console.WriteLine("New Socket connected");
 
-                        connection.Events.Where(x => x.EventType == EventName.ChannelHangup).Take(1).Subscribe(
+                        connection.Events.Where(x => x.EventName == EventName.ChannelHangup).Take(1).Subscribe(
                             e =>
                                 {
                                     using (Colour.Use(ConsoleColor.Red))

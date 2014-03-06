@@ -82,6 +82,14 @@
             return SendAsync(bytes, CancellationToken.None);
         }
 
+        /// <summary>
+        /// Asynchronously writes the given bytes to the socket.
+        /// </summary>
+        /// <param name="bytes"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        /// <exception cref="ObjectDisposedException">If disposed.</exception>
+        /// <exception cref="InvalidOperationException">If not connected.</exception>
         public Task SendAsync(byte[] bytes, CancellationToken cancellationToken)
         {
             if (disposed) throw new ObjectDisposedException(ToString());
