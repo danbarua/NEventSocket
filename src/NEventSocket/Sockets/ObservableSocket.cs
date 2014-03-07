@@ -20,7 +20,7 @@
 
         protected TcpClient tcpClient;
 
-        private static readonly ILog Log = LogManager.GetCurrentClassLogger();
+        private readonly ILog Log;
 
         private readonly object syncLock = new object();
 
@@ -34,6 +34,8 @@
 
         protected ObservableSocket(TcpClient tcpClient)
         {
+            Log = LogManager.GetLogger(this.GetType());
+
             this.tcpClient = tcpClient;
 
             receiver = received.GetConsumingEnumerable()

@@ -25,7 +25,7 @@ namespace NEventSocket.Tests
         {
             get
             {
-                return Receiver.Select(x => Encoding.ASCII.GetString(x));
+                return Receiver.Select(x => Encoding.ASCII.GetString(x).Remove(x.Length - 2, 2));
             }
         }
 
