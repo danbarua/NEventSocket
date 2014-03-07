@@ -4,6 +4,7 @@
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
+    using System.Text;
     using System.Threading.Tasks;
 
     using NEventSocket.FreeSwitch;
@@ -92,9 +93,20 @@
             return eventSocket.SendCommandAsync("nolinger");
         }
 
+        /// <summary>
+        /// The 'myevents' subscription allows your inbound socket connection to behave like an outbound socket connect. 
+        /// It will "lock on" to the events for a particular uuid and will ignore all other events, closing the socket when
+        /// the channel goes away or closing the channel when the socket disconnects and all applications have finished executing.
+        /// https://wiki.freeswitch.org/wiki/Mod_event_socket#event
+        /// </summary>
+        /// <remarks>
+        /// Once the socket connection has locked on to the events for this particular uuid it will NEVER see any events that are 
+        /// not related to the channel, even if subsequent event commands are sent. If you need to monitor a specific channel/uuid 
+        /// and you need watch for other events as well then it is best to use a filter.
+        /// </remarks>
         public static Task<CommandReply> MyEvents(this IEventSocketCommands eventSocket, string uuid)
         {
-            //todo: move to inbound socket
+            //todo: move to outbound socket
             return eventSocket.SendCommandAsync("myevents {0} plain".Fmt(uuid));
         }
 
@@ -143,13 +155,28 @@
             return eventSocket.SendCommandAsync("filter delete {0} {1}".Fmt(header, value));
         }
 
-        public static Task<CommandReply> SendEvent(this IEventSocketCommands eventSocket, string eventName, IDictionary<string, string> headers, string body = null)
+        public static Task<CommandReply> SendEvent(
+            this IEventSocketCommands eventSocket, EventName eventName, IDictionary<string, string> headers = null)
         {
-            throw new NotImplementedException("Todo");
+            return SendEvent(eventSocket, eventName.ToString().ToUpperWithUnderscores(), headers);
+        }
 
+        public static Task<CommandReply> SendEvent(this IEventSocketCommands eventSocket, string eventName, IDictionary<string, string> headers = null)
+        {
             if (eventName == null) throw new ArgumentNullException("eventName");
-            if (headers == null) throw new ArgumentNullException("headers");
-            return eventSocket.SendCommandAsync("sendevent {0}\n{1}".Fmt(eventName, body));
+            if (headers == null) headers = new Dictionary<string, string>();
+
+            var headersString = headers.Aggregate(
+                new StringBuilder(),
+                (sb, kvp) =>
+                    {
+                        sb.AppendFormat("{0}: {1}", kvp.Key, kvp.Value);
+                        sb.Append("\n");
+                        return sb;
+                    },
+                sb => sb.ToString());
+
+            return eventSocket.SendCommandAsync("sendevent {0}\n{1}".Fmt(eventName, headersString));
         }
 
         public static Task<CommandReply> SendMessage(this IEventSocketCommands eventSocket, string uuid, string message)
