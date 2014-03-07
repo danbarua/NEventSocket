@@ -28,7 +28,7 @@
 
         public static Task<EventMessage> SetChannelVariable(this IEventSocketCommands eventSocket, string uuid, string variable, object value)
         {
-            return eventSocket.Execute(uuid, "set", appArg: "{0}={1}".Fmt(variable, value));
+            return eventSocket.Execute(uuid, "set", applicationArguments: "{0}={1}".Fmt(variable, value));
         }
 
         /// <summary>
@@ -56,7 +56,8 @@
         public static async Task<PlayResult> Play(this IEventSocketCommands eventSocket, string uuid, string file, PlayOptions options = null)
         {
             //todo: implement options for playback eg a-leg, b-leg, both, using uuid_displace
-            return new PlayResult(await eventSocket.Execute(uuid, "playback", appArg: file));
+            if (options == null) options = new PlayOptions();
+            return new PlayResult(await eventSocket.Execute(uuid, "playback", applicationArguments: file, loops: options.Loops));
         }
 
         public static async Task<PlayGetDigitsResult> PlayGetDigits(

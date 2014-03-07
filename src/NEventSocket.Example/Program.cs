@@ -130,7 +130,9 @@ namespace NEventSocket.Example
                                 Type = SayType.Number,
                                 Method = SayMethod.Iterated
                             });
-                    await client.Play(uuid, "ivr/8000/ivr-you_may_exit_by_hanging_up.wav");
+                    await
+                        client.Play(
+                            uuid, "ivr/8000/ivr-you_may_exit_by_hanging_up.wav", new PlayOptions() { Loops = 3 });
                     await client.Hangup(uuid, HangupCause.CallRejected);
                 }
             }
@@ -327,7 +329,7 @@ namespace NEventSocket.Example
                                                 client.Execute(
                                                     uuid,
                                                     "displace_session",
-                                                    appArg: "{0} m".Fmt("ivr/8000/ivr-recording_paused.wav"));
+                                                    applicationArguments: "{0} m".Fmt("ivr/8000/ivr-recording_paused.wav"));
                                             break;
                                         case "2":
                                             Console.WriteLine("Unmask recording");
@@ -336,7 +338,7 @@ namespace NEventSocket.Example
                                                 client.Execute(
                                                     uuid,
                                                     "displace_session",
-                                                    appArg: "{0} m".Fmt("ivr/8000/ivr-begin_recording.wav"));
+                                                    applicationArguments: "{0} m".Fmt("ivr/8000/ivr-begin_recording.wav"));
                                             break;
                                         case "3":
                                             Console.WriteLine("Stop recording");
@@ -345,7 +347,7 @@ namespace NEventSocket.Example
                                                 client.Execute(
                                                     uuid,
                                                     "displace_session",
-                                                    appArg: "{0} m".Fmt("ivr/8000/ivr-recording_stopped.wav"));
+                                                    applicationArguments: "{0} m".Fmt("ivr/8000/ivr-recording_stopped.wav"));
                                             break;
                                     }
                                 });

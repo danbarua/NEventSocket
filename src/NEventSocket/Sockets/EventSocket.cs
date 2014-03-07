@@ -112,15 +112,15 @@
             }
         }
 
-        public Task<EventMessage> Execute(string uuid, string appName, string appArg = null)
+        public Task<EventMessage> Execute(string uuid, string application, string applicationArguments = null, int loops = 1, bool eventLock = false, bool async = false)
         {
             if (uuid == null) throw new ArgumentNullException("uuid");
-            if (appName == null) throw new ArgumentNullException("appName");           
+            if (application == null) throw new ArgumentNullException("application");           
 
             var tcs = new TaskCompletionSource<EventMessage>();
 
             var subscription = Events.Where(
-                x => x.UUID == uuid && x.EventName == EventName.ChannelExecuteComplete && x.Headers[HeaderNames.Application] == appName)
+                x => x.UUID == uuid && x.EventName == EventName.ChannelExecuteComplete && x.Headers[HeaderNames.Application] == application)
                 .Take(1)
                 .Subscribe(
                     x =>
@@ -132,9 +132,30 @@
                             tcs.SetResult(x);
                         });
 
-            var appCmd = "sendmsg {0}\ncall-command: execute\nexecute-app-name: {1}\nexecute-app-arg: {2}".Fmt(uuid, appName, appArg);
+            var command = "sendmsg {0}\ncall-command: execute\nexecute-app-name: {1}\n".Fmt(uuid, application);
 
-            SendCommand(appCmd).ContinueOnFaultedOrCancelled(tcs, subscription.Dispose);
+            if (eventLock)
+            {
+                command += "event-lock: true\n";
+            }
+
+            if (loops > 1)
+            {
+                command += "loops: " + loops + "\n";
+            }
+
+            if (async)
+            {
+                command += "async: true\n";
+            }
+
+            if (applicationArguments != null)
+            {
+                command += "content-type: text/plain\ncontent-length: {0}\n\n{1}\n".Fmt(
+                    applicationArguments.Length, applicationArguments);
+            }
+
+            SendCommand(command).ContinueOnFaultedOrCancelled(tcs, subscription.Dispose);
 
             return tcs.Task;
         }
@@ -162,7 +183,7 @@
                     tcs.SetResult(new BridgeResult(x));
                 });
 
-            this.Execute(uuid, "bridge", appArg: bridgeString)
+            this.Execute(uuid, "bridge", applicationArguments: bridgeString)
                 .ContinueWith(t =>
                     {
                         /* If the bridge fails, we'll get a CHANNEL_EXECUTE_COMPLETE event immediately.
