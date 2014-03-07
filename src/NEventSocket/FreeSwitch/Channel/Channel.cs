@@ -97,14 +97,30 @@
             return eventSocket.ExecuteAppAsync(UUID, "park");
         }
 
+        public Task RingReady()
+        {
+            return eventSocket.ExecuteAppAsync(UUID, "ring_ready");
+        }
+
+        public Task Answer()
+        {
+            return eventSocket.ExecuteAppAsync(UUID, "answer");
+        }
+
         public Task Hangup(HangupCause hangupCause = FreeSwitch.HangupCause.NormalClearing)
         {
             return eventSocket.Hangup(UUID, hangupCause);
         }
 
+        public Task Sleep(int milliseconds)
+        {
+            return eventSocket.ExecuteAppAsync(UUID, "sleep", milliseconds.ToString());
+        }
+
         public Task PlayFile(string file, Leg leg = Leg.Both, string terminator = null)
         {
-            throw new NotImplementedException();
+            if (terminator != null) this.SetChannelVariable("playback_terminators", terminator);
+            return eventSocket.Play(UUID, file, new PlayOptions());
         }
 
         public Task<string> PlayGetDigits(string file, int numDigits, int timeout)

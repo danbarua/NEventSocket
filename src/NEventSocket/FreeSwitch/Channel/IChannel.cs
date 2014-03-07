@@ -28,7 +28,13 @@
 
         Task Park();
 
+        Task RingReady();
+
+        Task Answer();
+
         Task Hangup(HangupCause hangupCause);
+
+        Task Sleep(int milliseconds);
 
         Task PlayFile(string file, Leg leg = Leg.Both, string terminator = null);
 
