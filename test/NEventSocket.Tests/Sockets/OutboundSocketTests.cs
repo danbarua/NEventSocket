@@ -17,28 +17,26 @@
                    LogLevel.All, true, true, true, "yyyy-MM-dd hh:mm:ss");
         }
 
-        [Fact]
+        [Fact(Timeout = 1000)]
         public async Task On_calling_connect_it_should_populate_the_channel_data()
         {
             using (var listener = new OutboundListener(8084))
             {
                 listener.Start();
-                bool wasConnected = false;
+                bool gotChannelData = false;
 
                 listener.Connections.Subscribe(
                     async (socket) =>
                     {
                         await socket.Connect();
-                        wasConnected = socket.ChannelData != null;
-                        await socket.SendCommandAsync("say hello!");
+                        gotChannelData = socket.ChannelData != null;
                     });
 
                 var fakeSocket = new FakeFreeSwitchOutbound(8084);
-                fakeSocket.MessagesReceived.Subscribe(x => Console.WriteLine(x));
                 await fakeSocket.SendChannelDataEvent();
 
-                Thread.Sleep(1000);
-                Assert.True(wasConnected);
+                Thread.Sleep(100);
+                Assert.True(gotChannelData);
             }
         }
     }
