@@ -89,22 +89,22 @@
 
         public Task Hold()
         {
-            return eventSocket.ExecuteAppAsync(UUID, "hold");
+            return eventSocket.Execute(UUID, "hold");
         }
 
         public Task Park()
         {
-            return eventSocket.ExecuteAppAsync(UUID, "park");
+            return eventSocket.Execute(UUID, "park");
         }
 
         public Task RingReady()
         {
-            return eventSocket.ExecuteAppAsync(UUID, "ring_ready");
+            return eventSocket.Execute(UUID, "ring_ready");
         }
 
         public Task Answer()
         {
-            return eventSocket.ExecuteAppAsync(UUID, "answer");
+            return eventSocket.Execute(UUID, "answer");
         }
 
         public Task Hangup(HangupCause hangupCause = FreeSwitch.HangupCause.NormalClearing)
@@ -114,7 +114,7 @@
 
         public Task Sleep(int milliseconds)
         {
-            return eventSocket.ExecuteAppAsync(UUID, "sleep", milliseconds.ToString());
+            return eventSocket.Execute(UUID, "sleep", milliseconds.ToString());
         }
 
         public Task PlayFile(string file, Leg leg = Leg.Both, string terminator = null)

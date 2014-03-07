@@ -112,7 +112,7 @@
             }
         }
 
-        public Task<EventMessage> ExecuteAppAsync(string uuid, string appName, string appArg = null)
+        public Task<EventMessage> Execute(string uuid, string appName, string appArg = null)
         {
             if (uuid == null) throw new ArgumentNullException("uuid");
             if (appName == null) throw new ArgumentNullException("appName");           
@@ -134,7 +134,7 @@
 
             var appCmd = "sendmsg {0}\ncall-command: execute\nexecute-app-name: {1}\nexecute-app-arg: {2}".Fmt(uuid, appName, appArg);
 
-            SendCommandAsync(appCmd).ContinueOnFaultedOrCancelled(tcs, subscription.Dispose);
+            SendCommand(appCmd).ContinueOnFaultedOrCancelled(tcs, subscription.Dispose);
 
             return tcs.Task;
         }
@@ -162,7 +162,7 @@
                     tcs.SetResult(new BridgeResult(x));
                 });
 
-            this.ExecuteAppAsync(uuid, "bridge", appArg: bridgeString)
+            this.Execute(uuid, "bridge", appArg: bridgeString)
                 .ContinueWith(t =>
                     {
                         /* If the bridge fails, we'll get a CHANNEL_EXECUTE_COMPLETE event immediately.
@@ -181,7 +181,7 @@
             return tcs.Task;
         }
 
-        public Task<ApiResponse> SendApiAsync(string command)
+        public Task<ApiResponse> Api(string command)
         {
             var tcs = new TaskCompletionSource<ApiResponse>();
 
@@ -222,7 +222,7 @@
                                                      tcs.SetResult(result);
                                                  });
 
-            SendCommandAsync(arg != null
+            SendCommand(arg != null
                                  ? "bgapi {0} {1}\nJob-UUID: {2}".Fmt(command, arg, jobUUID)
                                  : "bgapi {0}\nJob-UUID: {1}".Fmt(command, jobUUID))
                             .ContinueOnFaultedOrCancelled(tcs, subscription.Dispose);
@@ -230,7 +230,7 @@
             return tcs.Task;
         }
 
-        public Task<CommandReply> SendCommandAsync(string command)
+        public Task<CommandReply> SendCommand(string command)
         {
             var tcs = new TaskCompletionSource<CommandReply>();
             try
@@ -259,7 +259,7 @@
         public Task<CommandReply> SubscribeEvents(params EventName[] events)
         {
             this.events.UnionWith(events); //ensures we are always at least using the default minimum events
-            return SendCommandAsync("event plain {0} CUSTOM {1}"
+            return SendCommand("event plain {0} CUSTOM {1}"
                 .Fmt(string.Join(" ", this.events.Select(x => x.ToString().ToUpperWithUnderscores())), string.Join(" ", customEvents)));
         }
 

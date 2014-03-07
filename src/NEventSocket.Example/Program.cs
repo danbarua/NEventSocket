@@ -34,7 +34,7 @@ namespace NEventSocket.Example
             //InboundSocketTest();
 
             //DtmfTest();
-            //PlayGetDigitsTest();
+            PlayGetDigitsTest();
 
             Console.WriteLine("Press [Enter] to exit.");
             Console.ReadLine();
@@ -131,6 +131,7 @@ namespace NEventSocket.Example
                                 Method = SayMethod.Iterated
                             });
                     await client.Play(uuid, "ivr/8000/ivr-you_may_exit_by_hanging_up.wav");
+                    await client.Hangup(uuid, HangupCause.CallRejected);
                 }
             }
         }
@@ -170,7 +171,7 @@ namespace NEventSocket.Example
                         //"spandsp_dtmf_rx_threshold=-32");
                     //"spandsp_dtmf_rx_twist=32",
                     //"spandsp_dtmf_rx_reverse_twist=7");
-                await client.ExecuteAppAsync(uuid, "spandsp_start_dtmf");
+                await client.Execute(uuid, "spandsp_start_dtmf");
 
                 client.OnHangup(uuid,
                           e =>
@@ -323,7 +324,7 @@ namespace NEventSocket.Example
                                             Console.WriteLine("Mask recording");
                                             await client.Api("uuid_record {0} mask {1}".Fmt(uuid, recordingPath));
                                             await
-                                                client.ExecuteAppAsync(
+                                                client.Execute(
                                                     uuid,
                                                     "displace_session",
                                                     appArg: "{0} m".Fmt("ivr/8000/ivr-recording_paused.wav"));
@@ -332,7 +333,7 @@ namespace NEventSocket.Example
                                             Console.WriteLine("Unmask recording");
                                             await client.Api("uuid_record {0} unmask {1}".Fmt(uuid, recordingPath));
                                             await
-                                                client.ExecuteAppAsync(
+                                                client.Execute(
                                                     uuid,
                                                     "displace_session",
                                                     appArg: "{0} m".Fmt("ivr/8000/ivr-begin_recording.wav"));
@@ -341,7 +342,7 @@ namespace NEventSocket.Example
                                             Console.WriteLine("Stop recording");
                                             await client.Api("uuid_record {0} stop {1}".Fmt(uuid, recordingPath));
                                             await
-                                                client.ExecuteAppAsync(
+                                                client.Execute(
                                                     uuid,
                                                     "displace_session",
                                                     appArg: "{0} m".Fmt("ivr/8000/ivr-recording_stopped.wav"));
@@ -385,7 +386,7 @@ namespace NEventSocket.Example
                                 EventName.Dtmf);
 
                         await connection.Linger();
-                        await connection.SendMessage(uuid, "call-command: execute\nexecute-app-name: answer");
+                        await connection.Execute(uuid, "answer");
 
                         var result =
                             await

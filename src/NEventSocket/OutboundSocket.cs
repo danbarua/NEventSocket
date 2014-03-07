@@ -29,7 +29,7 @@ namespace NEventSocket
 
         public async Task Connect()
         {
-            var result = await this.SendCommandAsync("connect")
+            var result = await this.SendCommand("connect")
                     .Then(
                         () =>
                         this.disposables.Add(

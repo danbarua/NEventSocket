@@ -17,18 +17,18 @@
         public static Task<CommandReply> Auth(this IEventSocketCommands eventSocket, string password)
         {
             if (password == null) throw new ArgumentNullException("password");
-            return eventSocket.SendCommandAsync("auth {0}".Fmt(password));
+            return eventSocket.SendCommand("auth {0}".Fmt(password));
         }
 
         public static Task<ApiResponse> Api(this IEventSocketCommands eventSocket, string command, string arg = null)
         {
             if (command == null) throw new ArgumentNullException("command");
-            return eventSocket.SendApiAsync(arg != null ? "{0} {1}".Fmt(command, arg) : command);
+            return eventSocket.Api(arg != null ? "{0} {1}".Fmt(command, arg) : command);
         }
 
         public static Task<EventMessage> SetChannelVariable(this IEventSocketCommands eventSocket, string uuid, string variable, object value)
         {
-            return eventSocket.ExecuteAppAsync(uuid, "set", appArg: "{0}={1}".Fmt(variable, value));
+            return eventSocket.Execute(uuid, "set", appArg: "{0}={1}".Fmt(variable, value));
         }
 
         /// <summary>
@@ -41,7 +41,7 @@
         public static Task<EventMessage> SetMultipleChannelVariables(
             this IEventSocketCommands eventSocket, string uuid, params string[] assignments)
         {
-            return eventSocket.ExecuteAppAsync(uuid, "multiset", "^^:" + assignments.Aggregate(string.Empty, (a, s) => a += s.Replace(":", @"\:") + ":", s => s));
+            return eventSocket.Execute(uuid, "multiset", "^^:" + assignments.Aggregate(string.Empty, (a, s) => a += s.Replace(":", @"\:") + ":", s => s));
         }
 
         /// <summary>
@@ -56,41 +56,41 @@
         public static async Task<PlayResult> Play(this IEventSocketCommands eventSocket, string uuid, string file, PlayOptions options = null)
         {
             //todo: implement options for playback eg a-leg, b-leg, both, using uuid_displace
-            return new PlayResult(await eventSocket.ExecuteAppAsync(uuid, "playback", appArg: file));
+            return new PlayResult(await eventSocket.Execute(uuid, "playback", appArg: file));
         }
 
         public static async Task<PlayGetDigitsResult> PlayGetDigits(
             this IEventSocketCommands eventSocket, string uuid, PlayGetDigitsOptions options)
         {
             return new PlayGetDigitsResult(
-                await eventSocket.ExecuteAppAsync(uuid, "play_and_get_digits", options.ToString()), options.ChannelVariableName);
+                await eventSocket.Execute(uuid, "play_and_get_digits", options.ToString()), options.ChannelVariableName);
         }
 
         public static Task<EventMessage> Say(this IEventSocketCommands eventSocket, string uuid, SayOptions options)
         {
-            return eventSocket.ExecuteAppAsync(uuid, "say", options.ToString());
+            return eventSocket.Execute(uuid, "say", options.ToString());
         }
 
         public static Task<EventMessage> StartDtmf(this IEventSocketCommands eventSocket, string uuid)
         {
-            return eventSocket.ExecuteAppAsync(uuid, "spandsp_start_dtmf");
+            return eventSocket.Execute(uuid, "spandsp_start_dtmf");
         }
 
         public static Task<EventMessage> Stoptmf(this IEventSocketCommands eventSocket, string uuid)
         {
-            return eventSocket.ExecuteAppAsync(uuid, "spandsp_stop_dtmf");
+            return eventSocket.Execute(uuid, "spandsp_stop_dtmf");
         }
 
         public static Task<CommandReply> Linger(this IEventSocketCommands eventSocket)
         {
             //todo: move to outbound socket
-            return eventSocket.SendCommandAsync("linger");
+            return eventSocket.SendCommand("linger");
         }
 
         public static Task<CommandReply> NoLinger(this IEventSocketCommands eventSocket)
         {
             //todo: move to outbound socket
-            return eventSocket.SendCommandAsync("nolinger");
+            return eventSocket.SendCommand("nolinger");
         }
 
         /// <summary>
@@ -107,17 +107,17 @@
         public static Task<CommandReply> MyEvents(this IEventSocketCommands eventSocket, string uuid)
         {
             //todo: move to outbound socket
-            return eventSocket.SendCommandAsync("myevents {0} plain".Fmt(uuid));
+            return eventSocket.SendCommand("myevents {0} plain".Fmt(uuid));
         }
 
         public static Task<CommandReply> DivertEventsOn(this IEventSocketCommands eventSocket)
         {
-            return eventSocket.SendCommandAsync("divert_events on");
+            return eventSocket.SendCommand("divert_events on");
         }
 
         public static Task<CommandReply> DivertEventsOff(this IEventSocketCommands eventSocket)
         {
-            return eventSocket.SendCommandAsync("divert_events off");
+            return eventSocket.SendCommand("divert_events off");
         }
 
         public static Task<CommandReply> Filter(this IEventSocketCommands eventSocket, EventName eventName)
@@ -134,7 +134,7 @@
         {
             if (header == null) throw new ArgumentNullException("header");
             if (value == null) throw new ArgumentNullException("value");
-            return eventSocket.SendCommandAsync("filter {0} {1}".Fmt(header, value));
+            return eventSocket.SendCommand("filter {0} {1}".Fmt(header, value));
         }
 
         public static Task<CommandReply> FilterDelete(this IEventSocketCommands eventSocket, EventName eventName)
@@ -145,14 +145,14 @@
         public static Task<CommandReply> FilterDelete(this IEventSocketCommands eventSocket, string header)
         {
             if (header == null) throw new ArgumentNullException("header");
-            return eventSocket.SendCommandAsync("filter delete {0}".Fmt(header));
+            return eventSocket.SendCommand("filter delete {0}".Fmt(header));
         }
 
         public static Task<CommandReply> FilterDelete(this IEventSocketCommands eventSocket, string header, string value)
         {
             if (header == null) throw new ArgumentNullException("header");
             if (value == null) throw new ArgumentNullException("value");
-            return eventSocket.SendCommandAsync("filter delete {0} {1}".Fmt(header, value));
+            return eventSocket.SendCommand("filter delete {0} {1}".Fmt(header, value));
         }
 
         public static Task<CommandReply> SendEvent(
@@ -176,40 +176,36 @@
                     },
                 sb => sb.ToString());
 
-            return eventSocket.SendCommandAsync("sendevent {0}\n{1}".Fmt(eventName, headersString));
-        }
-
-        public static Task<CommandReply> SendMessage(this IEventSocketCommands eventSocket, string uuid, string message)
-        {
-            if (uuid == null) throw new ArgumentNullException("uuid");
-            if (message == null) throw new ArgumentNullException("message");
-            return eventSocket.SendCommandAsync("sendmsg {0}\n{1}".Fmt(uuid, message));
+            return eventSocket.SendCommand("sendevent {0}\n{1}".Fmt(eventName, headersString));
         }
 
         public static Task<CommandReply> Hangup(this IEventSocketCommands eventSocket, string uuid, HangupCause hangupCause = HangupCause.NormalClearing)
         {
             if (uuid == null) throw new ArgumentNullException("uuid");
-            return eventSocket.SendMessage(uuid, "call-command: hangup\nhangup-cause: " + hangupCause.ToString().ToUpperWithUnderscores());
+            return
+                eventSocket.SendCommand(
+                    "sendmsg {0}\ncall-command: hangup\nhangup-cause: {1}".Fmt(
+                        uuid, hangupCause.ToString().ToUpperWithUnderscores()));
         }
 
         public static void Exit(this IEventSocketCommands eventSocket)
         {
-            eventSocket.SendCommandAsync("exit"); //will disconnect, no reply will arrive
+            eventSocket.SendCommand("exit"); //will disconnect, no reply will arrive
         }
 
         public static Task<CommandReply> FsLog(this IEventSocketCommands eventSocket, string logLevel)
         {
-            return eventSocket.SendCommandAsync("log " + logLevel);
+            return eventSocket.SendCommand("log " + logLevel);
         }
 
         public static Task<CommandReply> NoLog(this IEventSocketCommands eventSocket)
         {
-            return eventSocket.SendCommandAsync("nolog");
+            return eventSocket.SendCommand("nolog");
         }
 
         public static Task<CommandReply> NoEvents(this IEventSocketCommands eventSocket)
         {
-            return eventSocket.SendCommandAsync("noevents");
+            return eventSocket.SendCommand("noevents");
         }
     }
 }
