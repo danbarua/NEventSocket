@@ -427,13 +427,17 @@ namespace NEventSocket.Example
                                         "HANGUP DETECTED {0} {1}",
                                         e.Headers[HeaderNames.CallerUniqueId],
                                         e.Headers[HeaderNames.HangupCause]);
+
+                                    Console.WriteLine("Hold music : {0}", e.GetVariable("hold_music"));
                                 }
 
                                 aLeg.Dispose();
                             };
 
                        await aLeg.Answer();
-                       await aLeg.StartDetectingInbandDtmf();
+
+                       await aLeg.Park();
+                       await connection.Api("uuid_broadcast {0} playback::{1} aleg".Fmt(aLeg.UUID, "tone_stream://${uk-ring};loops=-1"));
 
                         var socket = await InboundSocket.Connect("freeswitch.codes.local");
                         await socket.SubscribeEvents();
@@ -473,9 +477,10 @@ namespace NEventSocket.Example
                                 {
                                     Console.WriteLine("BRIDGED!");
 
-                                    aLeg["RECORD_STEREO"] = "true";
+                                    await aLeg.SetChannelVariable("RECORD_STEREO", "true");
                                     var recordingPath = "/usr/local/freeswitch/recordings/{0}.wav".Fmt(aLeg.UUID);
-
+                                    await aLeg.SetChannelVariable("min_dup_digit_spacing_ms", "50");
+                                    await aLeg.StartDetectingInbandDtmf();
                                     aLeg.Dtmf.Subscribe(
                                         async dtmf =>
                                             {

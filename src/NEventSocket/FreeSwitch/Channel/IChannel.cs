@@ -20,7 +20,7 @@
 
         IObservable<string> Dtmf { get; }
 
-        string this[string variableName] { get; set; }
+        string this[string variableName] { get; }
 
         Task Bridge(IChannel other);
         
@@ -53,5 +53,7 @@
         Task StartDetectingInbandDtmf();
 
         Task StopDetectingInbandDtmf();
+
+        Task SetChannelVariable(string name, string value);
     }
 }

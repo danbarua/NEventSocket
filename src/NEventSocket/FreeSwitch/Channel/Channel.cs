@@ -26,7 +26,7 @@ namespace NEventSocket.FreeSwitch.Channel
         private static readonly ILog Log = LogManager.GetCurrentClassLogger();
 
         private readonly EventSocket eventSocket;
-        
+
         private readonly CompositeDisposable disposables = new CompositeDisposable();
 
         private bool disposed;
@@ -39,13 +39,15 @@ namespace NEventSocket.FreeSwitch.Channel
 
         private string bridgedLegUUID;
 
-        public Channel(OutboundSocket outboundSocket) : this(outboundSocket.ChannelData, outboundSocket)
+        public Channel(OutboundSocket outboundSocket)
+            : this(outboundSocket.ChannelData, outboundSocket)
         {
             this.eventSocket.Linger();
             this.eventSocket.SubscribeEvents().Wait();
         }
 
-        public Channel(EventMessage eventMessage, EventSocket eventSocket) : this(eventMessage.UUID, eventMessage, eventSocket)
+        public Channel(EventMessage eventMessage, EventSocket eventSocket)
+            : this(eventMessage.UUID, eventMessage, eventSocket)
         {
         }
 
@@ -55,16 +57,17 @@ namespace NEventSocket.FreeSwitch.Channel
             this.lastEvent = eventMessage;
             this.eventSocket = eventSocket;
 
-            disposables.Add(eventSocket.Events.Where(x => x.UUID == this.UUID).Subscribe(
-                e =>
-                {
-                    this.lastEvent = e;
+            disposables.Add(
+                eventSocket.Events.Where(x => x.UUID == this.UUID).Subscribe(
+                    e =>
+                        {
+                            this.lastEvent = e;
 
-                    if (e.EventName == EventName.ChannelHangup)
-                    {
-                        HangupCallBack(e);
-                    }
-                }));
+                            if (e.EventName == EventName.ChannelHangup)
+                            {
+                                HangupCallBack(e);
+                            }
+                        }));
         }
 
         ~Channel()
@@ -74,11 +77,29 @@ namespace NEventSocket.FreeSwitch.Channel
 
         public string UUID { get; private set; }
 
-        public ChannelState ChannelState { get { return lastEvent.ChannelState; } }
+        public ChannelState ChannelState
+        {
+            get
+            {
+                return lastEvent.ChannelState;
+            }
+        }
 
-        public AnswerState AnswerState { get { return lastEvent.AnswerState; } }
+        public AnswerState AnswerState
+        {
+            get
+            {
+                return lastEvent.AnswerState;
+            }
+        }
 
-        public HangupCause? HangupCause { get { return lastEvent.HangupCause; } }
+        public HangupCause? HangupCause
+        {
+            get
+            {
+                return lastEvent.HangupCause;
+            }
+        }
 
         public Action<EventMessage> HangupCallBack
         {
@@ -115,12 +136,7 @@ namespace NEventSocket.FreeSwitch.Channel
         {
             get
             {
-                return this.GetChannelVariable(variableName);
-            }
-
-            set
-            {
-                this.SetChannelVariable(variableName, value);
+                return lastEvent.GetVariable(variableName);
             }
         }
 
@@ -136,16 +152,18 @@ namespace NEventSocket.FreeSwitch.Channel
                 this.bridgedLegUUID = other.UUID;
                 eventSocket.Events.Where(x => x.UUID == bridgedLegUUID && x.EventName == EventName.ChannelHangup)
                            .Take(1)
-                           .Subscribe(x =>
-                               {
-                                   Log.DebugFormat(
-                                       "Channel {0} B-Leg {1} hungup {2}", UUID, bridgedLegUUID, x.HangupCause);
-                                   this.bridgedLegUUID = null;
-                               });
+                           .Subscribe(
+                               x =>
+                                   {
+                                       Log.DebugFormat(
+                                           "Channel {0} B-Leg {1} hungup {2}", UUID, bridgedLegUUID, x.HangupCause);
+                                       this.bridgedLegUUID = null;
+                                   });
             }
         }
 
-        public async Task<BridgeResult> Bridge(string destination, BridgeOptions options, Action<EventMessage> onProgress = null)
+        public async Task<BridgeResult> Bridge(
+            string destination, BridgeOptions options, Action<EventMessage> onProgress = null)
         {
             Log.DebugFormat("Channel {0} is attempting a bridge to {1}", UUID, destination);
             if (string.IsNullOrEmpty(options.UUID)) options.UUID = Guid.NewGuid().ToString();
@@ -156,10 +174,10 @@ namespace NEventSocket.FreeSwitch.Channel
             {
                 subscriptions.Add(
                     eventSocket.Events.Where(x => x.UUID == options.UUID && x.EventName == EventName.ChannelProgress)
-                        .Take(1)
-                        .Subscribe(onProgress));
+                               .Take(1)
+                               .Subscribe(onProgress));
             }
-            
+
             var result = await eventSocket.Bridge(UUID, destination, options);
 
             subscriptions.Dispose();
@@ -172,19 +190,24 @@ namespace NEventSocket.FreeSwitch.Channel
 
                 eventSocket.Events.Where(x => x.UUID == this.UUID && x.EventName == EventName.ChannelUnbridge)
                            .Take(1)
-                           .Subscribe(x =>
-                               {
-                                   Log.DebugFormat("Channel {0} B-Leg {1} hungup {2}", UUID, bridgedLegUUID, x.GetVariable("bridge_hangup_cause"));
-                                   this.bridgedLegUUID = null;
-                               });
+                           .Subscribe(
+                               x =>
+                                   {
+                                       Log.DebugFormat(
+                                           "Channel {0} B-Leg {1} hungup {2}",
+                                           UUID,
+                                           bridgedLegUUID,
+                                           x.GetVariable("bridge_hangup_cause"));
+                                       this.bridgedLegUUID = null;
+                                   });
             }
-            
+
             return result;
         }
 
         public Task Hold()
         {
-            return eventSocket.Execute(UUID, "hold");
+            return eventSocket.Api("uuid_hold toggle " + UUID);
         }
 
         public Task Park()
@@ -212,26 +235,29 @@ namespace NEventSocket.FreeSwitch.Channel
             return eventSocket.Execute(UUID, "sleep", milliseconds.ToString());
         }
 
-        public Task PlayFile(string file, Leg leg = Leg.ALeg, string terminator = null)
+        public async Task PlayFile(string file, Leg leg = Leg.ALeg, string terminator = null)
         {
-            if (terminator != null) this["playback_terminators"] = terminator;
+            if (terminator != null) await this.SetChannelVariable("playback_terminators", terminator);
 
             if (!IsBridged)
             {
-                return eventSocket.Play(UUID, file, new PlayOptions());
+                await eventSocket.Play(UUID, file, new PlayOptions());
             }
 
             //uuid displace only works on one leg
             switch (leg)
             {
                 case Leg.Both:
-                    return Task.WhenAll(
+                    await Task.WhenAll(
                         eventSocket.Execute(this.UUID, "displace_session", "{0} m{1}".Fmt(file, "w")),
                         eventSocket.Execute(this.UUID, "displace_session", "{0} m{1}".Fmt(file, "r")));
+                    break;
                 case Leg.ALeg:
-                    return this.eventSocket.Execute(this.UUID, "displace_session", "{0} m{1}".Fmt(file, "w"));
+                    await this.eventSocket.Execute(this.UUID, "displace_session", "{0} m{1}".Fmt(file, "w"));
+                    break;
                 case Leg.BLeg:
-                    return this.eventSocket.Execute(this.UUID, "displace_session", "{0} m{1}".Fmt(file, "r"));
+                    await this.eventSocket.Execute(this.UUID, "displace_session", "{0} m{1}".Fmt(file, "r"));
+                    break;
                 default:
                     throw new NotSupportedException("Leg {0} is not supported".Fmt(leg));
             }
@@ -253,7 +279,10 @@ namespace NEventSocket.FreeSwitch.Channel
             if (this.recordingPath != null)
             {
                 Log.WarnFormat(
-                    "Channel {0} received a request to record to file {1} while currently recording to file {2}. Channel will stop recording and start recording to the new file.", UUID, file, recordingPath);
+                    "Channel {0} received a request to record to file {1} while currently recording to file {2}. Channel will stop recording and start recording to the new file.",
+                    UUID,
+                    file,
+                    recordingPath);
                 await this.StopRecording();
             }
 
@@ -313,6 +342,12 @@ namespace NEventSocket.FreeSwitch.Channel
             return eventSocket.Stoptmf(UUID);
         }
 
+        public Task SetChannelVariable(string name, string value)
+        {
+            Log.DebugFormat("Channel {0} setting variable '{1}' to '{2}'", UUID, name, value);
+            return eventSocket.Api("uuid_setvar {0} {1} {2}".Fmt(UUID, name, value));
+        }
+
         public void Dispose()
         {
             Dispose(true);
@@ -339,17 +374,6 @@ namespace NEventSocket.FreeSwitch.Channel
 
                 disposed = true;
             }
-        }
-
-        private string GetChannelVariable(string variableName)
-        {
-            return lastEvent.GetVariable(variableName);
-        }
-
-        private Task SetChannelVariable(string variableName, string value)
-        {
-            Log.DebugFormat("Channel {0} setting variable '{1}' to '{2}'", UUID, variableName, value);
-            return eventSocket.SetChannelVariable(UUID, variableName, value).Then((result) => lastEvent = result);
         }
     }
 }
