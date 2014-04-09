@@ -277,17 +277,23 @@
             return tcs.Task;
         }
 
-        public Task<CommandReply> SubscribeEvents(params EventName[] events)
+        public async Task SubscribeEvents(params EventName[] events)
         {
-            this.events.UnionWith(events); //ensures we are always at least using the default minimum events
-            return SendCommand("event plain {0} CUSTOM {1}"
-                .Fmt(string.Join(" ", this.events.Select(x => x.ToString().ToUpperWithUnderscores())), string.Join(" ", customEvents)));
+            if (!this.events.SequenceEqual(events))
+            {
+                this.events.UnionWith(events); //ensures we are always at least using the default minimum events
+                await SendCommand("event plain {0} CUSTOM {1}"
+                    .Fmt(string.Join(" ", this.events.Select(x => x.ToString().ToUpperWithUnderscores())), string.Join(" ", customEvents)));
+            }
         }
 
-        public Task<CommandReply> SubscribeCustomEvents(params string[] events)
+        public async Task SubscribeCustomEvents(params string[] events)
         {
-            this.customEvents.UnionWith(events); //ensures we are always at least using the default minimum events
-            return this.SubscribeEvents();
+            if (!this.customEvents.SequenceEqual(events))
+            {
+                this.customEvents.UnionWith(events); //ensures we are always at least using the default minimum events
+                await this.SubscribeEvents();
+            }
         }
 
         public void OnHangup(string uuid, Action<EventMessage> action)

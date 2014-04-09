@@ -39,6 +39,12 @@ namespace NEventSocket.FreeSwitch.Channel
 
         private string bridgedLegUUID;
 
+        public Channel(OutboundSocket outboundSocket) : this(outboundSocket.ChannelData, outboundSocket)
+        {
+            this.eventSocket.Linger();
+            this.eventSocket.SubscribeEvents().Wait();
+        }
+
         public Channel(EventMessage eventMessage, EventSocket eventSocket) : this(eventMessage.UUID, eventMessage, eventSocket)
         {
         }
@@ -87,6 +93,16 @@ namespace NEventSocket.FreeSwitch.Channel
             }
         }
 
+        public IObservable<string> Dtmf
+        {
+            get
+            {
+                return
+                    eventSocket.Events.Where(x => x.UUID == UUID && x.EventName == EventName.Dtmf)
+                               .Select(x => x.Headers[HeaderNames.DtmfDigit]);
+            }
+        }
+
         public bool IsBridged
         {
             get
@@ -105,6 +121,27 @@ namespace NEventSocket.FreeSwitch.Channel
             set
             {
                 this.SetChannelVariable(variableName, value);
+            }
+        }
+
+        public async Task Bridge(IChannel other)
+        {
+            if (this.IsBridged) throw new InvalidOperationException("Channel {0} is already bridged to {1}".Fmt(UUID, bridgedLegUUID));
+
+            if (this.AnswerState != AnswerState.Answered && other.AnswerState != AnswerState.Answered) throw new InvalidOperationException("At least one channel must be Answered to bridge them");
+
+            var result = await this.eventSocket.Api("uuid_bridge {0} {1}".Fmt(UUID, other.UUID));
+            if (result.Success)
+            {
+                this.bridgedLegUUID = other.UUID;
+                eventSocket.Events.Where(x => x.UUID == bridgedLegUUID && x.EventName == EventName.ChannelHangup)
+                           .Take(1)
+                           .Subscribe(x =>
+                               {
+                                   Log.DebugFormat(
+                                       "Channel {0} B-Leg {1} hungup {2}", UUID, bridgedLegUUID, x.HangupCause);
+                                   this.bridgedLegUUID = null;
+                               });
             }
         }
 
@@ -135,7 +172,11 @@ namespace NEventSocket.FreeSwitch.Channel
 
                 eventSocket.Events.Where(x => x.UUID == this.UUID && x.EventName == EventName.ChannelUnbridge)
                            .Take(1)
-                           .Subscribe(x => this.bridgedLegUUID = null);
+                           .Subscribe(x =>
+                               {
+                                   Log.DebugFormat("Channel {0} B-Leg {1} hungup {2}", UUID, bridgedLegUUID, x.GetVariable("bridge_hangup_cause"));
+                                   this.bridgedLegUUID = null;
+                               });
             }
             
             return result;
@@ -180,26 +221,20 @@ namespace NEventSocket.FreeSwitch.Channel
                 return eventSocket.Play(UUID, file, new PlayOptions());
             }
 
-            string whichLeg;
-
+            //uuid displace only works on one leg
             switch (leg)
             {
                 case Leg.Both:
-                    whichLeg = "m"; //mux
-                    break;
+                    return Task.WhenAll(
+                        eventSocket.Execute(this.UUID, "displace_session", "{0} m{1}".Fmt(file, "w")),
+                        eventSocket.Execute(this.UUID, "displace_session", "{0} m{1}".Fmt(file, "r")));
                 case Leg.ALeg:
-                    whichLeg = "w"; //write
-                    break;
+                    return this.eventSocket.Execute(this.UUID, "displace_session", "{0} m{1}".Fmt(file, "w"));
                 case Leg.BLeg:
-                    whichLeg = "r"; //read
-                    break;
+                    return this.eventSocket.Execute(this.UUID, "displace_session", "{0} m{1}".Fmt(file, "r"));
                 default:
                     throw new NotSupportedException("Leg {0} is not supported".Fmt(leg));
             }
-
-            string args = "{0} {1}".Fmt(file, whichLeg);
-            Log.TraceFormat("Channel {0} calling displace_session with args '{1}'", this.UUID, args);
-            return this.eventSocket.Execute(this.UUID, "displace_session", args);
         }
 
         public async Task<string> PlayGetDigits(PlayGetDigitsOptions options)
@@ -213,17 +248,17 @@ namespace NEventSocket.FreeSwitch.Channel
             return eventSocket.Say(UUID, options);
         }
 
-        public async Task StartRecording(string file, int maxSeconds = 0)
+        public async Task StartRecording(string file, int? maxSeconds = null)
         {
-            if (this.recordingPath != file)
+            if (this.recordingPath != null)
             {
                 Log.WarnFormat(
-                    "Channel {0} received a request to record to file {1} while currently recording to file {2}. Channel will stop recording and start recording to the new file.", UUID, recordingPath, file);
+                    "Channel {0} received a request to record to file {1} while currently recording to file {2}. Channel will stop recording and start recording to the new file.", UUID, file, recordingPath);
                 await this.StopRecording();
             }
 
             this.recordingPath = file;
-            await eventSocket.Api("uuid_record {0} start {1}".Fmt(UUID, recordingPath));
+            await eventSocket.Api("uuid_record {0} start {1} {2}".Fmt(UUID, recordingPath, maxSeconds));
             Log.DebugFormat("Channel {0} is recording to {1}", UUID, recordingPath);
         }
 
@@ -265,6 +300,17 @@ namespace NEventSocket.FreeSwitch.Channel
                 this.recordingPath = null;
                 Log.DebugFormat("Channel {0} has stopped recording to {1}", UUID, recordingPath);
             }
+        }
+
+        public async Task StartDetectingInbandDtmf()
+        {
+            await eventSocket.SubscribeEvents(EventName.Dtmf);
+            await eventSocket.StartDtmf(UUID);
+        }
+
+        public Task StopDetectingInbandDtmf()
+        {
+            return eventSocket.Stoptmf(UUID);
         }
 
         public void Dispose()

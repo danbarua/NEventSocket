@@ -6,12 +6,7 @@
 
 namespace NEventSocket.FreeSwitch.Api
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
     using System.Text;
-
-    using NEventSocket.Util;
 
     /// <summary>
     /// Defines options for executing a bridge
@@ -30,7 +25,7 @@ namespace NEventSocket.FreeSwitch.Api
         /// Sets the outbound callerid name
         /// </summary>
         /// <remarks>
-        /// https://wiki.freeswitch.org/wiki/Cid
+        /// See https://wiki.freeswitch.org/wiki/Cid
         /// </remarks>
         public string CallerIdName { get; set; }
 
@@ -38,7 +33,7 @@ namespace NEventSocket.FreeSwitch.Api
         /// Sets the outbound callerid number.
         /// </summary>
         /// <remarks>
-        /// https://wiki.freeswitch.org/wiki/Cid
+        /// See https://wiki.freeswitch.org/wiki/Cid
         /// </remarks>
         public string CallerIdNumber { get; set; }
 

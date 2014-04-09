@@ -18,8 +18,12 @@
 
         Action<EventMessage> HangupCallBack { set; }
 
+        IObservable<string> Dtmf { get; }
+
         string this[string variableName] { get; set; }
 
+        Task Bridge(IChannel other);
+        
         Task<BridgeResult> Bridge(string destination, BridgeOptions options, Action<EventMessage> onProgress = null);
 
         Task Hold();
@@ -38,12 +42,16 @@
 
         Task<string> PlayGetDigits(PlayGetDigitsOptions options);
 
-        Task StartRecording(string file, int maxSeconds = 0);
+        Task StartRecording(string file, int? maxSeconds = null);
 
         Task MaskRecording();
 
         Task UnmaskRecording();
 
         Task StopRecording();
+
+        Task StartDetectingInbandDtmf();
+
+        Task StopDetectingInbandDtmf();
     }
 }

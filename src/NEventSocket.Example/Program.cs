@@ -17,6 +17,7 @@ namespace NEventSocket.Example
     using NEventSocket.FreeSwitch;
     using NEventSocket.FreeSwitch.Api;
     using NEventSocket.FreeSwitch.Applications;
+    using NEventSocket.FreeSwitch.Channel;
     using NEventSocket.Util;
 
     /// <summary>The program.</summary>
@@ -30,11 +31,13 @@ namespace NEventSocket.Example
 
             Console.WriteLine("Starting...");
 
-            OutboundSocketTest();
+            ChannelTest();
+
+            //OutboundSocketTest();
             //InboundSocketTest();
 
             //DtmfTest();
-            PlayGetDigitsTest();
+            //PlayGetDigitsTest();
 
             Console.WriteLine("Press [Enter] to exit.");
             Console.ReadLine();
@@ -400,6 +403,118 @@ namespace NEventSocket.Example
 
                         //await connection.ExecuteAppAsync(uuid, "conference", "test+1234");
                         //if (result.ChannelData.AnswerState != AnswerState.Hangup) await connection.Hangup(uuid, "NORMAL_CLEARING");
+                    });
+
+            listener.Start();
+        }
+
+        private static void ChannelTest()
+        {
+            var listener = new OutboundListener(8084);
+
+            listener.Connections.Subscribe(
+                async connection =>
+                    {
+                        await connection.Connect();
+                        Console.WriteLine("New Socket connected");
+
+                        var aLeg = new Channel(connection);
+                        aLeg.HangupCallBack = (e) =>
+                            {
+                                using (Colour.Use(ConsoleColor.Red))
+                                {
+                                    Console.WriteLine(
+                                        "HANGUP DETECTED {0} {1}",
+                                        e.Headers[HeaderNames.CallerUniqueId],
+                                        e.Headers[HeaderNames.HangupCause]);
+                                }
+
+                                aLeg.Dispose();
+                            };
+
+                       await aLeg.Answer();
+                       await aLeg.StartDetectingInbandDtmf();
+
+                        var socket = await InboundSocket.Connect("freeswitch.codes.local");
+                        await socket.SubscribeEvents();
+
+                        var bridgeResult = await socket.Originate(
+                            Endpoint.User("1003"),
+                            new OriginateOptions() { IgnoreEarlyMedia = true, HangupAfterBridge = true });
+
+                        if (bridgeResult.Success)
+                        {
+                            await socket.MyEvents(bridgeResult.ChannelData.UUID);
+                            var bLeg = new Channel(bridgeResult.ChannelData, socket);
+                            var result = await 
+                                bLeg.PlayGetDigits(
+                                    new PlayGetDigitsOptions()
+                                        {
+                                            PromptAudioFile =
+                                                "ivr/8000/ivr-to_accept_press_one.wav",
+                                            BadInputAudioFile =
+                                                "ivr/8000/ivr-that_was_an_invalid_entry.wav",
+                                            MinDigits = 1,
+                                            MaxDigits = 1,
+                                            ValidDigits = "12"
+                                        });
+
+                            if (result != "1")
+                            {
+                                await aLeg.PlayFile("ivr/8000/ivr-call_rejected.wav");
+                                await aLeg.Hangup(HangupCause.CallRejected);
+                                await bLeg.Hangup(HangupCause.NormalClearing);
+                            }
+                            else
+                            {
+                                await aLeg.Bridge(bLeg);
+
+                                if (aLeg.IsBridged)
+                                {
+                                    Console.WriteLine("BRIDGED!");
+
+                                    aLeg["RECORD_STEREO"] = "true";
+                                    var recordingPath = "/usr/local/freeswitch/recordings/{0}.wav".Fmt(aLeg.UUID);
+
+                                    aLeg.Dtmf.Subscribe(
+                                        async dtmf =>
+                                            {
+                                                switch (dtmf)
+                                                {
+                                                    case "1":
+                                                        Console.WriteLine("Mask recording");
+                                                        await aLeg.MaskRecording();
+                                                        await
+                                                            Task.WhenAll(
+                                                                aLeg.PlayFile(
+                                                                    "ivr/8000/ivr-recording_paused.wav", Leg.Both));
+                                                        break;
+                                                    case "2":
+                                                        Console.WriteLine("Unmask recording");
+                                                        await aLeg.UnmaskRecording();
+                                                        await
+                                                            aLeg.PlayFile(
+                                                                "ivr/8000/ivr-begin_recording.wav", Leg.Both);
+                                                        break;
+                                                    case "3":
+                                                        Console.WriteLine("Stop recording");
+                                                        await aLeg.StopRecording();
+                                                        await
+                                                            aLeg.PlayFile(
+                                                                "ivr/8000/ivr-recording_stopped.wav", Leg.Both);
+                                                        break;
+                                                    case "4":
+                                                        Console.WriteLine("Start recording");
+                                                        await aLeg.StartRecording(recordingPath);
+                                                        await
+                                                            aLeg.PlayFile(
+                                                                "ivr/8000/ivr-begin_recording.wav", Leg.Both);
+                                                        break;
+                                                }
+                                            });
+                                }
+                            }
+                        }
                     });
 
             listener.Start();
