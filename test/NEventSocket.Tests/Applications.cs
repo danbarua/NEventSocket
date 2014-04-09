@@ -81,13 +81,12 @@
                                       "ivr/8000/ivr-please_enter_pin_followed_by_pound.wav",
                                   BadInputAudioFile = "ivr/8000/ivr-that_was_an_invalid_entry.wav",
                                   DigitTimeoutMs = 2000,
-                                  DigitsRegex = @"\dddd",
-                                  TransferOnFailure = "1 XML hangup"
+                                  ValidDigits = "1234567890" //note that in the command string this gets transformed into the regex ^(1|2|3|4|5|6|7|8|9|0)+
                               };
 
             var toString = options.ToString();
 
-            Assert.Equal(@"4 8 3 4000 # ivr/8000/ivr-please_enter_pin_followed_by_pound.wav ivr/8000/ivr-that_was_an_invalid_entry.wav play_get_digits_result \dddd 2000 1 XML hangup", toString);
+            Assert.Equal(@"4 8 3 4000 # ivr/8000/ivr-please_enter_pin_followed_by_pound.wav ivr/8000/ivr-that_was_an_invalid_entry.wav play_get_digits_result ^(1|2|3|4|5|6|7|8|9|0)+ 2000", toString);
           }
     }
 }

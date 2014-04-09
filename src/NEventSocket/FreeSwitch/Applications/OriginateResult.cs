@@ -19,8 +19,7 @@
         {
             this.Success = backgroundJobResult.Success;
 
-            HangupCause hangupCause;
-            if (Enum.TryParse(backgroundJobResult.ErrorMessage.ToCamelCase(), out hangupCause)) this.HangupCause = hangupCause;
+            this.HangupCause = backgroundJobResult.ErrorMessage.ToEnumFromUppercaseUnderscore<HangupCause>();
 
             ResponseText = backgroundJobResult.ErrorMessage;
         }

@@ -113,5 +113,15 @@
 
             return dictionary;
         }
+
+        [DebuggerStepThrough]
+        public static TEnum? ToEnumFromUppercaseUnderscore<TEnum>(this string inputString) where TEnum : struct
+        {
+            TEnum result;
+
+            if (Enum.TryParse(inputString.ToCamelCase(), out result)) return result;
+
+            return null;
+        }
     }
 }

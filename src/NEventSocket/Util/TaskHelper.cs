@@ -74,6 +74,33 @@
 
             return tcs.Task;
         }
-    }
 
+        public static Task<TResult> Then<TResult>(this Task<TResult> task, Action<TResult> onSuccess)
+        {
+            if (task == null) throw new ArgumentNullException("task");
+            if (onSuccess == null) throw new ArgumentNullException("onSuccess");
+
+            var tcs = new TaskCompletionSource<TResult>();
+
+            task.ContinueWith(previousTask =>
+            {
+                if (previousTask.IsFaulted && previousTask.Exception != null) tcs.TrySetException(previousTask.Exception);
+                else if (previousTask.IsCanceled) tcs.TrySetCanceled();
+                else
+                {
+                    try
+                    {
+                        onSuccess(task.Result);
+                        tcs.TrySetResult(previousTask.Result);
+                    }
+                    catch (Exception ex)
+                    {
+                        tcs.TrySetException(ex);
+                    }
+                }
+            });
+
+            return tcs.Task;
+        }
+    }
 }

@@ -18,11 +18,9 @@
 
         Action<EventMessage> HangupCallBack { set; }
 
-        string GetChannelVariable(string variableName);
+        string this[string variableName] { get; set; }
 
-        Task SetChannelVariable(string variableName, string value);
-
-        Task<Channel> Bridge(string destination, BridgeOptions options = null);
+        Task<BridgeResult> Bridge(string destination, BridgeOptions options, Action<EventMessage> onProgress = null);
 
         Task Hold();
 
@@ -38,7 +36,7 @@
 
         Task PlayFile(string file, Leg leg = Leg.Both, string terminator = null);
 
-        Task<string> PlayGetDigits(string file, int numDigits, int timeout);
+        Task<string> PlayGetDigits(PlayGetDigitsOptions options);
 
         Task StartRecording(string file, int maxSeconds = 0);
 

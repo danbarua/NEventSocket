@@ -13,6 +13,7 @@ namespace NEventSocket.Tests
     using System.Threading.Tasks;
 
     using NEventSocket.Sockets;
+    using NEventSocket.Util;
 
     public class FakeFreeSwitchOutbound : ObservableSocket
     {
@@ -29,11 +30,20 @@ namespace NEventSocket.Tests
             }
         }
 
-        public async Task SendChannelDataEvent()
+        public Task SendChannelDataEvent()
         {
-            var msg = "Content-Type: command/reply\nReply-Text: +OK\n" + TestMessages.ConnectEvent.Replace("\r\n", "\n")
-                      + "\n\n";
-            await this.SendAsync(Encoding.ASCII.GetBytes(msg));
+            var msg = TestMessages.ConnectEvent.Replace("\r\n", "\n") + "\n\n";
+            return this.SendAsync(Encoding.ASCII.GetBytes(msg));
+        }
+
+        public Task SendCommandReplyOk()
+        {
+            return this.SendAsync(Encoding.ASCII.GetBytes("Content-Type: command/reply\nReply-Text: +OK\n\n"));
+        }
+
+        public Task SendCommandReplyError(string error)
+        {
+            return this.SendAsync(Encoding.ASCII.GetBytes("Content-Type: command/reply\nReply-Text: -ERR {0}\n\n".Fmt(error)));
         }
     }
 }
