@@ -89,6 +89,39 @@ namespace NEventSocket.FreeSwitch.Api
         public string ApiAfterBridge { set { ChannelVariables["api_after_bridge"] = value; } }
 
         /// <summary>
+        /// Sets a prompt for the callee to accept the call by pressing a DTMF key or PIN code
+        /// </summary>
+        /// <remarks>
+        /// See https://wiki.freeswitch.org/wiki/Freeswitch_IVR_Originate#Answer_confirmation
+        /// </remarks>
+        public string ConfirmPrompt { set { ChannelVariables["group_confirm_file"] = value; } }
+
+        /// <summary>
+        /// Sets a prompt to be played on invalid input
+        /// </summary>
+        public string ConfirmInvalidPrompt { set { ChannelVariables["group_confirm_error_file"] = value; } }
+
+        /// <summary>
+        /// Sets a DTMF key or PIN code to be inputted to accept the call
+        /// </summary>
+        public string ConfirmKey { set { ChannelVariables["group_confirm_key"] = value; } }
+
+        /// <summary>
+        /// Sets a timeout for inputting a confirmation Key or PIN (Defaults to 5000ms)
+        /// </summary>
+        public int ConfirmReadTimeoutMs { set { ChannelVariables["group_confirm_read_timeout"] = value.ToString(); } }
+
+        /// <summary>
+        /// Unknown - not documented see https://wiki.freeswitch.org/wiki/Freeswitch_IVR_Originate#Answer_confirmation
+        /// </summary>
+        public bool FailOnSingleReject { set { ChannelVariables["fail_on_single_reject"] = value.ToString().ToLowerInvariant(); } }
+
+        /// <summary>
+        /// Unknown - not documented see https://wiki.freeswitch.org/wiki/Freeswitch_IVR_Originate#Answer_confirmation
+        /// </summary>
+        public bool ConfirmCancelTimeout { set { ChannelVariables["fail_on_single_reject"] = value.ToString().ToLowerInvariant(); } }
+
+        /// <summary>
         /// Container for any Channel Variables to be set before executing the bridge
         /// </summary>
         public IDictionary<string, string> ChannelVariables { get; private set; }
