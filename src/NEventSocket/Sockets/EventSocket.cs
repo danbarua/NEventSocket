@@ -202,6 +202,7 @@
                         if (!tcs.Task.IsCompleted)
                         {
                             tcs.SetResult(new BridgeResult(t.Result));
+                            subscription.Dispose();
                         }
                     },
                     TaskContinuationOptions.OnlyOnRanToCompletion)
