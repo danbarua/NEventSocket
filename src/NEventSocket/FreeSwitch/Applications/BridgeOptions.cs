@@ -93,8 +93,11 @@ namespace NEventSocket.FreeSwitch.Api
 
         /// <summary>
         /// Sets a prompt for the callee to accept the call by pressing a DTMF key or PIN code
+        /// Will not work unless ConfirmKey is also set.
         /// </summary>
         /// <remarks>
+        /// If you want to just playback an audio prompt to the callee before bridging the call, without asking any confirmation, here's an example:
+        /// {group_confirm_file=playback /path/to/prompt.wav,group_confirm_key=exec}
         /// See https://wiki.freeswitch.org/wiki/Freeswitch_IVR_Originate#Answer_confirmation
         /// </remarks>
         public string ConfirmPrompt { set { parameters["group_confirm_file"] = value; } }
@@ -105,8 +108,11 @@ namespace NEventSocket.FreeSwitch.Api
         public string ConfirmInvalidPrompt { set { parameters["group_confirm_error_file"] = value; } }
 
         /// <summary>
-        /// Sets a DTMF key or PIN code to be inputted to accept the call
+        /// Sets a DTMF key or PIN code to be inputted to accept the call. Set to "exec" to just play a whisper prompt before connecting the bridge.
         /// </summary>
+        /// <remarks>
+        /// See https://wiki.freeswitch.org/wiki/Freeswitch_IVR_Originate#Answer_confirmation
+        /// </remarks>
         public string ConfirmKey { set { parameters["group_confirm_key"] = value; } }
 
         /// <summary>
@@ -120,9 +126,25 @@ namespace NEventSocket.FreeSwitch.Api
         public bool FailOnSingleReject { set { parameters["fail_on_single_reject"] = value.ToString().ToLowerInvariant(); } }
 
         /// <summary>
+        /// Command or api to be executed on the B leg before bridging the two channels.
+        /// </summary>
+        /// <remarks>
+        /// See https://wiki.freeswitch.org/wiki/Channel_Variables#bridge_pre_execute_bleg_app
+        /// </remarks>
+        public string PreExecuteBLegApp { set { parameters["bridge_pre_execute_bleg_app"] = value; } }
+
+        /// <summary>
+        /// Arguments to be used with bridge_pre_execute_bleg_app
+        /// </summary>
+        /// <remarks>
+        /// See https://wiki.freeswitch.org/wiki/Channel_Variables#bridge_pre_execute_bleg_data
+        /// </remarks>
+        public string PreExecuteBLegData { set { parameters["bridge_pre_execute_bleg_data"] = value; } }
+
+        /// <summary>
         /// Unknown - not documented see https://wiki.freeswitch.org/wiki/Freeswitch_IVR_Originate#Answer_confirmation
         /// </summary>
-        public bool ConfirmCancelTimeout { set { parameters["fail_on_single_reject"] = value.ToString().ToLowerInvariant(); } }
+        public bool ConfirmCancelTimeout { set { parameters["group_confirm_cancel_timeout "] = value.ToString().ToLowerInvariant(); } }
 
         /// <summary>
         /// Container for any Channel Variables to be set before executing the bridge

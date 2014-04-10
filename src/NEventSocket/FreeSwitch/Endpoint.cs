@@ -7,6 +7,7 @@
 namespace NEventSocket.FreeSwitch
 {
     using System.Diagnostics;
+    using System.Linq;
 
     public static class Endpoint
     {
@@ -14,6 +15,12 @@ namespace NEventSocket.FreeSwitch
         public static string User(string user)
         {
             return string.Format("user/{0}", user);
+        }
+
+        public static string Multiple(params string[] endpoints)
+        {
+            //https://wiki.freeswitch.org/wiki/Freeswitch_IVR_Originate#Enterprise_originate
+            return endpoints.Aggregate(string.Empty, (a, s) => a += s + ":_:", s => s);
         }
 
         public static class Sofia

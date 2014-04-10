@@ -508,8 +508,6 @@ namespace NEventSocket.Example
                                     }
                                 });
                         }
-                        // }
-
                     }
                 });
 
