@@ -212,7 +212,7 @@ namespace NEventSocket.Example
                             CallerIdNumber = "123456789", 
                             CallerIdName = "Dan Leg A", 
                             HangupAfterBridge = false,
-                            TimeoutSeconds = 20
+                            TimeoutSeconds = 20,
                         });
 
             if (!originate.Success)
@@ -260,7 +260,7 @@ namespace NEventSocket.Example
                     await
                     client.Bridge(
                         uuid, 
-                        Endpoint.User("1001"), 
+                        Endpoint.User("1003"), 
                         new BridgeOptions()
                             {
                                 UUID = bridgeUUID,
@@ -270,7 +270,10 @@ namespace NEventSocket.Example
                                 HangupAfterBridge = false, 
                                 IgnoreEarlyMedia = true, 
                                 ContinueOnFail = true, 
-                                RingBack = "${uk-ring}"
+                                RingBack = "tone_stream://${uk-ring};loops=-1",
+                                ConfirmPrompt = "ivr/8000/ivr-to_accept_press_one.wav",
+                                ConfirmInvalidPrompt = "ivr/8000/ivr-that_was_an_invalid_entry.wav",
+                                ConfirmKey = "1234",
                             });
 
                 if (!bridge.Success)
@@ -434,72 +437,34 @@ namespace NEventSocket.Example
 
                     await aLeg.Answer();
                     await aLeg.SetChannelVariable("bridge_filter_dtmf", "true");
-                    await
-                        connection.Api(
-                            "uuid_broadcast {0} playback::{1} aleg".Fmt(
-                                aLeg.UUID, "tone_stream://${uk-ring};loops=-1"));
 
-                    var socket = await InboundSocket.Connect("freeswitch.codes.local");
-                    await socket.SubscribeEvents();
+                    var bridgeResult = await aLeg.Bridge(
+                        Endpoint.User("1003"),
+                        new BridgeOptions()
+                            {
+                                IgnoreEarlyMedia = true,
+                                RingBack = "tone_stream://%(400,200,400,450);%(400,2000,400,450);loops=-1",
+                                ContinueOnFail = true,
+                                Timeout = 60,
+                                CallerIdName = aLeg["effective_caller_id_name"],
+                                CallerIdNumber = aLeg["effective_caller_id_number"],
+                                ConfirmPrompt = "ivr/8000/ivr-to_accept_press_one.wav",
+                                ConfirmInvalidPrompt = "ivr/8000/ivr-that_was_an_invalid_entry.wav",
+                                ConfirmKey = "1234",
+                            });
 
-                    var originateResult =
-                        await
-                        socket.Originate(
-                            Endpoint.User("1003"),
-                            new OriginateOptions()
-                                {
-                                    IgnoreEarlyMedia = true,
-                                    HangupAfterBridge = true,
-                                    CallerIdName = aLeg["effective_caller_id_name"],
-                                    CallerIdNumber = aLeg["effective_caller_id_number"],
-                                    ChannelVariables =
-                                            {
-                                                { "group_confirm_file", "ivr/8000/ivr-to_accept_press_one.wav"},
-                                                { "group_confirm_error_file", "ivr/8000/ivr-that_was_an_invalid_entry.wav"},
-                                                { "group_confirm_key", "1234" }
-                                            }
-                                });
-
-                    if (!originateResult.Success)
+                    if (!bridgeResult.Success)
                     {
                         using (Colour.Use(ConsoleColor.DarkRed))
                         {
-                            Console.WriteLine("Originate Failed - {0}", originateResult.ResponseText);
+                            Console.WriteLine("Originate Failed - {0}", bridgeResult.ResponseText);
                         }
 
-                        await connection.Api("uuid_break " + aLeg.UUID);
                         await aLeg.PlayFile("ivr/8000/ivr-call_rejected.wav");
                         await aLeg.Hangup(HangupCause.NormalTemporaryFailure);
                     }
                     else
                     {
-                        var bLeg = new Channel(originateResult.ChannelData, socket);
-                        await socket.MyEvents(originateResult.ChannelData.UUID);
-
-                        //var result =
-                        //    await
-                        //    bLeg.PlayGetDigits(
-                        //        new PlayGetDigitsOptions()
-                        //            {
-                        //                PromptAudioFile =
-                        //                    "ivr/8000/ivr-to_accept_press_one.wav",
-                        //                BadInputAudioFile =
-                        //                    "ivr/8000/ivr-that_was_an_invalid_entry.wav",
-                        //                MinDigits = 1,
-                        //                MaxDigits = 1,
-                        //                ValidDigits = "12"
-                        //            });
-
-                        //if (result != "1")
-                        //{
-                        //    await aLeg.PlayFile("ivr/8000/ivr-call_rejected.wav");
-                        //    await aLeg.Hangup(HangupCause.CallRejected);
-                        //    await bLeg.Hangup(HangupCause.NormalClearing);
-                        //}
-                        //else
-                        //{
-                        await aLeg.Bridge(bLeg);
-
                         if (aLeg.IsBridged)
                         {
                             Console.WriteLine("BRIDGED!");

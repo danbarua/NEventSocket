@@ -7,6 +7,7 @@
 namespace NEventSocket.FreeSwitch.Api
 {
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Text;
 
     /// <summary>
@@ -17,6 +18,8 @@ namespace NEventSocket.FreeSwitch.Api
     /// </remarks>
     public class BridgeOptions
     {
+        private IDictionary<string, string> parameters = new Dictionary<string, string>(); 
+
         public BridgeOptions()
         {
             ChannelVariables = new Dictionary<string, string>();
@@ -60,7 +63,7 @@ namespace NEventSocket.FreeSwitch.Api
         /// <summary>
         /// If not null, will set the ringback channel variable on the A-Leg to the given sound.
         /// </summary>
-        public string RingBack { set { ChannelVariables["ringback"] = value; } }
+        public string RingBack { set{ ChannelVariables["ringback"] = value; } }//{ get; set; }
 
         /// <summary>
         /// The maximum number of seconds to wait for an answer state from a remote endpoint.
@@ -94,38 +97,39 @@ namespace NEventSocket.FreeSwitch.Api
         /// <remarks>
         /// See https://wiki.freeswitch.org/wiki/Freeswitch_IVR_Originate#Answer_confirmation
         /// </remarks>
-        public string ConfirmPrompt { set { ChannelVariables["group_confirm_file"] = value; } }
+        public string ConfirmPrompt { set { parameters["group_confirm_file"] = value; } }
 
         /// <summary>
         /// Sets a prompt to be played on invalid input
         /// </summary>
-        public string ConfirmInvalidPrompt { set { ChannelVariables["group_confirm_error_file"] = value; } }
+        public string ConfirmInvalidPrompt { set { parameters["group_confirm_error_file"] = value; } }
 
         /// <summary>
         /// Sets a DTMF key or PIN code to be inputted to accept the call
         /// </summary>
-        public string ConfirmKey { set { ChannelVariables["group_confirm_key"] = value; } }
+        public string ConfirmKey { set { parameters["group_confirm_key"] = value; } }
 
         /// <summary>
         /// Sets a timeout for inputting a confirmation Key or PIN (Defaults to 5000ms)
         /// </summary>
-        public int ConfirmReadTimeoutMs { set { ChannelVariables["group_confirm_read_timeout"] = value.ToString(); } }
+        public int ConfirmReadTimeoutMs { set { parameters["group_confirm_read_timeout"] = value.ToString(); } }
 
         /// <summary>
         /// Unknown - not documented see https://wiki.freeswitch.org/wiki/Freeswitch_IVR_Originate#Answer_confirmation
         /// </summary>
-        public bool FailOnSingleReject { set { ChannelVariables["fail_on_single_reject"] = value.ToString().ToLowerInvariant(); } }
+        public bool FailOnSingleReject { set { parameters["fail_on_single_reject"] = value.ToString().ToLowerInvariant(); } }
 
         /// <summary>
         /// Unknown - not documented see https://wiki.freeswitch.org/wiki/Freeswitch_IVR_Originate#Answer_confirmation
         /// </summary>
-        public bool ConfirmCancelTimeout { set { ChannelVariables["fail_on_single_reject"] = value.ToString().ToLowerInvariant(); } }
+        public bool ConfirmCancelTimeout { set { parameters["fail_on_single_reject"] = value.ToString().ToLowerInvariant(); } }
 
         /// <summary>
         /// Container for any Channel Variables to be set before executing the bridge
         /// </summary>
         public IDictionary<string, string> ChannelVariables { get; private set; }
 
+        [DebuggerStepThrough]
         public override string ToString()
         {
             var sb = new StringBuilder();
@@ -141,8 +145,15 @@ namespace NEventSocket.FreeSwitch.Api
             if (!string.IsNullOrEmpty(this.CallerIdName)) sb.AppendFormat("origination_caller_id_name='{0}',", this.CallerIdName);
             if (!string.IsNullOrEmpty(this.CallerIdNumber)) sb.AppendFormat("origination_caller_id_number={0},", this.CallerIdNumber);
 
+            //if (!string.IsNullOrEmpty(this.RingBack)) sb.AppendFormat("ringback='{0}',", this.RingBack);
+
             if (this.Timeout > 0) sb.AppendFormat("originate_timeout={0},", this.Timeout);
             if (this.IgnoreEarlyMedia) sb.Append("ignore_early_media=true,");
+
+            foreach (var kvp in parameters)
+            {
+                sb.AppendFormat("{0}='{1}',", kvp.Key, kvp.Value);
+            }
 
             if (sb.Length > 1) sb.Remove(sb.Length - 1, 1);
 

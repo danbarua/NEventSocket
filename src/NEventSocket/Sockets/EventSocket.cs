@@ -166,7 +166,7 @@
             return tcs.Task;
         }
 
-        public Task<BridgeResult> Bridge(string uuid, string endpoint, BridgeOptions options = null)
+        public async Task<BridgeResult> Bridge(string uuid, string endpoint, BridgeOptions options = null)
         {
             if (options == null) options = new BridgeOptions();
             if (string.IsNullOrEmpty(options.UUID)) options.UUID = Guid.NewGuid().ToString();
@@ -176,8 +176,9 @@
             //some bridge options need to be set in channel vars
             if (options.ChannelVariables.Any())
             {
-                this.SetMultipleChannelVariables(
-                    uuid, options.ChannelVariables.Select(kvp => kvp.Key + "=" + kvp.Value).ToArray()).Wait();
+                await
+                    this.SetMultipleChannelVariables(
+                        uuid, options.ChannelVariables.Select(kvp => kvp.Key + "='" + kvp.Value + "'").ToArray());
             }
 
             var tcs = new TaskCompletionSource<BridgeResult>(TaskCreationOptions.AttachedToParent);
@@ -206,7 +207,7 @@
                     TaskContinuationOptions.OnlyOnRanToCompletion)
                 .ContinueOnFaultedOrCancelled(tcs, subscription.Dispose);
 
-            return tcs.Task;
+            return await tcs.Task;
         }
 
         public Task<ApiResponse> Api(string command)

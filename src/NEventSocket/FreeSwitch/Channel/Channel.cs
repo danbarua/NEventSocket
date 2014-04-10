@@ -239,11 +239,11 @@ namespace NEventSocket.FreeSwitch.Channel
         {
             if (terminator != null) await this.SetChannelVariable("playback_terminators", terminator);
 
-            //if (!IsBridged)
-            //{
-            //    await eventSocket.Play(UUID, file, new PlayOptions());
-            //    return;
-            //}
+            if (!IsBridged)
+            {
+                await eventSocket.Play(UUID, file, new PlayOptions());
+                return;
+            }
 
             //uuid displace only works on one leg
             switch (leg)

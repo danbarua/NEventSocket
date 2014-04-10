@@ -26,9 +26,9 @@
             return eventSocket.Api(arg != null ? "{0} {1}".Fmt(command, arg) : command);
         }
 
-        public static Task<EventMessage> SetChannelVariable(this IEventSocketCommands eventSocket, string uuid, string variable, object value)
+        public static Task<ApiResponse> SetChannelVariable(this IEventSocketCommands eventSocket, string uuid, string variable, object value)
         {
-            return eventSocket.Execute(uuid, "set", applicationArguments: "{0}={1}".Fmt(variable, value));
+            return eventSocket.Api("uuid_setvar {0} {1} {2}".Fmt(uuid, variable, value));
         }
 
         /// <summary>
@@ -38,10 +38,13 @@
         /// <param name="uuid">The Channel UUID</param>
         /// <param name="assignments">Array of assignments in the form "foo=value", "bar=value".</param>
         /// <returns>A Task[EventMessage] representing the CHANNEL_EXECUTE_COMPLETE event.</returns>
-        public static Task<EventMessage> SetMultipleChannelVariables(
+        public static Task<ApiResponse> SetMultipleChannelVariables(
             this IEventSocketCommands eventSocket, string uuid, params string[] assignments)
         {
-            return eventSocket.Execute(uuid, "multiset", "^^:" + assignments.Aggregate(string.Empty, (a, s) => a += s.Replace(":", @"\:") + ":", s => s));
+            return
+                eventSocket.Api(
+                    "uuid_setvar_multi {0} {1}".Fmt(
+                        uuid, assignments.Aggregate(string.Empty, (a, s) => a += s + ";", s => s)));
         }
 
         /// <summary>
