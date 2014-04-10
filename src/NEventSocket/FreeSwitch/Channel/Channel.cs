@@ -227,7 +227,7 @@ namespace NEventSocket.FreeSwitch.Channel
 
         public Task Hangup(HangupCause hangupCause = FreeSwitch.HangupCause.NormalClearing)
         {
-            return eventSocket.Hangup(UUID, hangupCause);
+            return eventSocket.Api("uuid_kill {0} {1}".Fmt(UUID, hangupCause.ToString().ToUpperWithUnderscores()));
         }
 
         public Task Sleep(int milliseconds)
@@ -239,10 +239,11 @@ namespace NEventSocket.FreeSwitch.Channel
         {
             if (terminator != null) await this.SetChannelVariable("playback_terminators", terminator);
 
-            if (!IsBridged)
-            {
-                await eventSocket.Play(UUID, file, new PlayOptions());
-            }
+            //if (!IsBridged)
+            //{
+            //    await eventSocket.Play(UUID, file, new PlayOptions());
+            //    return;
+            //}
 
             //uuid displace only works on one leg
             switch (leg)

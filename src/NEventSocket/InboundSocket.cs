@@ -55,30 +55,43 @@
 
             var tcs = new TaskCompletionSource<OriginateResult>();
 
+            EventMessage channelData = null;
+
             var subscription = this.Events.Where(x => x.UUID == options.UUID
                                     && (x.EventName == EventName.ChannelAnswer || x.EventName == EventName.ChannelHangup
                                         || (options.ReturnRingReady && x.EventName == EventName.ChannelProgress)))
                                              .Take(1)
                                              .Subscribe(x =>
                                              {
-                                                 Log.TraceFormat("Originate {0} complete - {1}", originateString, x.Headers[HeaderNames.AnswerState]);
-                                                 tcs.SetResult(new OriginateResult(x));
+                                                 channelData = x;
+
+                                                 if (options.ReturnRingReady && x.EventName == EventName.ChannelProgress)
+                                                 {
+                                                     tcs.SetResult(new OriginateResult(x));
+                                                 }
                                              });
 
             this.BackgroundJob("originate", originateString)
                 .ContinueWith(
                     t =>
                         {
-                            if (!tcs.Task.IsCompleted && t.Result != null && !t.Result.Success)
+                            if (!tcs.Task.IsCompleted && t.Result != null)
                             {
                                 //we got a BgApiResult before getting a ChannelAnswer or ChannelHangup event.
-                                Log.TraceFormat("Originate {0} failed - {1}", originateString, t.Result.ErrorMessage);
+                                Log.TraceFormat("Originate {0} success: {1} - message: {2}", originateString, t.Result.Success, t.Result.ErrorMessage);
 
                                 //clean up the event handler, we don't need it now
                                 subscription.Dispose();
 
                                 //complete the task
-                                tcs.SetResult(new OriginateResult(t.Result));
+                                if (!t.Result.Success || channelData == null)
+                                {
+                                    tcs.SetResult(new OriginateResult(t.Result));
+                                }
+                                else if (channelData != null)
+                                {
+                                    tcs.SetResult(new OriginateResult(channelData));
+                                }
                             }
                         },
                         TaskContinuationOptions.OnlyOnRanToCompletion)

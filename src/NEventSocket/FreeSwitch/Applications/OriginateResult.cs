@@ -19,7 +19,8 @@
         {
             this.Success = backgroundJobResult.Success;
 
-            this.HangupCause = backgroundJobResult.ErrorMessage.ToEnumFromUppercaseUnderscore<HangupCause>();
+            if (!Success)
+                this.HangupCause = backgroundJobResult.ErrorMessage.ToEnumFromUppercaseUnderscore<HangupCause>();
 
             ResponseText = backgroundJobResult.ErrorMessage;
         }

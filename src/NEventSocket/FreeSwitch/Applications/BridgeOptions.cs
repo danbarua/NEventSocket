@@ -6,16 +6,22 @@
 
 namespace NEventSocket.FreeSwitch.Api
 {
+    using System.Collections.Generic;
     using System.Text;
 
     /// <summary>
     /// Defines options for executing a bridge
     /// </summary>
     /// <remarks>
-    /// https://wiki.freeswitch.org/wiki/Misc._Dialplan_Tools_bridge
+    /// See https://wiki.freeswitch.org/wiki/Misc._Dialplan_Tools_bridge
     /// </remarks>
     public class BridgeOptions
     {
+        public BridgeOptions()
+        {
+            ChannelVariables = new Dictionary<string, string>();
+        }
+
         /// <summary>
         /// Optionally set the UUID of the outbound leg before initiating the bridge.
         /// </summary>
@@ -49,12 +55,12 @@ namespace NEventSocket.FreeSwitch.Api
         /// <summary>
         /// If set to true, the call will terminate when the bridge completes.
         /// </summary>
-        public bool HangupAfterBridge { get; set; }
+        public bool HangupAfterBridge { set { ChannelVariables["hangup_after_bridge"] = value.ToString().ToLowerInvariant(); } }
 
         /// <summary>
         /// If not null, will set the ringback channel variable on the A-Leg to the given sound.
         /// </summary>
-        public string RingBack { get; set; }
+        public string RingBack { set { ChannelVariables["ringback"] = value; } }
 
         /// <summary>
         /// The maximum number of seconds to wait for an answer state from a remote endpoint.
@@ -64,7 +70,28 @@ namespace NEventSocket.FreeSwitch.Api
         /// <summary>
         /// If set to true, the call will not terminate when the bridge fails.
         /// </summary>
-        public bool ContinueOnFail { get; set; }
+        public bool ContinueOnFail { set { ChannelVariables["continue_on_fail"] = value.ToString().ToLowerInvariant(); } }
+
+        /// <summary>
+        /// Setting this variable to true will prevent DTMF digits received on this channel when bridged from being sent to the other channel.
+        /// </summary>
+        /// <remarks>
+        /// See https://wiki.freeswitch.org/wiki/Variable_bridge_filter_dtmf
+        /// </remarks>
+        public bool FilterDtmf { set { ChannelVariables["bridge_filter_dtmf"] = value.ToString().ToLowerInvariant(); } }
+
+        /// <summary>
+        /// Execute an API command after bridge.
+        /// </summary>
+        /// <remarks>
+        /// See https://wiki.freeswitch.org/wiki/Variable_api_after_bridge
+        /// </remarks>
+        public string ApiAfterBridge { set { ChannelVariables["api_after_bridge"] = value; } }
+
+        /// <summary>
+        /// Container for any Channel Variables to be set before executing the bridge
+        /// </summary>
+        public IDictionary<string, string> ChannelVariables { get; private set; }
 
         public override string ToString()
         {

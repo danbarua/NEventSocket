@@ -63,17 +63,20 @@
                                     .Subscribe(response =>
                                         {
                                                      var result = new CommandReply(response);
-                                                     Log.TraceFormat("CommandReply received [{0}]", result.ReplyText);
                                                      lock (commandCallbacks)
                                                      {
-                                                         commandCallbacks.Dequeue().SetResult(result);
+                                                         var callBack = commandCallbacks.Dequeue();
+                                                         Log.TraceFormat("CommandReply received [{0}] for [{1}]", result.ReplyText, callBack.Task.AsyncState);
+                                                         callBack.SetResult(result);
                                                      }
                                                  },
                                                  ex =>
                                                      {
                                                          lock (commandCallbacks)
                                                          {
-                                                             commandCallbacks.Dequeue().SetException(ex);
+                                                            var callBack = commandCallbacks.Dequeue();
+                                                            Log.Error("Exception when receving reply for [{0}]".Fmt(callBack.Task.AsyncState),ex);
+                                                            callBack.SetException(ex);
                                                          }
                                                      }));
 
@@ -81,17 +84,20 @@
                                     .Where(x => x.ContentType == ContentTypes.ApiResponse)
                                     .Subscribe(response =>
                                                  {
-                                                     Log.TraceFormat("ApiResponse received [{0}]", response.BodyText);
                                                      lock (apiCallbacks)
                                                      {
-                                                         apiCallbacks.Dequeue().SetResult(new ApiResponse(response));
+                                                         var callBack = apiCallbacks.Dequeue();
+                                                         Log.TraceFormat("ApiResponse received [{0}] for [{1}]", response.BodyText, callBack.Task.AsyncState);
+                                                         callBack.SetResult(new ApiResponse(response));
                                                      }
                                                  },
                                                  ex =>
                                                      {
                                                          lock (commandCallbacks)
                                                          {
-                                                             apiCallbacks.Dequeue().SetException(ex);
+                                                             var callBack = apiCallbacks.Dequeue();
+                                                             Log.Error("Exception when receving reply for [{0}]".Fmt(callBack.Task.AsyncState), ex);
+                                                             callBack.SetException(ex);
                                                          }
                                                      }));
 
@@ -168,12 +174,13 @@
             var bridgeString = string.Format("{0}{1}", options, endpoint);
 
             //some bridge options need to be set in channel vars
-            if (!string.IsNullOrEmpty(options.RingBack)) this.SetChannelVariable(uuid, "ringback", options.RingBack);
+            if (options.ChannelVariables.Any())
+            {
+                this.SetMultipleChannelVariables(
+                    uuid, options.ChannelVariables.Select(kvp => kvp.Key + "=" + kvp.Value).ToArray()).Wait();
+            }
 
-            this.SetChannelVariable(uuid, "hangup_after_bridge", options.HangupAfterBridge.ToString().ToLowerInvariant());
-            this.SetChannelVariable(uuid, "continue_on_fail", options.ContinueOnFail.ToLower());
-
-            var tcs = new TaskCompletionSource<BridgeResult>();
+            var tcs = new TaskCompletionSource<BridgeResult>(TaskCreationOptions.AttachedToParent);
 
             var subscription = this.Events.Where(x => x.UUID == uuid && x.EventName == EventName.ChannelBridge)
                 .Take(1)
@@ -204,7 +211,7 @@
 
         public Task<ApiResponse> Api(string command)
         {
-            var tcs = new TaskCompletionSource<ApiResponse>();
+            var tcs = new TaskCompletionSource<ApiResponse>(command, TaskCreationOptions.AttachedToParent);
 
             try
             {
@@ -230,7 +237,7 @@
             if (jobUUID == null)
                 jobUUID = Guid.NewGuid();
 
-            var tcs = new TaskCompletionSource<BackgroundJobResult>();
+            var tcs = new TaskCompletionSource<BackgroundJobResult>(TaskCreationOptions.AttachedToParent);
 
             //we'll get an event in the future for this JobUUID and we'll use that to complete the task
             var subscription = Events.Where(
@@ -253,7 +260,8 @@
 
         public Task<CommandReply> SendCommand(string command)
         {
-            var tcs = new TaskCompletionSource<CommandReply>();
+            var tcs = new TaskCompletionSource<CommandReply>(command, TaskCreationOptions.AttachedToParent);
+
             try
             {
                 Monitor.Enter(commandCallbacks);

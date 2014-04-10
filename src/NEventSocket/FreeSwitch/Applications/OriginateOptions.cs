@@ -1,5 +1,6 @@
 ﻿namespace NEventSocket.FreeSwitch.Applications
 {
+    using System.Collections.Generic;
     using System.Text;
 
     /// <summary>
@@ -10,6 +11,11 @@
     /// </remarks>
     public class OriginateOptions
     {
+        public OriginateOptions()
+        {
+            ChannelVariables = new Dictionary<string, string>();
+        }
+
         public string UUID { get; set; }
 
         /// <summary>
@@ -43,17 +49,17 @@
         /// </summary>
         public string ExecuteOnOriginate { get; set; }
 
-
         /// <summary>
         /// Whether this call should hang up after completing a bridge to another leg
         /// </summary>
         public bool HangupAfterBridge { get; set; }
 
         /// <summary>
-        /// 
+        /// Whether the originate command should complete on receiving a RingReady event.
+        /// Can be used to route the call to an outbound socket to recive the CHANNEL_ANSWER event.
         /// </summary>
         /// <remarks>
-        /// http://blog.godson.in/2010/12/use-of-returnringready-originate.html
+        /// See http://blog.godson.in/2010/12/use-of-returnringready-originate.html
         /// </remarks>
         public bool ReturnRingReady { get; set; }
 
@@ -72,6 +78,10 @@
         /// </remarks>
         public bool BypassMedia { get; set; }
 
+        /// <summary>
+        /// Container for any Channel Variables to be set before executing the origination
+        /// </summary>
+        public IDictionary<string, string> ChannelVariables { get; set; }
 
         public override string ToString()
         {
@@ -98,6 +108,11 @@
             if (this.BypassMedia) sb.Append("bypass_media=true,");
 
             sb.AppendFormat("hangup_after_bridge={0},", HangupAfterBridge.ToString().ToLower());
+
+            foreach (var kvp in ChannelVariables)
+            {
+                sb.AppendFormat("{0}='{1}',", kvp.Key, kvp.Value);
+            }
             
             if (sb.Length > 1)
                 sb.Remove(sb.Length - 1, 1);
