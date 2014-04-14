@@ -93,7 +93,7 @@
                                                  },
                                                  ex =>
                                                      {
-                                                         lock (commandCallbacks)
+                                                         lock (apiCallbacks)
                                                          {
                                                              var callBack = apiCallbacks.Dequeue();
                                                              Log.Error("Exception when receving reply for [{0}]".Fmt(callBack.Task.AsyncState), ex);
