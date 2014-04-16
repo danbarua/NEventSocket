@@ -8,7 +8,7 @@
     /// </summary>
     public class PlayGetDigitsOptions
     {
-        private string channelVariableName = "play_get_digits_result";
+        private const string channelVariableName = "play_get_digits_result";
 
         private int maxDigits = 128;
 
@@ -69,6 +69,7 @@
             {
                 return this.maxTries;
             }
+
             set
             {
                 this.maxTries = value;
@@ -84,6 +85,7 @@
             {
                 return this.timeoutMs;
             }
+
             set
             {
                 this.timeoutMs = value;
@@ -115,6 +117,7 @@
             {
                 return this.promptAudioFile;
             }
+
             set
             {
                 this.promptAudioFile = value;
@@ -130,6 +133,7 @@
             {
                 return this.badInputAudioFile;
             }
+
             set
             {
                 this.badInputAudioFile = value;
@@ -137,7 +141,7 @@
         }
 
         /// <summary>
-        /// ValidDigits
+        /// Valid Digits
         /// </summary>
         public string ValidDigits
         {
@@ -172,6 +176,7 @@
             {
                 return this.digitTimeoutMs;
             }
+
             set
             {
                 this.digitTimeoutMs = value;

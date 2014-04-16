@@ -20,14 +20,11 @@
             this.Success = backgroundJobResult.Success;
 
             if (!Success)
-                this.HangupCause = backgroundJobResult.ErrorMessage.ToEnumFromUppercaseUnderscore<HangupCause>();
+                this.HangupCause = backgroundJobResult.ErrorMessage.HeaderToEnumOrNull<HangupCause>();
 
             ResponseText = backgroundJobResult.ErrorMessage;
         }
 
-        /// <summary>
-        /// Gets a string indicating why the originate command failed
-        /// </summary>
         public HangupCause? HangupCause { get; private set; }
     }
 }

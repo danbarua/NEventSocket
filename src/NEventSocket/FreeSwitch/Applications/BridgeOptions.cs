@@ -10,6 +10,8 @@ namespace NEventSocket.FreeSwitch.Api
     using System.Diagnostics;
     using System.Text;
 
+    using NEventSocket.Util;
+
     /// <summary>
     /// Defines options for executing a bridge
     /// </summary>
@@ -18,7 +20,7 @@ namespace NEventSocket.FreeSwitch.Api
     /// </remarks>
     public class BridgeOptions
     {
-        private IDictionary<string, string> parameters = new Dictionary<string, string>(); 
+        private readonly IDictionary<string, string> parameters = new Dictionary<string, string>(); 
 
         public BridgeOptions()
         {
@@ -28,7 +30,21 @@ namespace NEventSocket.FreeSwitch.Api
         /// <summary>
         /// Optionally set the UUID of the outbound leg before initiating the bridge.
         /// </summary>
-        public string UUID { get; set; }
+        /// <remarks>
+        /// NEventSocket will set the UUID if it is not set, so that we can catch events of interest on the outbound channel.
+        /// </remarks>
+        public string UUID
+        {
+            get
+            {
+                return parameters.GetValueOrDefault("origination_uuid");
+            }
+
+            set
+            {
+                parameters["origination_uuid"] = value;
+            }
+        }
 
         /// <summary>
         /// Sets the outbound callerid name
@@ -36,7 +52,7 @@ namespace NEventSocket.FreeSwitch.Api
         /// <remarks>
         /// See https://wiki.freeswitch.org/wiki/Cid
         /// </remarks>
-        public string CallerIdName { get; set; }
+        public string CallerIdName { set { parameters["origination_caller_id_name"] = value; } }
 
         /// <summary>
         /// Sets the outbound callerid number.
@@ -44,7 +60,7 @@ namespace NEventSocket.FreeSwitch.Api
         /// <remarks>
         /// See https://wiki.freeswitch.org/wiki/Cid
         /// </remarks>
-        public string CallerIdNumber { get; set; }
+        public string CallerIdNumber { set { parameters["origination_caller_id_number"] = value; } }
 
         /// <summary>
         /// By default when bridging, the first endpoint to provide media (as opposed to actually answering) 
@@ -53,25 +69,28 @@ namespace NEventSocket.FreeSwitch.Api
         /// In some cases, the ringing sound itself is media. If your bridge command includes a cell phone number and your internal endpoints
         /// stop ringing as soon as the cell phone starts, you will need to enable the 'ignore_early_media' option
         /// </summary>
-        public bool IgnoreEarlyMedia { get; set; }
+        public bool IgnoreEarlyMedia { set { parameters["ignore_early_media"] = value.ToLowerBooleanString(); } }
 
         /// <summary>
         /// If set to true, the call will terminate when the bridge completes.
         /// </summary>
-        public bool HangupAfterBridge { set { ChannelVariables["hangup_after_bridge"] = value.ToString().ToLowerInvariant(); } }
+        /// <remarks>
+        /// Defaults to true if unset.
+        /// </remarks>
+        public bool HangupAfterBridge { set { ChannelVariables["hangup_after_bridge"] = value.ToLowerBooleanString(); } }
 
         /// <summary>
-        /// If not null, will set the ringback channel variable on the A-Leg to the given sound.
+        /// Sets the ringback channel variable on the A-Leg to the given sound.
         /// </summary>
-        public string RingBack { set{ ChannelVariables["ringback"] = value; } }//{ get; set; }
+        public string RingBack { set { ChannelVariables["ringback"] = value; } } //{ get; set; }
 
         /// <summary>
-        /// The maximum number of seconds to wait for an answer state from a remote endpoint.
+        /// The maximum number of seconds to wait for an answer from a remote endpoint.
         /// </summary>
-        public int Timeout { get; set; }
+        public int TimeoutSeconds { set { parameters["call_timeout"] = value.ToString(); } } //todo: test with this or originate_timeout ?
 
         /// <summary>
-        /// If set to true, the call will not terminate when the bridge fails.
+        /// If set to true, the dial-plan will continue to execute when the bridge fails instead of terminating the a-leg.
         /// </summary>
         public bool ContinueOnFail { set { ChannelVariables["continue_on_fail"] = value.ToString().ToLowerInvariant(); } }
 
@@ -103,7 +122,8 @@ namespace NEventSocket.FreeSwitch.Api
         public string ConfirmPrompt { set { parameters["group_confirm_file"] = value; } }
 
         /// <summary>
-        /// Sets a prompt to be played on invalid input
+        /// Sets a prompt to be played on invalid input.
+        /// Will not work unless ConfirmKey is also set. 
         /// </summary>
         public string ConfirmInvalidPrompt { set { parameters["group_confirm_error_file"] = value; } }
 
@@ -126,22 +146,6 @@ namespace NEventSocket.FreeSwitch.Api
         public bool FailOnSingleReject { set { parameters["fail_on_single_reject"] = value.ToString().ToLowerInvariant(); } }
 
         /// <summary>
-        /// Command or api to be executed on the B leg before bridging the two channels.
-        /// </summary>
-        /// <remarks>
-        /// See https://wiki.freeswitch.org/wiki/Channel_Variables#bridge_pre_execute_bleg_app
-        /// </remarks>
-        public string PreExecuteBLegApp { set { parameters["bridge_pre_execute_bleg_app"] = value; } }
-
-        /// <summary>
-        /// Arguments to be used with bridge_pre_execute_bleg_app
-        /// </summary>
-        /// <remarks>
-        /// See https://wiki.freeswitch.org/wiki/Channel_Variables#bridge_pre_execute_bleg_data
-        /// </remarks>
-        public string PreExecuteBLegData { set { parameters["bridge_pre_execute_bleg_data"] = value; } }
-
-        /// <summary>
         /// Unknown - not documented see https://wiki.freeswitch.org/wiki/Freeswitch_IVR_Originate#Answer_confirmation
         /// </summary>
         public bool ConfirmCancelTimeout { set { parameters["group_confirm_cancel_timeout "] = value.ToString().ToLowerInvariant(); } }
@@ -156,26 +160,8 @@ namespace NEventSocket.FreeSwitch.Api
         {
             var sb = new StringBuilder();
             sb.Append("{");
-          
-            if (Timeout > 0) sb.AppendFormat("call_timeout={0},", this.Timeout);
-
-            if (!string.IsNullOrEmpty(this.UUID)) sb.AppendFormat("origination_uuid='{0}',", this.UUID);
-
-            /* https://wiki.freeswitch.org/wiki/Variable_effective_caller_id_name
-            /*  sets the effective callerid name. This is automatically exported to the B-leg; however, it is not valid in an origination string.
-             * In other words, set this before calling bridge, otherwise use origination_caller_id_name */
-            if (!string.IsNullOrEmpty(this.CallerIdName)) sb.AppendFormat("origination_caller_id_name='{0}',", this.CallerIdName);
-            if (!string.IsNullOrEmpty(this.CallerIdNumber)) sb.AppendFormat("origination_caller_id_number={0},", this.CallerIdNumber);
-
-            //if (!string.IsNullOrEmpty(this.RingBack)) sb.AppendFormat("ringback='{0}',", this.RingBack);
-
-            if (this.Timeout > 0) sb.AppendFormat("originate_timeout={0},", this.Timeout);
-            if (this.IgnoreEarlyMedia) sb.Append("ignore_early_media=true,");
-
-            foreach (var kvp in parameters)
-            {
-                sb.AppendFormat("{0}='{1}',", kvp.Key, kvp.Value);
-            }
+            
+            sb.Append(parameters.ToOriginateString());
 
             if (sb.Length > 1) sb.Remove(sb.Length - 1, 1);
 

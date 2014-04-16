@@ -264,7 +264,7 @@ namespace NEventSocket.Example
                         new BridgeOptions()
                             {
                                 UUID = bridgeUUID,
-                                Timeout = 20, 
+                                TimeoutSeconds = 20, 
                                 CallerIdName = "Dan B Leg", 
                                 CallerIdNumber = "987654321", 
                                 HangupAfterBridge = false, 
@@ -437,27 +437,51 @@ namespace NEventSocket.Example
 
                     await aLeg.Answer();
                     await aLeg.SetChannelVariable("bridge_filter_dtmf", "true");
+                    await connection.Execute(aLeg.UUID, "digit_action_set_realm", "feature_codes");
+                    await connection.SubscribeCustomEvents("NEventSocket::FeatureCode");
 
-                    var bridgeResult = await aLeg.Bridge(
-                        Endpoint.User("1003"),
-                        new BridgeOptions()
-                            {
-                                IgnoreEarlyMedia = true,
-                                RingBack = "tone_stream://%(400,200,400,450);%(400,2000,400,450);loops=-1",
-                                ContinueOnFail = true,
-                                Timeout = 60,
-                                CallerIdName = aLeg["effective_caller_id_name"],
-                                CallerIdNumber = aLeg["effective_caller_id_number"],
-                                ConfirmPrompt = "ivr/8000/ivr-to_accept_press_one.wav",
-                                ConfirmInvalidPrompt = "ivr/8000/ivr-that_was_an_invalid_entry.wav",
-                                ConfirmKey = "1234",
-                            });
+                    connection.Events.Where(
+                        x =>
+                        x.EventName == EventName.Custom
+                        && x.Headers[HeaderNames.EventSubclass] == "NEventSocket::FeatureCode").Subscribe(
+                            x =>
+                                {
+                                    using (Colour.Use(ConsoleColor.Yellow))
+                                    {
+                                        Console.WriteLine("Got feature code '{0}'.", x.GetHeader("feature_code"));
+                                    }
+                                });
+                    
+                    var bridgeOptions = new BridgeOptions()
+                                            {
+                                                IgnoreEarlyMedia = true,
+                                                RingBack =
+                                                    "tone_stream://%(400,200,400,450);%(400,2000,400,450);loops=-1",
+                                                ContinueOnFail = true,
+                                                HangupAfterBridge = true,
+                                                TimeoutSeconds = 60,
+                                                CallerIdName = aLeg["effective_caller_id_name"],
+                                                CallerIdNumber = aLeg["effective_caller_id_number"],
+                                                ConfirmPrompt = "ivr/8000/ivr-to_accept_press_one.wav",
+                                                ConfirmInvalidPrompt =
+                                                    "ivr/8000/ivr-that_was_an_invalid_entry.wav",
+                                                ConfirmKey = "1234",
+                                                };
 
-                    if (!bridgeResult.Success)
+                    bridgeOptions.ChannelVariables.Add("x_callcraft_account_id", "1234");
+                    bridgeOptions.ChannelVariables.Add("x_callcallcraft_agent_id", "1234");
+                    bridgeOptions.ChannelVariables.Add("bridge_pre_execute_bleg_app", "bind_digit_action");
+                    bridgeOptions.ChannelVariables.Add(
+                        "bridge_pre_execute_bleg_data",
+                        @"feature_codes,~^\d+,exec:event,'Event-Subclass=NEventSocket::FeatureCode,Event-Name=CUSTOM,feature_code=${last_matching_digits}',peer,both".Fmt(aLeg.UUID)); //self,peer,both
+                    
+                    await aLeg.Bridge(Endpoint.User("1003"), bridgeOptions);
+
+                    if (!aLeg.IsBridged)
                     {
                         using (Colour.Use(ConsoleColor.DarkRed))
                         {
-                            Console.WriteLine("Originate Failed - {0}", bridgeResult.ResponseText);
+                            Console.WriteLine("Originate Failed - {0}", aLeg["bridge_hangup_cause"]);
                         }
 
                         await aLeg.PlayFile("ivr/8000/ivr-call_rejected.wav");
@@ -465,49 +489,46 @@ namespace NEventSocket.Example
                     }
                     else
                     {
-                        if (aLeg.IsBridged)
-                        {
-                            Console.WriteLine("BRIDGED!");
+                        Console.WriteLine("BRIDGED!");
 
-                            await aLeg.SetChannelVariable("RECORD_STEREO", "true");
-                            var recordingPath = "/usr/local/freeswitch/recordings/{0}.wav".Fmt(aLeg.UUID);
-                            await aLeg.SetChannelVariable("min_dup_digit_spacing_ms", "100");
-                            await aLeg.StartDetectingInbandDtmf();
-                            aLeg.Dtmf.Subscribe(
-                                async dtmf =>
-                                {
-                                    switch (dtmf)
-                                    {
-                                        case "1":
-                                            Console.WriteLine("Mask recording");
-                                            await aLeg.MaskRecording();
-                                            await
-                                                Task.WhenAll(
-                                                    aLeg.PlayFile(
-                                                        "ivr/8000/ivr-recording_paused.wav", Leg.ALeg));
-                                            break;
-                                        case "2":
-                                            Console.WriteLine("Unmask recording");
-                                            await aLeg.UnmaskRecording();
-                                            await
-                                                aLeg.PlayFile("ivr/8000/ivr-begin_recording.wav", Leg.ALeg);
-                                            break;
-                                        case "3":
-                                            Console.WriteLine("Stop recording");
-                                            await aLeg.StopRecording();
-                                            await
-                                                aLeg.PlayFile(
-                                                    "ivr/8000/ivr-recording_stopped.wav", Leg.Both);
-                                            break;
-                                        case "4":
-                                            Console.WriteLine("Start recording");
-                                            await aLeg.StartRecording(recordingPath);
-                                            await
-                                                aLeg.PlayFile("ivr/8000/ivr-begin_recording.wav", Leg.Both);
-                                            break;
-                                    }
-                                });
-                        }
+                        await aLeg.SetChannelVariable("RECORD_STEREO", "true");
+                        var recordingPath = "/usr/local/freeswitch/recordings/{0}.wav".Fmt(aLeg.UUID);
+                        await aLeg.SetChannelVariable("min_dup_digit_spacing_ms", "100");
+                        await aLeg.StartDetectingInbandDtmf();
+                        aLeg.Dtmf.Subscribe(
+                           async dtmf =>
+                           {
+                               switch (dtmf)
+                               {
+                                   case "1":
+                                       Console.WriteLine("Mask recording");
+                                       await aLeg.MaskRecording();
+                                       await
+                                           Task.WhenAll(
+                                               aLeg.PlayFile(
+                                                   "ivr/8000/ivr-recording_paused.wav", Leg.ALeg));
+                                       break;
+                                   case "2":
+                                       Console.WriteLine("Unmask recording");
+                                       await aLeg.UnmaskRecording();
+                                       await
+                                           aLeg.PlayFile("ivr/8000/ivr-begin_recording.wav", Leg.ALeg);
+                                       break;
+                                   case "3":
+                                       Console.WriteLine("Stop recording");
+                                       await aLeg.StopRecording();
+                                       await
+                                           aLeg.PlayFile(
+                                               "ivr/8000/ivr-recording_stopped.wav", Leg.Both);
+                                       break;
+                                   case "4":
+                                       Console.WriteLine("Start recording");
+                                       await aLeg.StartRecording(recordingPath);
+                                       await
+                                           aLeg.PlayFile("ivr/8000/ivr-begin_recording.wav", Leg.Both);
+                                       break;
+                               }
+                           });
                     }
                 });
 

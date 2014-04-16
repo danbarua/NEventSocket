@@ -18,11 +18,6 @@
         protected static readonly Regex ReplyTextPattern = new Regex("^\\s*Reply-Text\\s*:\\s*([\\S ]+)\\s*$", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Multiline);
         protected static readonly Regex CommandErrorPattern = new Regex("^\\s*Content-Length\\s*:\\s*(\\d+)\\s*$.*^$^.*(-ERR)", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Multiline);
 
-        /// <summary>Initializes a new instance of the <see cref="BasicMessage"/> class.</summary>
-        protected BasicMessage()
-        {
-        }
-
         public BasicMessage(IDictionary<string, string> headers)
         {
             Headers = new Dictionary<string, string>(headers, StringComparer.OrdinalIgnoreCase);
@@ -34,23 +29,30 @@
             BodyText = body;
         }
 
-        public IReadOnlyDictionary<string, string> Headers { get; protected set; }
+        /// <summary>Initializes a new instance of the <see cref="BasicMessage"/> class.</summary>
+        protected BasicMessage()
+        {
+        }
+
+        public IDictionary<string, string> Headers { get; protected set; }
 
         public string BodyText { get; protected set; }
 
         /// <summary>Gets the Content Type header.</summary>
         public string ContentType
         {
-            get { return Headers[HeaderNames.ContentType]; }
+            get { return Headers.GetValueOrDefault(HeaderNames.ContentType); }
         }
 
         /// <summary>Gets the content length.</summary>
-        public int? ContentLength
+        public int ContentLength
         {
             get
             {
-                if (!Headers.ContainsKey(HeaderNames.ContentLength)) return null;
-                return int.Parse(Headers[HeaderNames.ContentLength]);
+                int contentLength;
+                return int.TryParse(Headers.GetValueOrDefault(HeaderNames.ContentLength), out contentLength)
+                           ? contentLength
+                           : 0;
             }
         }
 

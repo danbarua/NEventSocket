@@ -42,9 +42,14 @@
                                    TimeoutSeconds = 20
                                };
 
+             options.ChannelVariables.Add("foo", "bar");
+             options.ChannelVariables.Add("baz", "widgets");
+
              var toString = options.ToString();
 
-             Assert.Equal("{origination_uuid='985cea12-4e70-4c03-8a2c-2c4b4502bbbb',origination_caller_id_name='Test',origination_caller_id_number=12341234,execute_on_originate='start_dtmf',originate_retries=3,originate_retry_sleep_ms=4000,originate_timeout=20,return_ring_ready=true,ignore_early_media=true,bypass_media=true,hangup_after_bridge=false}", toString);
+             const string Expected =
+                 "{origination_uuid='985cea12-4e70-4c03-8a2c-2c4b4502bbbb',bypass_media='true',origination_caller_id_name='Test',origination_caller_id_number='12341234',execute_on_originate='start_dtmf',ignore_early_media='true',originate_retries='3',originate_retry_sleep_ms='4000',return_ring_ready='true',originate_timeout='20',hangup_after_bridge='false',foo='bar',baz='widgets'}";
+             Assert.Equal(Expected, toString);
          }
 
         [Fact]
@@ -53,7 +58,7 @@
             var options = new BridgeOptions()
                               {
                                   UUID = "985cea12-4e70-4c03-8a2c-2c4b4502bbbb",
-                                  Timeout = 20,
+                                  TimeoutSeconds = 20,
                                   CallerIdName = "Dan B Leg",
                                   CallerIdNumber = "987654321",
                                   HangupAfterBridge = false,
@@ -62,9 +67,14 @@
                                   RingBack = "${uk-ring}"
                               };
 
-            var toString = options.ToString();
+            // channel variables have no effect on ToString(), they're set on the a-leg of the call before initiating the bridge.
+            // todo: allow exporting variables?
+            options.ChannelVariables.Add("foo", "bar");
+            options.ChannelVariables.Add("baz", "widgets");
 
-            Assert.Equal("{call_timeout=20,origination_uuid='985cea12-4e70-4c03-8a2c-2c4b4502bbbb',origination_caller_id_name='Dan B Leg',origination_caller_id_number=987654321,originate_timeout=20,ignore_early_media=true}", toString);
+            var toString = options.ToString();
+            const string Expected = "{origination_uuid='985cea12-4e70-4c03-8a2c-2c4b4502bbbb',call_timeout='20',origination_caller_id_name='Dan B Leg',origination_caller_id_number='987654321',ignore_early_media='true'}";
+            Assert.Equal(Expected, toString);
         }
 
         [Fact]

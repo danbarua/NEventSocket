@@ -10,6 +10,7 @@
             {
                 return this.loops;
             }
+
             set
             {
                 this.loops = value;

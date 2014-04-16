@@ -93,7 +93,7 @@
         {
             get
             {
-                return Headers.ContainsKey(HeaderNames.UniqueId) ? Headers[HeaderNames.UniqueId] : null;
+                return Headers.GetValueOrDefault(HeaderNames.UniqueId);
             }
         }
 
@@ -104,7 +104,7 @@
         {
             get
             {
-                return (EventName)Enum.Parse(typeof(EventName), Headers[HeaderNames.EventName].ToCamelCase());
+                return Headers.GetValueOrDefault(HeaderNames.EventName).HeaderToEnum<EventName>();
             }
         }
 
@@ -115,10 +115,12 @@
         {
             get
             {
-                //channel state = CS_NEW
-                //strip first 3 chars and convert to camelcase
-                var channelState = Headers[HeaderNames.ChannelState];
-                return (ChannelState)Enum.Parse(typeof(ChannelState), channelState.Substring(3, channelState.Length - 3).ToCamelCase());
+                //channel state = "CS_NEW"
+                //strip first 3 chars and then parse it to ChannelState enum.
+
+                var channelState = Headers.GetValueOrDefault(HeaderNames.ChannelState);
+                channelState = channelState.Substring(3, channelState.Length - 3);
+                return channelState.HeaderToEnum<ChannelState>();
             }
         }
 
@@ -129,7 +131,7 @@
         {
             get
             {
-                return (AnswerState)Enum.Parse(typeof(AnswerState), Headers[HeaderNames.AnswerState].ToCamelCase());
+                return Headers.GetValueOrDefault(HeaderNames.AnswerState).HeaderToEnum<AnswerState>();
             }
         }
 
@@ -140,8 +142,7 @@
         {
             get
             {
-                if (!Headers.ContainsKey(HeaderNames.HangupCause)) return null;
-                return (HangupCause)Enum.Parse(typeof(HangupCause), Headers[HeaderNames.HangupCause].ToCamelCase());
+                return Headers.GetValueOrDefault(HeaderNames.HangupCause).HeaderToEnumOrNull<HangupCause>();
             }
         }
         
@@ -153,7 +154,7 @@
         /// <returns>The Header Value.</returns>
         public string GetHeader(string header)
         {
-            return Headers.ContainsKey(header) ? Headers[header] : null;
+            return Headers.GetValueOrDefault(header);
         }
 
         /// <summary>

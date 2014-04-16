@@ -1,5 +1,6 @@
 ﻿namespace NEventSocket.Tests.Util
 {
+    using System;
     using System.Threading.Tasks;
 
     using NEventSocket.FreeSwitch;
@@ -36,19 +37,26 @@
         public void can_convert_uppercaseunderscore_to_enum()
         {
             const string Input = "UNALLOCATED_NUMBER";
-            var output = Input.ToEnumFromUppercaseUnderscore<HangupCause>();
+            var output = Input.HeaderToEnum<HangupCause>();
 
             Assert.NotNull(output);
             Assert.Equal(HangupCause.UnallocatedNumber, output);
         }
 
         [Fact]
-        public void if_unable_to_convert_string_to_enum_it_returns_null()
+        public void if_unable_to_convert_string_to_nullable_enum_it_should_return_null()
         {
             const string Input = "THIS_IS_AN_INVALID_HANGUPCAUSE";
-            var output = Input.ToEnumFromUppercaseUnderscore<HangupCause>();
+            var output = Input.HeaderToEnumOrNull<HangupCause>();
 
             Assert.Null(output);
+        }
+
+        [Fact]
+        public void if_unable_to_convert_string_to_enum_it_should_throw_an_ArgumentException()
+        {
+            const string Input = "THIS_IS_AN_INVALID_HANGUPCAUSE";
+            Assert.Throws<ArgumentException>(() => Input.HeaderToEnum<HangupCause>());
         }
     }
 }
