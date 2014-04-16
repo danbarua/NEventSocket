@@ -35,8 +35,7 @@
                     if (!basicMessage.BodyText.Contains(HeaderNames.ContentLength))
                     {
                         //body text consists of key-value-pair event headers
-                        this.Headers = new Dictionary<string, string>(
-                            basicMessage.BodyText.ParseKeyValuePairs("\n", ": "), StringComparer.OrdinalIgnoreCase);
+                        this.Headers = basicMessage.BodyText.ParseKeyValuePairs("\n", ": ");
                         this.BodyText = null;
                     }
                     else

@@ -96,12 +96,12 @@
                         .ToTask();
         }
 
-        public Task<ApiResponse> Api(string command)
+        public async Task<ApiResponse> Api(string command)
         {
             Log.TraceFormat("Sending [api {0}]", command);
-            SendAsync(Encoding.ASCII.GetBytes("api " + command + "\n\n"), cts.Token);
+            await SendAsync(Encoding.ASCII.GetBytes("api " + command + "\n\n"), cts.Token);
 
-            return Messages
+            return await Messages
                 .FirstAsync(x => x.ContentType == ContentTypes.ApiResponse)
                 .Select(x => new ApiResponse(x))
                 .Do(result => Log.TraceFormat("ApiResponse received [{0}] for [{1}]", result.BodyText, command))
@@ -173,12 +173,12 @@
                         .ToTask(cts.Token);
         }
 
-        public Task<CommandReply> SendCommand(string command)
+        public async Task<CommandReply> SendCommand(string command)
         {
             Log.TraceFormat("Sending [{0}]", command);
-            SendAsync(Encoding.ASCII.GetBytes(command + "\n\n"), cts.Token);
+            await SendAsync(Encoding.ASCII.GetBytes(command + "\n\n"), cts.Token);
 
-            return Messages
+            return await Messages
                 .FirstAsync(x => x.ContentType == ContentTypes.CommandReply)
                 .Select(x => new CommandReply(x))
                 .Do(result =>

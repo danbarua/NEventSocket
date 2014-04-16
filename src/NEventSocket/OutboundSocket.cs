@@ -6,9 +6,9 @@
 
 namespace NEventSocket
 {
-    using System;
     using System.Net.Sockets;
     using System.Reactive.Linq;
+    using System.Reactive.Threading.Tasks;
     using System.Threading.Tasks;
 
     using Common.Logging;
@@ -26,18 +26,25 @@ namespace NEventSocket
             : base(tcpClient)
         {
         }
+        
+        /// <summary>
+        /// When FS connects to an "Event Socket Outbound" handler, it sends
+        /// a "CHANNEL_DATA" event in the headers of the Command-Reply received in response to Connect();
+        /// </summary>
+        public EventMessage ChannelData { get; private set; }
 
-        public async Task Connect()
+        public Task Connect()
         {
-            var result = await this.SendCommand("connect")
-                    .Then(
-                        () =>
-                        this.disposables.Add(
-                            this.Messages.Where(x => x.ContentType == ContentTypes.DisconnectNotice)
-                                .Take(1)
-                                .Subscribe(_ => Log.Trace("Disconnect Notice received."))));
-
-            this.ChannelData = new EventMessage(result);
+            return
+                this.SendCommand("connect")
+                    .ToObservable()
+                    .Do(x =>
+                            {
+                                this.ChannelData = new EventMessage(x);
+                                this.Messages.FirstAsync(m => m.ContentType == ContentTypes.DisconnectNotice)
+                                    .Do(_ => Log.Trace("Channel {0} Disconnect Notice received.".Fmt(ChannelData.UUID)));
+                            })
+                    .ToTask();
         }
 
         public async Task<IChannel> GetChannel()
@@ -45,11 +52,5 @@ namespace NEventSocket
             await this.Connect();
             return new Channel(this.ChannelData, this);
         }
-
-        /// <summary>
-        /// When FS connects to an "Event Socket Outbound" handler, it sends
-        /// a "CHANNEL_DATA" event in the headers of the Command-Reply received in response to Connect();
-        /// </summary>
-        public EventMessage ChannelData { get; private set; }
     }
 }

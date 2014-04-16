@@ -119,6 +119,7 @@
     <Compile Include="IEventSocket.cs" />
     <Compile Include="IInboundSocket.cs" />
     <Compile Include="Sockets\Parser.cs" />
+    <Compile Include="Util\AsyncLock.cs" />
     <Compile Include="Util\ObservableExtensions.cs" />
     <Compile Include="Util\StringExtensions.cs" />
     <Compile Include="Util\TaskHelper.cs" />

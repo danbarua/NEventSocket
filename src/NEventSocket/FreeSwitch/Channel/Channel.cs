@@ -23,6 +23,8 @@ namespace NEventSocket.FreeSwitch.Channel
 
     public class Channel : IChannel
     {
+        private const string FeatureCodeEvent = "NEventSocket::FeatureCode";
+
         private static readonly ILog Log = LogManager.GetCurrentClassLogger();
 
         private readonly EventSocket eventSocket;
@@ -42,7 +44,7 @@ namespace NEventSocket.FreeSwitch.Channel
         public Channel(OutboundSocket outboundSocket)
             : this(outboundSocket.ChannelData, outboundSocket)
         {
-            this.eventSocket.Linger();
+            this.eventSocket.Linger().Wait();
             this.eventSocket.SubscribeEvents().Wait();
         }
 
@@ -124,6 +126,26 @@ namespace NEventSocket.FreeSwitch.Channel
             }
         }
 
+        public IObservable<string> FeatureCodes
+        {
+            get
+            {
+                return
+                    eventSocket.Events
+                    .Where(x => 
+                            x.UUID == UUID &&
+                            x.EventName == EventName.Custom
+                            && x.GetHeader(HeaderNames.EventSubclass) == FeatureCodeEvent)
+                    .Do(
+                        x =>
+                        Log.TraceFormat(
+                            "Channel {0} Detected Feature Code {1}",
+                            UUID,
+                            x.GetVariable("last_matching_digits")))
+                    .Select(x => x.GetVariable("last_matching_digits"));
+            }
+        } 
+
         public bool IsBridged
         {
             get
@@ -150,6 +172,7 @@ namespace NEventSocket.FreeSwitch.Channel
             if (result.Success)
             {
                 this.bridgedLegUUID = other.UUID;
+
                 eventSocket.Events.Where(x => x.UUID == bridgedLegUUID && x.EventName == EventName.ChannelHangup)
                            .Take(1)
                            .Subscribe(
