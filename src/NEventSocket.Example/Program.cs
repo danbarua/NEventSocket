@@ -531,6 +531,13 @@ namespace NEventSocket.Example
                                                     await
                                                         connection.Execute(
                                                             bridgeOptions.UUID, "att_xfer", "user/{0}".Fmt(digits.Digits));
+
+                                                    //todo: inspect hangup state of the b-leg CHANNEL_EXECUTE_COMPLETE event
+                                                    //and determine if the b-leg hung up or is still connected
+                                                    //if b-leg hung up, is there any way to get a reference to the c-leg?
+                                                    //if so, we need to replace the bridgedUUID with the c-leg
+                                                    //we currently get a UNBRIDGE event from the b-leg but not
+                                                    //a  bridge event for the c-leg
                                                 }
 
                                                 break;
