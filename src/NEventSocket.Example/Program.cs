@@ -519,6 +519,10 @@ namespace NEventSocket.Example
                                                 await
                                                     aLeg.PlayFile("ivr/8000/ivr-begin_recording.wav", Leg.Both);
                                                 break;
+                                            case "#9":
+                                                Console.WriteLine("Attended x-fer");
+                                                await aLeg.Execute(bridgeOptions.UUID, "execute_extension", "att_xfer XML features");
+                                                break;
                                         }
                                     }
                                 });

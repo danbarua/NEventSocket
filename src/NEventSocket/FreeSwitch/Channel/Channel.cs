@@ -59,6 +59,26 @@ namespace NEventSocket.FreeSwitch.Channel
             this.lastEvent = eventMessage;
             this.eventSocket = eventSocket;
 
+            disposables.Add(eventSocket.Events.Where(x => x.UUID == this.UUID && x.EventName == EventName.ChannelUnbridge).Subscribe(x
+                                                                                                                                     =>
+                {
+                    Log.DebugFormat(
+                                           "Channel {0} B-Leg {1} hungup {2}",
+                                           UUID,
+                                           bridgedLegUUID,
+                                           x.GetVariable("bridge_hangup_cause"));
+                    Log.TraceFormat("Channel {0} Unbridged from {1}", UUID, bridgedLegUUID);
+                    this.bridgedLegUUID = null;
+                }));
+
+            disposables.Add(eventSocket.Events.Where(x => x.UUID == this.UUID && x.EventName == EventName.ChannelBridge).Subscribe(x
+                                                                                                                                    =>
+                {
+                    Console.WriteLine(x.EventName);
+                    Log.TraceFormat("Channel {0} Bridged to {1}", UUID, x.GetHeader(HeaderNames.OtherLegUniqueId));
+                    this.bridgedLegUUID = x.GetHeader(HeaderNames.OtherLegUniqueId);
+            }));
+
             disposables.Add(
                 eventSocket.Events.Where(x => x.UUID == this.UUID).Subscribe(
                     e =>
@@ -195,6 +215,7 @@ namespace NEventSocket.FreeSwitch.Channel
 
             if (onProgress != null)
             {
+                //only works on inbound sockets
                 subscriptions.Add(
                     eventSocket.Events.Where(x => x.UUID == options.UUID && x.EventName == EventName.ChannelProgress)
                                .Take(1)
@@ -207,25 +228,35 @@ namespace NEventSocket.FreeSwitch.Channel
 
             Log.DebugFormat("Channel {0} bridge complete {1} {2}", UUID, result.Success, result.ResponseText);
 
-            if (result.Success)
-            {
-                this.bridgedLegUUID = result.BridgeUUID;
+            //if (result.Success)
+            //{
+            //    this.bridgedLegUUID = result.BridgeUUID;
 
-                eventSocket.Events.Where(x => x.UUID == this.UUID && x.EventName == EventName.ChannelUnbridge)
-                           .Take(1)
-                           .Subscribe(
-                               x =>
-                                   {
-                                       Log.DebugFormat(
-                                           "Channel {0} B-Leg {1} hungup {2}",
-                                           UUID,
-                                           bridgedLegUUID,
-                                           x.GetVariable("bridge_hangup_cause"));
-                                       this.bridgedLegUUID = null;
-                                   });
-            }
+            //    eventSocket.Events.Where(x => x.UUID == this.UUID && x.EventName == EventName.ChannelUnbridge)
+            //               .Take(1)
+            //               .Subscribe(
+            //                   x =>
+            //                       {
+            //                           Log.DebugFormat(
+            //                               "Channel {0} B-Leg {1} hungup {2}",
+            //                               UUID,
+            //                               bridgedLegUUID,
+            //                               x.GetVariable("bridge_hangup_cause"));
+            //                           //this.bridgedLegUUID = null;
+            //                       });
+            //}
 
             return result;
+        }
+
+        public Task Execute(string application, string args)
+        {
+            return eventSocket.Execute(UUID, application, args);
+        }
+
+        public Task Execute(string uuid, string application, string args)
+        {
+            return eventSocket.Execute(uuid, application, args);
         }
 
         public Task Hold()
