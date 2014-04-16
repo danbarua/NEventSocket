@@ -144,8 +144,9 @@
                         .Do(
                             x =>
                             Log.TraceFormat(
-                                "ChannelExecuteComplete [{0} {1} {2}]",
-                                x.Headers[HeaderNames.AnswerState],
+                                "{0} ChannelExecuteComplete [{1} {2} {3}]",
+                                x.UUID,
+                                x.AnswerState,
                                 x.Headers[HeaderNames.Application],
                                 x.Headers[HeaderNames.ApplicationResponse]))
                         .ToTask();

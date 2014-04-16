@@ -521,7 +521,18 @@ namespace NEventSocket.Example
                                                 break;
                                             case "#9":
                                                 Console.WriteLine("Attended x-fer");
-                                                await aLeg.Execute(bridgeOptions.UUID, "execute_extension", "att_xfer XML features");
+                                                
+                                                var digits = await connection.Read(bridgeOptions.UUID, new ReadOptions { MinDigits = 3, MaxDigits = 4, Prompt = "tone_stream://%(10000,0,350,440)", TimeoutMs = 30000, Terminators = "#" });
+                                                if (digits.Digits.Length == 4)
+                                                {
+                                                    await
+                                                        connection.SetChannelVariable(
+                                                            bridgeOptions.UUID, "origination_cancel_key", "#");
+                                                    await
+                                                        connection.Execute(
+                                                            bridgeOptions.UUID, "att_xfer", "user/{0}".Fmt(digits.Digits));
+                                                }
+
                                                 break;
                                         }
                                     }

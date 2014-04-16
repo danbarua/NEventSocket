@@ -70,6 +70,13 @@
                 await eventSocket.Execute(uuid, "play_and_get_digits", options.ToString()), options.ChannelVariableName);
         }
 
+        public static async Task<ReadResult> Read(
+            this IEventSocketCommands eventSocket, string uuid, ReadOptions options)
+        {
+            return new ReadResult(
+                await eventSocket.Execute(uuid, "read", options.ToString()), options.ChannelVariableName);
+        }
+
         public static Task<EventMessage> Say(this IEventSocketCommands eventSocket, string uuid, SayOptions options)
         {
             return eventSocket.Execute(uuid, "say", options.ToString());

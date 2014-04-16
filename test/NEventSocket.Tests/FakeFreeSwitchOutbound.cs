@@ -10,6 +10,7 @@ namespace NEventSocket.Tests
     using System.Net.Sockets;
     using System.Reactive.Linq;
     using System.Text;
+    using System.Threading;
     using System.Threading.Tasks;
 
     using NEventSocket.Sockets;
@@ -33,17 +34,17 @@ namespace NEventSocket.Tests
         public Task SendChannelDataEvent()
         {
             var msg = TestMessages.ConnectEvent.Replace("\r\n", "\n") + "\n\n";
-            return this.SendAsync(Encoding.ASCII.GetBytes(msg));
+            return this.SendAsync(Encoding.ASCII.GetBytes(msg), CancellationToken.None);
         }
 
         public Task SendCommandReplyOk()
         {
-            return this.SendAsync(Encoding.ASCII.GetBytes("Content-Type: command/reply\nReply-Text: +OK\n\n"));
+            return this.SendAsync(Encoding.ASCII.GetBytes("Content-Type: command/reply\nReply-Text: +OK\n\n"), CancellationToken.None);
         }
 
         public Task SendCommandReplyError(string error)
         {
-            return this.SendAsync(Encoding.ASCII.GetBytes("Content-Type: command/reply\nReply-Text: -ERR {0}\n\n".Fmt(error)));
+            return this.SendAsync(Encoding.ASCII.GetBytes("Content-Type: command/reply\nReply-Text: -ERR {0}\n\n".Fmt(error)), CancellationToken.None);
         }
     }
 }

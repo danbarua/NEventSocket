@@ -63,6 +63,8 @@
     <Compile Include="FreeSwitch\Applications\PlayGetDigitsResult.cs" />
     <Compile Include="FreeSwitch\Applications\PlayOptions.cs" />
     <Compile Include="FreeSwitch\Applications\PlayResult.cs" />
+    <Compile Include="FreeSwitch\Applications\ReadOptions.cs" />
+    <Compile Include="FreeSwitch\Applications\ReadResult.cs" />
     <Compile Include="FreeSwitch\Applications\SayGender.cs" />
     <Compile Include="FreeSwitch\Applications\SayMethod.cs" />
     <Compile Include="FreeSwitch\Applications\SayOptions.cs" />
