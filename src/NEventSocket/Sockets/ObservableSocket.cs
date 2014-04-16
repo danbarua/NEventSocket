@@ -14,6 +14,8 @@
 
     using Common.Logging;
 
+    using NEventSocket.Util;
+
     public abstract class ObservableSocket : IDisposable
     {
         protected bool disposed;
@@ -22,7 +24,7 @@
 
         private readonly ILog Log;
 
-        private readonly object syncLock = new object();
+        private readonly SemaphoreSlim syncLock = new SemaphoreSlim(1);
 
         private readonly IObservable<byte[]> receiver;
 
@@ -79,10 +81,10 @@
 
         protected IObservable<byte[]> Receiver { get { return receiver; } }
 
-        public Task SendAsync(byte[] bytes)
-        {
-            return SendAsync(bytes, CancellationToken.None);
-        }
+        //public Task SendAsync(byte[] bytes)
+        //{
+        //    return SendAsync(bytes, CancellationToken.None);
+        //}
 
         /// <summary>
         /// Asynchronously writes the given bytes to the socket.
@@ -92,25 +94,26 @@
         /// <returns></returns>
         /// <exception cref="ObjectDisposedException">If disposed.</exception>
         /// <exception cref="InvalidOperationException">If not connected.</exception>
-        public Task SendAsync(byte[] bytes, CancellationToken cancellationToken)
+        public async Task SendAsync(byte[] bytes, CancellationToken cancellationToken)
         {
             if (disposed) throw new ObjectDisposedException(ToString());
             
             if (!IsConnected) throw new InvalidOperationException("Not connected");
-            
+
             try
             {
-                Monitor.Enter(syncLock);
+                await syncLock.WaitAsync();
                 var stream = GetStream();
-                return stream.WriteAsync(bytes, 0, bytes.Length, cancellationToken);
+                await stream.WriteAsync(bytes, 0, bytes.Length, cancellationToken);
             }
             catch (IOException ex)
             {
-                if (ex.InnerException is SocketException && ((SocketException)ex.InnerException).SocketErrorCode == SocketError.ConnectionAborted)
+                if (ex.InnerException is SocketException
+                    && ((SocketException)ex.InnerException).SocketErrorCode == SocketError.ConnectionAborted)
                 {
                     Log.Warn("Socket disconnected");
                     this.Dispose();
-                    return Task.FromResult<object>(null);
+                    return;
                 }
 
                 throw;
@@ -121,7 +124,7 @@
                 {
                     Log.Warn("Socket disconnected");
                     this.Dispose();
-                    return Task.FromResult<object>(null);                    
+                    return;
                 }
 
                 throw;
@@ -134,7 +137,7 @@
             }
             finally
             {
-                Monitor.Exit(syncLock);
+                syncLock.Release();
             }
         }
 
