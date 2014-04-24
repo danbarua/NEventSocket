@@ -5,8 +5,7 @@
     using System.Text;
     using System.Threading;
 
-    using Common.Logging;
-    using Common.Logging.Simple;
+    using NEventSocket.Logging;
 
     using Xunit;
 
@@ -14,8 +13,7 @@
     { 
         public ObservableSocketTests()
         {
-            LogManager.Adapter = new ConsoleOutLoggerFactoryAdapter(
-                   LogLevel.All, true, true, true, "yyyy-MM-dd hh:mm:ss");
+            
         }
 
         [Fact]

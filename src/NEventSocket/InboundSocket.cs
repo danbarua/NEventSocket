@@ -7,7 +7,7 @@
     using System.Security;
     using System.Threading.Tasks;
 
-    using Common.Logging;
+    using NEventSocket.Logging;
 
     using NEventSocket.FreeSwitch;
     using NEventSocket.FreeSwitch.Applications;
@@ -15,7 +15,7 @@
 
     public class InboundSocket : EventSocket
     {
-        private static readonly ILog Log = LogManager.GetCurrentClassLogger();
+        private static readonly ILog Log = LogProvider.GetCurrentClassLogger();
 
         protected InboundSocket(string host, int port)
             : base(new TcpClient(host, port))

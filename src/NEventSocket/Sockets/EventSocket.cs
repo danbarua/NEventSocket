@@ -13,7 +13,7 @@
     using System.Threading;
     using System.Threading.Tasks;
 
-    using Common.Logging;
+    using NEventSocket.Logging;
 
     using NEventSocket.FreeSwitch;
     using NEventSocket.FreeSwitch.Api;
@@ -24,7 +24,7 @@
     {
         protected readonly CompositeDisposable disposables = new CompositeDisposable();
 
-        private static readonly ILog Log = LogManager.GetCurrentClassLogger();
+        private static readonly ILog Log = LogProvider.GetCurrentClassLogger();
 
         private readonly ISubject<BasicMessage> incomingMessages = new ReplaySubject<BasicMessage>(1);
         

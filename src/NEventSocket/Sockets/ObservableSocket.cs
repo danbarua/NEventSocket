@@ -12,7 +12,7 @@
     using System.Threading;
     using System.Threading.Tasks;
 
-    using Common.Logging;
+    using NEventSocket.Logging;
 
     using NEventSocket.Util;
 
@@ -36,7 +36,7 @@
 
         protected ObservableSocket(TcpClient tcpClient)
         {
-            Log = LogManager.GetLogger(this.GetType());
+            Log = LogProvider.GetLogger(this.GetType());
 
             this.tcpClient = tcpClient;
 
@@ -60,7 +60,7 @@
                         _ => { },
                         ex =>
                             {
-                                Log.Error("Read Failed", ex);
+                                Log.ErrorException("Read Failed", ex);
                                 Dispose();
                             },
                         () =>
@@ -131,7 +131,7 @@
             }
             catch (Exception ex)
             {
-                Log.Error("Error writing.", ex);
+                Log.ErrorException("Error writing.", ex);
                 Dispose();
                 throw;
             }

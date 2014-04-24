@@ -11,7 +11,7 @@ namespace NEventSocket
     using System.Reactive.Threading.Tasks;
     using System.Threading.Tasks;
 
-    using Common.Logging;
+    using NEventSocket.Logging;
 
     using NEventSocket.FreeSwitch;
     using NEventSocket.FreeSwitch.Channel;
@@ -20,7 +20,7 @@ namespace NEventSocket
 
     public class OutboundSocket : EventSocket
     {
-        private static readonly ILog Log = LogManager.GetCurrentClassLogger();
+        private static readonly ILog Log = LogProvider.GetCurrentClassLogger();
 
         protected internal OutboundSocket(TcpClient tcpClient)
             : base(tcpClient)

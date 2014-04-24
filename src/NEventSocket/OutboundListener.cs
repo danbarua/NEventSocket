@@ -9,14 +9,14 @@
     using System.Reactive.Subjects;
     using System.Reactive;
 
-    using Common.Logging;
+    using NEventSocket.Logging;
 
     /// <summary>
     ///     Listens for Outbound connections from FreeSwitch
     /// </summary>
     public class OutboundListener : IDisposable
     {
-        private static readonly ILog Log = LogManager.GetCurrentClassLogger();
+        private static readonly ILog Log = LogProvider.GetCurrentClassLogger();
 
         private bool disposed;
         private IDisposable subscription;

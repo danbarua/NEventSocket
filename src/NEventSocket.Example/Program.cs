@@ -11,8 +11,7 @@ namespace NEventSocket.Example
     using System.Security;
     using System.Threading.Tasks;
 
-    using Common.Logging;
-    using Common.Logging.Simple;
+    using NEventSocket.Logging;
 
     using NEventSocket.FreeSwitch;
     using NEventSocket.FreeSwitch.Api;
@@ -26,9 +25,6 @@ namespace NEventSocket.Example
         private static void Main(string[] args)
         {
             // set logger factory
-            LogManager.Adapter = new ConsoleOutLoggerFactoryAdapter(
-                LogLevel.All, true, true, true, "yyyy-MM-dd hh:mm:ss");
-
             Console.WriteLine("Starting...");
 
             ChannelTest();

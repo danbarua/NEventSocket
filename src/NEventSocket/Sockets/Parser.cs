@@ -13,7 +13,7 @@ namespace NEventSocket.Sockets
     using System.Collections.Generic;
     using System.Text;
 
-    using Common.Logging;
+    using NEventSocket.Logging;
 
     using NEventSocket.FreeSwitch;
     using NEventSocket.Util;
@@ -23,7 +23,7 @@ namespace NEventSocket.Sockets
     /// </summary>
     public class Parser
     {
-        private static readonly ILog Log = LogManager.GetCurrentClassLogger();
+        private static readonly ILog Log = LogProvider.GetCurrentClassLogger();
 
         private readonly StringBuilder buffer = new StringBuilder(); // StringBuilder in .Net 4 uses a Linked List internally to avoid expensive reallocations. Faster but uses marginally more memory.
 

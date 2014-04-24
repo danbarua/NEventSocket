@@ -14,10 +14,11 @@ namespace NEventSocket.FreeSwitch.Channel
     using System.Reactive.Linq;
     using System.Threading.Tasks;
 
-    using Common.Logging;
+    using NEventSocket.Logging;
 
     using NEventSocket.FreeSwitch.Api;
     using NEventSocket.FreeSwitch.Applications;
+    using NEventSocket.Logging;
     using NEventSocket.Sockets;
     using NEventSocket.Util;
 
@@ -25,7 +26,7 @@ namespace NEventSocket.FreeSwitch.Channel
     {
         private const string FeatureCodeEvent = "NEventSocket::FeatureCode";
 
-        private static readonly ILog Log = LogManager.GetCurrentClassLogger();
+        private static readonly ILog Log = LogProvider.GetCurrentClassLogger();
 
         private readonly EventSocket eventSocket;
 

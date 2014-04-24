@@ -3,8 +3,7 @@
     using System;
     using System.Threading;
 
-    using Common.Logging;
-    using Common.Logging.Simple;
+    using NEventSocket.Logging;
 
     using Xunit;
 
@@ -12,8 +11,6 @@
     {
         public OutboundListenerTests()
         {
-            LogManager.Adapter = new ConsoleOutLoggerFactoryAdapter(
-                   LogLevel.All, true, true, true, "yyyy-MM-dd hh:mm:ss");
         }
 
         [Fact]

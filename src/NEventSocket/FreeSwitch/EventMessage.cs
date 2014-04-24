@@ -5,7 +5,7 @@
     using System.Linq;
     using System.Text;
 
-    using Common.Logging;
+    using NEventSocket.Logging;
 
     using NEventSocket.Sockets;
     using NEventSocket.Util;
@@ -16,7 +16,7 @@
     [Serializable]
     public class EventMessage : BasicMessage
     {
-        private static readonly ILog Log = LogManager.GetCurrentClassLogger();
+        private static readonly ILog Log = LogProvider.GetCurrentClassLogger();
 
         protected EventMessage()
         {
@@ -58,7 +58,7 @@
                 }
                 catch (Exception ex)
                 {
-                    Log.Error("Failed to parse body of event", ex);
+                    Log.ErrorException("Failed to parse body of event", ex);
                     Log.Error(this.BodyText);
                     throw;
                 }
