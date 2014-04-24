@@ -17,6 +17,7 @@ namespace NEventSocket.Example
     using NEventSocket.FreeSwitch.Api;
     using NEventSocket.FreeSwitch.Applications;
     using NEventSocket.FreeSwitch.Channel;
+    using NEventSocket.Logging.LogProviders;
     using NEventSocket.Util;
 
     /// <summary>The program.</summary>
@@ -25,6 +26,8 @@ namespace NEventSocket.Example
         private static void Main(string[] args)
         {
             // set logger factory
+            LogProvider.SetCurrentLogProvider(new ConsoleLogProvider());
+
             Console.WriteLine("Starting...");
 
             ChannelTest();
