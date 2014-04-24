@@ -523,21 +523,30 @@ namespace NEventSocket.Example
                                                 Console.WriteLine("Attended x-fer");
                                                 
                                                 var digits = await connection.Read(bridgeOptions.UUID, new ReadOptions { MinDigits = 3, MaxDigits = 4, Prompt = "tone_stream://%(10000,0,350,440)", TimeoutMs = 30000, Terminators = "#" });
-                                                if (digits.Digits.Length == 4)
+                                                if (digits.Result == ReadResult.Status.Success && digits.Digits.Length == 4)
                                                 {
+                                                    //todo: set channel variable "recording_follow_attxfer" <-- test it out!
                                                     await
                                                         connection.SetChannelVariable(
                                                             bridgeOptions.UUID, "origination_cancel_key", "#");
                                                     await
+                                                        connection.SetChannelVariable(
+                                                            bridgeOptions.UUID, "transfer_ringback", "tone_stream://%(400,200,400,450);%(400,2000,400,450);loops=-1");
+                                                    await
                                                         connection.Execute(
                                                             bridgeOptions.UUID, "att_xfer", "user/{0}".Fmt(digits.Digits));
 
+
+                                                    //todo: see variable "att_xfer_result" == "success" or "failure"
+                                                    //todo: see variable "xfer_uuids"
                                                     //todo: inspect hangup state of the b-leg CHANNEL_EXECUTE_COMPLETE event
                                                     //and determine if the b-leg hung up or is still connected
                                                     //if b-leg hung up, is there any way to get a reference to the c-leg?
                                                     //if so, we need to replace the bridgedUUID with the c-leg
                                                     //we currently get a UNBRIDGE event from the b-leg but not
                                                     //a  bridge event for the c-leg
+                                                    //also: what happens when we transfer to a 3-way? the 'bridge' completes
+                                                    //but A, B and C are bridged together somehow.
                                                 }
 
                                                 break;
