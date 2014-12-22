@@ -1,9 +1,11 @@
 ﻿namespace NEventSocket.Tests.Sockets
 {
     using System;
-    using System.Threading;
 
     using NEventSocket.Logging;
+    using NEventSocket.Logging.LogProviders;
+    using NEventSocket.Tests.Fakes;
+    using NEventSocket.Tests.TestSupport;
 
     using Xunit;
 
@@ -11,77 +13,90 @@
     {
         public OutboundListenerTests()
         {
+            LogProvider.SetCurrentLogProvider(new ConsoleLogProvider());
         }
 
-        [Fact]
-        public void Disposing_the_listener_completes_the_observable()
+        [Fact(Timeout = 2000)]
+        public void Disposing_the_listener_completes_the_connections_observable()
         {
-            var listener = new OutboundListener(8084);
-            listener.Start();
+            using (var listener = new OutboundListener(8084))
+            {
+                listener.Start();
 
-            bool completed = false;
+                bool completed = false;
 
-            listener.Connections.Subscribe(_ => { }, () => completed = true);
+                listener.Connections.Subscribe(_ => { }, () => completed = true);
 
-            listener.Dispose();
+                listener.Dispose();
 
-            Assert.True(completed);
+                Assert.True(completed);
+            }
         }
 
-        [Fact]
-        public void New_connections_produce_an_outbound_socket()
+        [Fact(Timeout = 2000)]
+        public void Disposing_the_listener_disposes_any_connected_clients()
         {
-            var listener = new OutboundListener(8084);
-            listener.Start();
+            using (var listener = new OutboundListener(8084))
+            {
+                listener.Start();
 
-            bool connected = false;
+                bool connected = false;
+                bool disposed = false;
 
-            listener.Connections.Subscribe((socket) => connected = true);
+                listener.Connections.Subscribe((socket) =>
+                {
+                    connected = true;
+                    socket.Disposed += (o, e) => disposed = true;
+                });
 
-            var client = new FakeFreeSwitchOutbound(8084);
+                var client = new FakeFreeSwitchOutbound(8084);
 
-            Thread.Sleep(1000);
-            listener.Dispose();
+                ThreadUtils.WaitUntil(() => connected);
+                listener.Dispose();
 
-            Assert.True(connected);
+                Assert.True(disposed);
+            }
         }
 
-        [Fact]
-        public void can_handle_multiple_connections()
+        [Fact(Timeout = 2000)]
+        public void a_new_connection_produces_an_outbound_socket()
         {
-            var listener = new OutboundListener(8084);
-            listener.Start();
+            using (var listener = new OutboundListener(8084))
+            {
+                listener.Start();
 
-            var connected = 0;
+                bool connected = false;
 
-            listener.Connections.Subscribe((socket) => connected++);
+                listener.Connections.Subscribe((socket) => connected = true);
 
-            var client = new FakeFreeSwitchOutbound(8084);
-            var client2 = new FakeFreeSwitchOutbound(8084);
-            var client3 = new FakeFreeSwitchOutbound(8084);
+                var client = new FakeFreeSwitchOutbound(8084);
 
-            Thread.Sleep(1000);
-            listener.Dispose();
-
-            Assert.Equal(3, connected);
+                ThreadUtils.WaitUntil(() => connected);
+                Assert.True(connected);
+            }
         }
 
-        [Fact]
-        public void Disposing_the_listener_disposes_the_clients()
+        [Fact(Timeout = 2000)]
+        public void each_new_connection_produces_a_new_outbound_socket_from_the_Connections_observable()
         {
-            var listener = new OutboundListener(8084);
-            listener.Start();
+            const int NumberOfConnections = 3;
 
-            bool disposed = false;
+            using (var listener = new OutboundListener(8084))
+            {
+                listener.Start();
 
-            listener.Connections.Subscribe((socket) => socket.Disposed += (o, e) => disposed = true);
+                var connected = 0;
 
-            var client = new FakeFreeSwitchOutbound(8084);
+                listener.Connections.Subscribe((socket) => connected++);
 
-            Thread.Sleep(100);
-            listener.Dispose();
+                for (int i = 0; i < NumberOfConnections; i++)
+                {
+                    var client = new FakeFreeSwitchOutbound(8084);
+                }
 
-            Assert.True(disposed);
+                ThreadUtils.WaitUntil(() => connected == NumberOfConnections);
+                Assert.Equal(NumberOfConnections, connected);
+            }
         }
     }
 }

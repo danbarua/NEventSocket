@@ -1,13 +1,20 @@
-﻿namespace NEventSocket.Tests.Util
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="StringExtensionsTests.cs" company="Business Systems (UK) Ltd">
+//   Copyright © Business Systems (UK) Ltd and contributors. All rights reserved.
+// </copyright>
+// <summary>
+//   Defines the StringExtensionsTests type.
+// </summary>
+// --------------------------------------------------------------------------------------------------------------------
+
+namespace NEventSocket.Tests.Util
 {
     using System;
-    using System.Threading.Tasks;
 
     using NEventSocket.FreeSwitch;
     using NEventSocket.Util;
 
     using Xunit;
-    using Xunit.Extensions;
 
     public class StringExtensionsTests
     {
