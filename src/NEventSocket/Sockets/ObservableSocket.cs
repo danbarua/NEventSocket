@@ -9,6 +9,7 @@
     using System.Reactive.Concurrency;
     using System.Reactive.Linq;
     using System.Reactive.Subjects;
+    using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
 
@@ -81,17 +82,25 @@
 
         protected IObservable<byte[]> Receiver { get { return receiver; } }
 
-        //public Task SendAsync(byte[] bytes)
-        //{
-        //    return SendAsync(bytes, CancellationToken.None);
-        //}
+        /// <summary>
+        /// Asynchronously writes the given message to the socket.
+        /// </summary>
+        /// <param name="message">The string message to send</param>
+        /// <param name="cancellationToken">A CancellationToken to cancel the send operation.</param>
+        /// <returns>A Task.</returns>
+        /// <exception cref="ObjectDisposedException">If disposed.</exception>
+        /// <exception cref="InvalidOperationException">If not connected.</exception>
+        public Task SendAsync(string message, CancellationToken cancellationToken)
+        {
+            return SendAsync(Encoding.ASCII.GetBytes(message), cancellationToken);
+        }
 
         /// <summary>
         /// Asynchronously writes the given bytes to the socket.
         /// </summary>
-        /// <param name="bytes"></param>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
+        /// <param name="bytes">The raw byts to stream through the socket.</param>
+        /// <param name="cancellationToken">A CancellationToken to cancel the send operation.</param>
+        /// <returns>A Task.</returns>
         /// <exception cref="ObjectDisposedException">If disposed.</exception>
         /// <exception cref="InvalidOperationException">If not connected.</exception>
         public async Task SendAsync(byte[] bytes, CancellationToken cancellationToken)
@@ -131,7 +140,7 @@
             }
             catch (Exception ex)
             {
-                Log.ErrorException("Error writing.", ex);
+                Log.ErrorException("Error writing", ex);
                 Dispose();
                 throw;
             }
@@ -156,7 +165,7 @@
         {
             if (!disposed)
             {
-                Log.Trace(() => "Disposing");
+                Log.Trace(() => "Disposing (disposing:{0})".Fmt(disposing));
                 if (disposing)
                 {
                     if (readSubscription != null)
@@ -177,21 +186,23 @@
                         received.Dispose();
                         received = null;
                     }
-                }
 
-                if (IsConnected)
-                {
-                    if (tcpClient != null)
+                    if (IsConnected)
                     {
-                        tcpClient.Close();
-                        tcpClient = null;
-                        Log.Trace(() => "Client closed.");
+                        if (tcpClient != null)
+                        {
+                            tcpClient.Close();
+                            tcpClient = null;
+                            Log.Trace(() => "TcpClient closed");
+                        }
                     }
                 }
                 
                 disposed = true;
 
                 Disposed(this, EventArgs.Empty);
+
+                Log.Trace(() => "Disposed");
             }
         }
     }

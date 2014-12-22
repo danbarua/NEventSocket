@@ -7,11 +7,11 @@
     using System.Security;
     using System.Threading.Tasks;
 
-    using NEventSocket.Logging;
-
     using NEventSocket.FreeSwitch;
     using NEventSocket.FreeSwitch.Applications;
+    using NEventSocket.Logging;
     using NEventSocket.Sockets;
+    using NEventSocket.Util;
 
     public class InboundSocket : EventSocket
     {
@@ -22,19 +22,29 @@
         {
         }
 
-        public static Task<InboundSocket> Connect(string host = "localhost", int port = 8021, string password = "ClueCon")
+        public async static Task<InboundSocket> Connect(string host = "localhost", int port = 8021, string password = "ClueCon")
         {
             var socket = new InboundSocket(host, port);
 
-            return socket.Messages
+            await socket.Messages
                 .FirstAsync(x => x.ContentType == ContentTypes.AuthRequest)
-                .Do(async x =>
-                    {
-                        var result = await socket.Auth(password);
-                        if (!result.Success) throw new SecurityException("Invalid password");
-                    })
-                .Select(x => socket)
+                .Timeout(EventSocket.TimeOut, Observable.Throw<BasicMessage>(new TimeoutException("No Auth Request received within the specified timeout of {0}.".Fmt(EventSocket.TimeOut))))
+                .Do(_ => { },
+                    ex => Log.ErrorException("Error waiting for AuthRequest.", ex))
                 .ToTask();
+
+            var result = await socket.Auth(password);
+
+            if (!result.Success)
+            {
+                Log.Error("InboundSocket authentication failed.");
+                socket.Dispose();
+                throw new SecurityException("Invalid password");
+            }
+
+            Log.Trace(() => "InboundSocket authentication succeeded.");
+
+            return socket;
         }
 
         public Task<OriginateResult> Originate(string endpoint, OriginateOptions options = null, string application = "park")

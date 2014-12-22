@@ -4,7 +4,6 @@
     using System.Collections.Generic;
     using System.Linq;
     using System.Net.Sockets;
-    using System.Reactive.Concurrency;
     using System.Reactive.Disposables;
     using System.Reactive.Linq;
     using System.Reactive.Subjects;
@@ -13,18 +12,19 @@
     using System.Threading;
     using System.Threading.Tasks;
 
-    using NEventSocket.Logging;
-
     using NEventSocket.FreeSwitch;
     using NEventSocket.FreeSwitch.Api;
     using NEventSocket.FreeSwitch.Applications;
+    using NEventSocket.Logging;
     using NEventSocket.Util;
 
-    public abstract class EventSocket : ObservableSocket, IEventSocket, IEventSocketCommands
+    public abstract class EventSocket : ObservableSocket, IEventSocket
     {
         protected readonly CompositeDisposable disposables = new CompositeDisposable();
 
         private static readonly ILog Log = LogProvider.GetCurrentClassLogger();
+
+        private static TimeSpan timeOut = TimeSpan.FromSeconds(30);
 
         private readonly ISubject<BasicMessage> incomingMessages = new ReplaySubject<BasicMessage>(1);
         
@@ -41,7 +41,7 @@
                                                              EventName.ChannelUnbridge
                                                          };
 
-        private readonly HashSet<string> customEvents = new HashSet<string>() { "conference::maintenance" }; 
+        private readonly HashSet<string> customEvents = new HashSet<string>() { "conference::maintenance" };
 
         private readonly CancellationTokenSource cts = new CancellationTokenSource();
 
@@ -53,6 +53,18 @@
                 .Select(builder => builder.ParseMessage()).Subscribe(msg => incomingMessages.OnNext(msg));
 
             Log.Trace(() => "EventSocket initialized");
+        }
+
+        public static TimeSpan TimeOut
+        {
+            get
+            {
+                return timeOut;
+            }
+            set
+            {
+                timeOut = value;
+            }
         }
 
         /// <summary> Gets an observable stream of BasicMessages </summary>
@@ -105,6 +117,7 @@
 
             return await Messages
                 .FirstAsync(x => x.ContentType == ContentTypes.ApiResponse)
+                .Timeout(EventSocket.TimeOut, Observable.Throw<BasicMessage>(new TimeoutException("No Api Response received within the specified timeout of {0}.".Fmt(EventSocket.TimeOut))))
                 .Select(x => new ApiResponse(x))
                 .Do(result => Log.Trace(() => "ApiResponse received [{0}] for [{1}]".Fmt(result.BodyText.Replace("\n", string.Empty), command)))
                 .ToTask(cts.Token);
@@ -183,14 +196,9 @@
 
             return await Messages
                 .FirstAsync(x => x.ContentType == ContentTypes.CommandReply)
+                .Timeout(EventSocket.TimeOut, Observable.Throw<BasicMessage>(new TimeoutException("No Command Reply received within the specified timeout of {0}.".Fmt(EventSocket.TimeOut))))
                 .Select(x => new CommandReply(x))
-                .Do(result =>
-                    {
-                        Log.Trace(() => "CommandReply received [{0}] for [{1}]".Fmt(result.ReplyText.Replace("\n", string.Empty), command));
-
-                        //todo: throw specific NEventSocket/FreeSwitch exception here instead
-                        if (!result.Success) throw new ApplicationException("Command {0} failed - {1}".Fmt(command, result.ReplyText));
-                    })
+                .Do(result => Log.Trace(() => "CommandReply received [{0}] for [{1}]".Fmt(result.ReplyText.Replace("\n", string.Empty), command)))
                 .ToTask(cts.Token);
         }
 

@@ -49,7 +49,7 @@
                     socket.Disposed += (o, e) => disposed = true;
                 });
 
-                var client = new FakeFreeSwitchOutbound(8084);
+                var client = new FakeFreeSwitchSocket(8084);
 
                 ThreadUtils.WaitUntil(() => connected);
                 listener.Dispose();
@@ -69,7 +69,7 @@
 
                 listener.Connections.Subscribe((socket) => connected = true);
 
-                var client = new FakeFreeSwitchOutbound(8084);
+                var client = new FakeFreeSwitchSocket(8084);
 
                 ThreadUtils.WaitUntil(() => connected);
                 Assert.True(connected);
@@ -91,7 +91,7 @@
 
                 for (int i = 0; i < NumberOfConnections; i++)
                 {
-                    var client = new FakeFreeSwitchOutbound(8084);
+                    var client = new FakeFreeSwitchSocket(8084);
                 }
 
                 ThreadUtils.WaitUntil(() => connected == NumberOfConnections);

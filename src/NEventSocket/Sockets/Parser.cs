@@ -13,9 +13,8 @@ namespace NEventSocket.Sockets
     using System.Collections.Generic;
     using System.Text;
 
-    using NEventSocket.Logging;
-
     using NEventSocket.FreeSwitch;
+    using NEventSocket.Logging;
     using NEventSocket.Util;
 
     /// <summary>
