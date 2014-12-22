@@ -37,7 +37,11 @@ namespace NEventSocket.Tests.Fakes
         {
             get
             {
-                return this.Receiver.Select(x => Encoding.ASCII.GetString(x).Remove(x.Length - 2, 2));
+                return
+                    this.Receiver.SelectMany(x => Encoding.ASCII.GetString(x))
+                        .AggregateUntil(
+                            () => new StringBuilder(), (sb, c) => sb.Append(c), sb => sb.ToString().EndsWith("\n\n"))
+                        .Select(x => x.ToString().Remove(x.Length - 2, 2));
             }
         }
 

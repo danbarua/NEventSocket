@@ -32,17 +32,18 @@ namespace NEventSocket
         /// </summary>
         public EventMessage ChannelData { get; private set; }
 
-        public Task Connect()
+        public Task<EventMessage> Connect()
         {
             return
                 this.SendCommand("connect")
                     .ToObservable()
+                    .Select(reply => new EventMessage(reply))
                     .Do(x =>
-                            {
-                                this.ChannelData = new EventMessage(x);
-                                this.Messages.FirstAsync(m => m.ContentType == ContentTypes.DisconnectNotice)
-                                    .Do(_ => Log.Trace(() => "Channel {0} Disconnect Notice received.".Fmt(ChannelData.UUID)));
-                            })
+                        {
+                            this.ChannelData = x;
+                            this.Messages.FirstAsync(m => m.ContentType == ContentTypes.DisconnectNotice)
+                                .Do(_ => Log.Trace(() => "Channel {0} Disconnect Notice received.".Fmt(ChannelData.UUID)));
+                        })
                     .ToTask();
         }
 
