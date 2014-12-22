@@ -1,15 +1,24 @@
-﻿namespace NEventSocket
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="OutboundListener.cs" company="Business Systems (UK) Ltd">
+//   (C) Business Systems (UK) Ltd
+// </copyright>
+// <summary>
+//   Listens for Outbound connections from FreeSwitch
+// </summary>
+// --------------------------------------------------------------------------------------------------------------------
+
+namespace NEventSocket
 {
     using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Net.Sockets;
-    using System.Reactive.Concurrency;
+    using System.Reactive;
     using System.Reactive.Linq;
     using System.Reactive.Subjects;
-    using System.Reactive;
 
     using NEventSocket.Logging;
+    using NEventSocket.Util;
 
     /// <summary>
     ///     Listens for Outbound connections from FreeSwitch
@@ -18,18 +27,19 @@
     {
         private static readonly ILog Log = LogProvider.GetCurrentClassLogger();
 
-        private bool disposed;
-        private IDisposable subscription;
-        private TcpListener tcpListener;
         private readonly Subject<Unit> listenerTermination = new Subject<Unit>();
         private readonly List<OutboundSocket> connections = new List<OutboundSocket>();
         private readonly Subject<OutboundSocket> observable = new Subject<OutboundSocket>();
         private readonly int port;
 
+        private bool disposed;
+        private IDisposable subscription;
+        private TcpListener tcpListener;
+
         /// <summary>
-        ///     Starts the Listener on the given port
+        /// Starts the Listener on the given port
         /// </summary>
-        /// <param name="port"></param>
+        /// <param name="port">The Tcp Port on which to listen for incoming connections.</param>
         public OutboundListener(int port)
         {
             this.port = port;
@@ -42,7 +52,7 @@
 
 
         /// <summary>
-        ///     Observable of all outbound connections
+        /// Observable sequence of all outbound connections from FreeSwitch.
         /// </summary>
         public IObservable<OutboundSocket> Connections
         {
@@ -50,7 +60,7 @@
         }
 
         /// <summary>
-        ///     Starts the Listener
+        /// Starts the Listener
         /// </summary>
         public void Start()
         {
@@ -61,7 +71,7 @@
 
             tcpListener.Start();
 
-            Log.TraceFormat("OutboundListener Started on Port {0}", this.port);
+            Log.Trace(() => "OutboundListener Started on Port {0}".Fmt(this.port));
 
             subscription =
                 Observable.FromAsync(this.tcpListener.AcceptTcpClientAsync)
@@ -71,13 +81,13 @@
                           .Subscribe(
                               connection =>
                                   {
-                                      Log.Trace("New Connection");
+                                      Log.Trace(() => "New Connection");
                                       this.connections.Add(connection);
                                       this.observable.OnNext(connection);
 
                                       connection.Disposed += (o, e) =>
                                           {
-                                              Log.Trace("Connection Disposed");
+                                              Log.Trace(() => "Connection Disposed");
                                               this.connections.Remove(connection);
                                           };
                                   },
@@ -116,7 +126,7 @@
                         tcpListener = null;
                     }
 
-                    Log.Trace("OutboundListener Disposed");
+                    Log.Trace(() => "OutboundListener Disposed");
                 }
 
                 disposed = true;

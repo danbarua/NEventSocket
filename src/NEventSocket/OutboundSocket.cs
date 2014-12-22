@@ -11,10 +11,9 @@ namespace NEventSocket
     using System.Reactive.Threading.Tasks;
     using System.Threading.Tasks;
 
-    using NEventSocket.Logging;
-
     using NEventSocket.FreeSwitch;
     using NEventSocket.FreeSwitch.Channel;
+    using NEventSocket.Logging;
     using NEventSocket.Sockets;
     using NEventSocket.Util;
 
@@ -42,7 +41,7 @@ namespace NEventSocket
                             {
                                 this.ChannelData = new EventMessage(x);
                                 this.Messages.FirstAsync(m => m.ContentType == ContentTypes.DisconnectNotice)
-                                    .Do(_ => Log.Trace("Channel {0} Disconnect Notice received.".Fmt(ChannelData.UUID)));
+                                    .Do(_ => Log.Trace(() => "Channel {0} Disconnect Notice received.".Fmt(ChannelData.UUID)));
                             })
                     .ToTask();
         }

@@ -65,7 +65,7 @@
                             },
                         () =>
                             {
-                                Log.Trace("Read Observable Completed");
+                                Log.Trace(() => "Read Observable Completed");
                                 Dispose();
                             });
         }
@@ -111,7 +111,7 @@
                 if (ex.InnerException is SocketException
                     && ((SocketException)ex.InnerException).SocketErrorCode == SocketError.ConnectionAborted)
                 {
-                    Log.Warn("Socket disconnected");
+                    Log.Warn(() => "Socket disconnected");
                     this.Dispose();
                     return;
                 }
@@ -122,7 +122,7 @@
             {
                 if (ex.SocketErrorCode == SocketError.ConnectionAborted)
                 {
-                    Log.Warn("Socket disconnected");
+                    Log.Warn(() => "Socket disconnected");
                     this.Dispose();
                     return;
                 }
@@ -156,7 +156,7 @@
         {
             if (!disposed)
             {
-                Log.Trace("Disposing");
+                Log.Trace(() => "Disposing");
                 if (disposing)
                 {
                     if (readSubscription != null)
@@ -185,7 +185,7 @@
                     {
                         tcpClient.Close();
                         tcpClient = null;
-                        Log.Trace("Client closed.");
+                        Log.Trace(() => "Client closed.");
                     }
                 }
                 

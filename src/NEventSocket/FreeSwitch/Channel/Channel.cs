@@ -14,8 +14,6 @@ namespace NEventSocket.FreeSwitch.Channel
     using System.Reactive.Linq;
     using System.Threading.Tasks;
 
-    using NEventSocket.Logging;
-
     using NEventSocket.FreeSwitch.Api;
     using NEventSocket.FreeSwitch.Applications;
     using NEventSocket.Logging;
@@ -63,12 +61,8 @@ namespace NEventSocket.FreeSwitch.Channel
             disposables.Add(eventSocket.Events.Where(x => x.UUID == this.UUID && x.EventName == EventName.ChannelUnbridge).Subscribe(x
                                                                                                                                      =>
                 {
-                    Log.DebugFormat(
-                                           "Channel {0} B-Leg {1} hungup {2}",
-                                           UUID,
-                                           bridgedLegUUID,
-                                           x.GetVariable("bridge_hangup_cause"));
-                    Log.TraceFormat("Channel {0} Unbridged from {1}", UUID, bridgedLegUUID);
+                    Log.Debug(() => "Channel {0} B-Leg {1} hungup {2}".Fmt(UUID, bridgedLegUUID, x.GetVariable("bridge_hangup_cause")));
+                    Log.Trace(() => "Channel {0} Unbridged from {1}".Fmt(UUID, bridgedLegUUID));
                     this.bridgedLegUUID = null;
                 }));
 
@@ -76,7 +70,7 @@ namespace NEventSocket.FreeSwitch.Channel
                                                                                                                                     =>
                 {
                     Console.WriteLine(x.EventName);
-                    Log.TraceFormat("Channel {0} Bridged to {1}", UUID, x.GetHeader(HeaderNames.OtherLegUniqueId));
+                    Log.Trace(() => "Channel {0} Bridged to {1}".Fmt(UUID, x.GetHeader(HeaderNames.OtherLegUniqueId)));
                     this.bridgedLegUUID = x.GetHeader(HeaderNames.OtherLegUniqueId);
             }));
 
@@ -157,12 +151,7 @@ namespace NEventSocket.FreeSwitch.Channel
                             x.UUID == UUID &&
                             x.EventName == EventName.Custom
                             && x.GetHeader(HeaderNames.EventSubclass) == FeatureCodeEvent)
-                    .Do(
-                        x =>
-                        Log.TraceFormat(
-                            "Channel {0} Detected Feature Code {1}",
-                            UUID,
-                            x.GetVariable("last_matching_digits")))
+                    .Do(x => Log.Trace(() => "Channel {0} Detected Feature Code {1}".Fmt(UUID, x.GetVariable("last_matching_digits"))))
                     .Select(x => x.GetVariable("last_matching_digits"));
             }
         } 
@@ -199,8 +188,7 @@ namespace NEventSocket.FreeSwitch.Channel
                            .Subscribe(
                                x =>
                                    {
-                                       Log.DebugFormat(
-                                           "Channel {0} B-Leg {1} hungup {2}", UUID, bridgedLegUUID, x.HangupCause);
+                                       Log.Debug(() => "Channel {0} B-Leg {1} hungup {2}".Fmt(UUID, bridgedLegUUID, x.HangupCause));
                                        this.bridgedLegUUID = null;
                                    });
             }
@@ -209,7 +197,7 @@ namespace NEventSocket.FreeSwitch.Channel
         public async Task<BridgeResult> Bridge(
             string destination, BridgeOptions options, Action<EventMessage> onProgress = null)
         {
-            Log.DebugFormat("Channel {0} is attempting a bridge to {1}", UUID, destination);
+            Log.Debug(() => "Channel {0} is attempting a bridge to {1}".Fmt(UUID, destination));
             if (string.IsNullOrEmpty(options.UUID)) options.UUID = Guid.NewGuid().ToString();
 
             var subscriptions = new CompositeDisposable();
@@ -227,7 +215,7 @@ namespace NEventSocket.FreeSwitch.Channel
 
             subscriptions.Dispose();
 
-            Log.DebugFormat("Channel {0} bridge complete {1} {2}", UUID, result.Success, result.ResponseText);
+            Log.Debug(() => "Channel {0} bridge complete {1} {2}".Fmt(UUID, result.Success, result.ResponseText));
 
             //if (result.Success)
             //{
@@ -334,29 +322,28 @@ namespace NEventSocket.FreeSwitch.Channel
         {
             if (this.recordingPath != null)
             {
-                Log.WarnFormat(
-                    "Channel {0} received a request to record to file {1} while currently recording to file {2}. Channel will stop recording and start recording to the new file.",
-                    UUID,
-                    file,
-                    recordingPath);
+                Log.Warn(
+                    () =>
+                    "Channel {0} received a request to record to file {1} while currently recording to file {2}. Channel will stop recording and start recording to the new file."
+                    .Fmt(UUID, file, recordingPath));
                 await this.StopRecording();
             }
 
             this.recordingPath = file;
             await eventSocket.Api("uuid_record {0} start {1} {2}".Fmt(UUID, recordingPath, maxSeconds));
-            Log.DebugFormat("Channel {0} is recording to {1}", UUID, recordingPath);
+            Log.Debug(() => "Channel {0} is recording to {1}".Fmt(UUID, recordingPath));
         }
 
         public async Task MaskRecording()
         {
             if (string.IsNullOrEmpty(recordingPath))
             {
-                Log.WarnFormat("Channel {0} is not recording", UUID);
+                Log.Warn(() => "Channel {0} is not recording".Fmt(UUID));
             }
             else
             {
                 await eventSocket.Api("uuid_record {0} mask {1}".Fmt(UUID, recordingPath));
-                Log.DebugFormat("Channel {0} has masked recording to {1}", UUID, recordingPath);
+                Log.Debug(() => "Channel {0} has masked recording to {1}".Fmt(UUID, recordingPath));
             }
         }
 
@@ -364,12 +351,12 @@ namespace NEventSocket.FreeSwitch.Channel
         {
             if (string.IsNullOrEmpty(recordingPath))
             {
-                Log.WarnFormat("Channel {0} is not recording", UUID);
+                Log.Warn(() => "Channel {0} is not recording".Fmt(UUID));
             }
             else
             {
                 await eventSocket.Api("uuid_record {0} unmask {1}".Fmt(UUID, recordingPath));
-                Log.DebugFormat("Channel {0} has unmasked recording to {1}", UUID, recordingPath);
+                Log.Debug(() => "Channel {0} has unmasked recording to {1}".Fmt(UUID, recordingPath));
             }
         }
 
@@ -377,13 +364,13 @@ namespace NEventSocket.FreeSwitch.Channel
         {
             if (string.IsNullOrEmpty(recordingPath))
             {
-                Log.WarnFormat("Channel {0} is not recording", UUID);
+                Log.Warn(() => "Channel {0} is not recording".Fmt(UUID));
             }
             else
             {
                 await eventSocket.Api("uuid_record {0} stop {1}".Fmt(UUID, recordingPath));
                 this.recordingPath = null;
-                Log.DebugFormat("Channel {0} has stopped recording to {1}", UUID, recordingPath);
+                Log.Debug(() => "Channel {0} has stopped recording to {1}".Fmt(UUID, recordingPath));
             }
         }
 
@@ -400,7 +387,7 @@ namespace NEventSocket.FreeSwitch.Channel
 
         public Task SetChannelVariable(string name, string value)
         {
-            Log.DebugFormat("Channel {0} setting variable '{1}' to '{2}'", UUID, name, value);
+            Log.Debug(() => "Channel {0} setting variable '{1}' to '{2}'".Fmt(UUID, name, value));
             return eventSocket.Api("uuid_setvar {0} {1} {2}".Fmt(UUID, name, value));
         }
 

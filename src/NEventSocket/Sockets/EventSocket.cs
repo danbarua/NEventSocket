@@ -52,7 +52,7 @@
                 .AggregateUntil(() => new Parser(), (builder, ch) => builder.Append(ch), builder => builder.Completed)
                 .Select(builder => builder.ParseMessage()).Subscribe(msg => incomingMessages.OnNext(msg));
 
-            Log.Trace("EventSocket initialized");
+            Log.Trace(() => "EventSocket initialized");
         }
 
         /// <summary> Gets an observable stream of BasicMessages </summary>
@@ -90,21 +90,23 @@
 
             return await Execute(uuid, "bridge", bridgeString)
                         .ToObservable()
-                        .Amb(Events.FirstAsync(x => x.UUID == uuid && x.EventName == EventName.ChannelBridge)
-                                  .Do(x => Log.TraceFormat("Bridge {0} complete - {1}", bridgeString, x.Headers[HeaderNames.OtherLegUniqueId])))
+                        .Amb(
+                                Events
+                                    .FirstAsync(x => x.UUID == uuid && x.EventName == EventName.ChannelBridge)
+                                    .Do(x => Log.Trace(() => "Bridge {0} complete - {1}".Fmt(bridgeString, x.Headers[HeaderNames.OtherLegUniqueId]))))
                         .Select(x => new BridgeResult(x))
                         .ToTask();
         }
 
         public async Task<ApiResponse> Api(string command)
         {
-            Log.TraceFormat("Sending [api {0}]", command);
+            Log.Trace(() => "Sending [api {0}]".Fmt(command));
             await SendAsync(Encoding.ASCII.GetBytes("api " + command + "\n\n"), cts.Token);
 
             return await Messages
                 .FirstAsync(x => x.ContentType == ContentTypes.ApiResponse)
                 .Select(x => new ApiResponse(x))
-                .Do(result => Log.TraceFormat("ApiResponse received [{0}] for [{1}]", result.BodyText, command))
+                .Do(result => Log.Trace(() => "ApiResponse received [{0}] for [{1}]".Fmt(result.BodyText.Replace("\n", string.Empty), command)))
                 .ToTask(cts.Token);
         }
 
@@ -143,12 +145,12 @@
                         .Cast<EventMessage>()
                         .Do(
                             x =>
-                            Log.TraceFormat(
-                                "{0} ChannelExecuteComplete [{1} {2} {3}]",
+                            Log.Trace(() => 
+                                "{0} ChannelExecuteComplete [{1} {2} {3}]".Fmt(
                                 x.UUID,
                                 x.AnswerState,
                                 x.Headers[HeaderNames.Application],
-                                x.Headers[HeaderNames.ApplicationResponse]))
+                                x.Headers[HeaderNames.ApplicationResponse])))
                         .ToTask();
         }
 
@@ -176,15 +178,17 @@
 
         public async Task<CommandReply> SendCommand(string command)
         {
-            Log.TraceFormat("Sending [{0}]", command);
+            Log.Trace(() => "Sending [{0}]".Fmt(command));
             await SendAsync(Encoding.ASCII.GetBytes(command + "\n\n"), cts.Token);
 
             return await Messages
                 .FirstAsync(x => x.ContentType == ContentTypes.CommandReply)
                 .Select(x => new CommandReply(x))
                 .Do(result =>
-                    { 
-                        Log.TraceFormat("CommandReply received [{0}] for [{1}]", result.ReplyText, command);
+                    {
+                        Log.Trace(() => "CommandReply received [{0}] for [{1}]".Fmt(result.ReplyText.Replace("\n", string.Empty), command));
+
+                        //todo: throw specific NEventSocket/FreeSwitch exception here instead
                         if (!result.Success) throw new ApplicationException("Command {0} failed - {1}".Fmt(command, result.ReplyText));
                     })
                 .ToTask(cts.Token);
