@@ -76,15 +76,7 @@
     <Compile Include="FreeSwitch\Endpoint.cs" />
     <Compile Include="FreeSwitch\Channel\IChannel.cs" />
     <Compile Include="FreeSwitch\HangupCause.cs" />
-    <Compile Include="Logging\LogProviders\ConsoleLogProvider.cs" />
-    <Compile Include="Logging\ILog.cs" />
-    <Compile Include="Logging\ILogExtensions.cs" />
-    <Compile Include="Logging\ILogProvider.cs" />
-    <Compile Include="Logging\LoggerExecutionWrapper.cs" />
-    <Compile Include="Logging\LogLevel.cs" />
-    <Compile Include="Logging\LogProvider.cs" />
-    <Compile Include="Logging\LogProviders\Log4NetLogProvider.cs" />
-    <Compile Include="Logging\LogProviders\NLogLogProvider.cs" />
+    <Compile Include="Logging\LibLog.cs" />
     <Compile Include="OutboundListener.cs" />
     <Compile Include="Sockets\EventSocket.cs" />
     <Compile Include="InboundSocket.cs" />
@@ -133,9 +125,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Logging\README.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

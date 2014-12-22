@@ -16,7 +16,7 @@
     {
         public InboundSocketTests()
         {
-            Logging.LogProvider.SetCurrentLogProvider(new ConsoleLogProvider());
+            Logging.LogProvider.SetCurrentLogProvider(new ColouredConsoleLogProvider());
         }
 
         [Fact(Timeout = 2000)]

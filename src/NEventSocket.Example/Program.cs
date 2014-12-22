@@ -26,7 +26,7 @@ namespace NEventSocket.Example
         private static void Main(string[] args)
         {
             // set logger factory
-            LogProvider.SetCurrentLogProvider(new ConsoleLogProvider());
+            LogProvider.SetCurrentLogProvider(new ColouredConsoleLogProvider());
 
             Console.WriteLine("Starting...");
 

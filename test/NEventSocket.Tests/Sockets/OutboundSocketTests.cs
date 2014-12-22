@@ -23,7 +23,7 @@ namespace NEventSocket.Tests.Sockets
     {
         public OutboundSocketTests()
         {
-            LogProvider.SetCurrentLogProvider(new ConsoleLogProvider());
+            LogProvider.SetCurrentLogProvider(new ColouredConsoleLogProvider());
         }
 
         [Fact(Timeout = 2000)]

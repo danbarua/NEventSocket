@@ -118,6 +118,8 @@
             return await Messages
                 .FirstAsync(x => x.ContentType == ContentTypes.ApiResponse)
                 .Timeout(EventSocket.TimeOut, Observable.Throw<BasicMessage>(new TimeoutException("No Api Response received within the specified timeout of {0}.".Fmt(EventSocket.TimeOut))))
+                .Do(_ => { },
+                    ex => Log.ErrorException("Error waiting for Api Response.", ex))
                 .Select(x => new ApiResponse(x))
                 .Do(result => Log.Trace(() => "ApiResponse received [{0}] for [{1}]".Fmt(result.BodyText.Replace("\n", string.Empty), command)))
                 .ToTask(cts.Token);
@@ -197,6 +199,8 @@
             return await Messages
                 .FirstAsync(x => x.ContentType == ContentTypes.CommandReply)
                 .Timeout(EventSocket.TimeOut, Observable.Throw<BasicMessage>(new TimeoutException("No Command Reply received within the specified timeout of {0}.".Fmt(EventSocket.TimeOut))))
+                .Do(_ => { },
+                    ex => Log.ErrorException("Error waiting for Command Reply.", ex))
                 .Select(x => new CommandReply(x))
                 .Do(result => Log.Trace(() => "CommandReply received [{0}] for [{1}]".Fmt(result.ReplyText.Replace("\n", string.Empty), command)))
                 .ToTask(cts.Token);
