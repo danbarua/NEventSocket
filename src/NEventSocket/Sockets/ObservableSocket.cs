@@ -177,8 +177,12 @@
                     if (receiverTermination != null)
                     {
                         receiverTermination.OnNext(Unit.Default);
-                        receiverTermination.Dispose();
-                        receiverTermination = null;
+
+                        if (receiverTermination != null)
+                        {
+                            receiverTermination.Dispose();
+                            receiverTermination = null;
+                        }
                     }
 
                     if (received != null)

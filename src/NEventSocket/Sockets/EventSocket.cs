@@ -18,15 +18,15 @@
     using NEventSocket.Logging;
     using NEventSocket.Util;
 
-    public abstract class EventSocket : ObservableSocket, IEventSocket
+    public abstract class EventSocket : ObservableSocket
     {
+        public TimeSpan Timeout { get; set; }
+
         protected readonly CompositeDisposable disposables = new CompositeDisposable();
 
-        private static readonly ILog Log = LogProvider.GetCurrentClassLogger();
+        private readonly ILog Log;
 
-        private static TimeSpan timeOut = TimeSpan.FromSeconds(30);
-
-        private readonly ISubject<BasicMessage> incomingMessages = new ReplaySubject<BasicMessage>(1);
+        private readonly ISubject<BasicMessage> incomingMessages = new Subject<BasicMessage>(); //new ReplaySubject<BasicMessage>(1);
         
         // minimum events required for this class to do its job
         private readonly HashSet<EventName> events = new HashSet<EventName>()
@@ -45,32 +45,27 @@
 
         private readonly CancellationTokenSource cts = new CancellationTokenSource();
 
-        protected EventSocket(TcpClient tcpClient) : base(tcpClient)
+        protected EventSocket(TcpClient tcpClient, TimeSpan? timeout = null)
+            : base(tcpClient)
         {
-            Receiver
-                .SelectMany(x => Encoding.ASCII.GetString(x))
-                .AggregateUntil(() => new Parser(), (builder, ch) => builder.Append(ch), builder => builder.Completed)
-                .Select(builder => builder.ExtractMessage())
-                .Subscribe(msg => incomingMessages.OnNext(msg));
+            Log = LogProvider.GetLogger(this.GetType());
+            this.TimeOut = timeout ?? TimeSpan.FromSeconds(30);
+
+            this.Messages = incomingMessages;
+
+            disposables.Add(Receiver.SelectMany(x => Encoding.ASCII.GetString(x))
+                        .AggregateUntil(
+                            () => new Parser(), (builder, ch) => builder.Append(ch), builder => builder.Completed)
+                        .Select(builder => builder.ExtractMessage())
+                        .Subscribe(msg => incomingMessages.OnNext(msg), err => incomingMessages.OnError(err)));
 
             Log.Trace(() => "EventSocket initialized");
         }
 
-        public static TimeSpan TimeOut
-        {
-            get
-            {
-                return timeOut;
-            }
-
-            set
-            {
-                timeOut = value;
-            }
-        }
+        public TimeSpan TimeOut { get; set; }
 
         /// <summary> Gets an observable stream of BasicMessages </summary>
-        public IObservable<BasicMessage> Messages { get { return incomingMessages; } }
+        public IObservable<BasicMessage> Messages { get; private set; }
 
         /// <summary>Observable of all Events received on this connection</summary>
         public IObservable<EventMessage> Events
@@ -119,7 +114,7 @@
 
             return await Messages
                 .FirstAsync(x => x.ContentType == ContentTypes.ApiResponse)
-                .Timeout(EventSocket.TimeOut, Observable.Throw<BasicMessage>(new TimeoutException("No Api Response received within the specified timeout of {0}.".Fmt(EventSocket.TimeOut))))
+                .Timeout(TimeOut, Observable.Throw<BasicMessage>(new TimeoutException("No Api Response received within the specified timeout of {0}.".Fmt(TimeOut))))
                 .Do(_ => { },
                     ex => Log.ErrorException("Error waiting for Api Response.", ex))
                 .Select(x => new ApiResponse(x))
@@ -199,13 +194,13 @@
             await SendAsync(Encoding.ASCII.GetBytes(command + "\n\n"), cts.Token);
 
             return await Messages
-                .FirstAsync(x => x.ContentType == ContentTypes.CommandReply)
-                .Timeout(EventSocket.TimeOut, Observable.Throw<BasicMessage>(new TimeoutException("No Command Reply received within the specified timeout of {0}.".Fmt(EventSocket.TimeOut))))
-                .Do(_ => { },
-                    ex => Log.ErrorException("Error waiting for Command Reply.", ex))
-                .Select(x => new CommandReply(x))
-                .Do(result => Log.Trace(() => "CommandReply received [{0}] for [{1}]".Fmt(result.ReplyText.Replace("\n", string.Empty), command)))
-                .ToTask(cts.Token);
+                            .FirstAsync(x => x.ContentType == ContentTypes.CommandReply)
+                            .Timeout(TimeOut, Observable.Throw<BasicMessage>(new TimeoutException("No Command Reply received within the specified timeout of {0}.".Fmt(TimeOut))))
+                            .Do(_ => { },
+                                ex => Log.ErrorException("Error waiting for Command Reply.", ex))
+                            .Select(x => new CommandReply(x))
+                            .Do(result => Log.Trace(() => "CommandReply received [{0}] for [{1}]".Fmt(result.ReplyText.Replace("\n", string.Empty), command)))
+                            .ToTask(cts.Token);
         }
 
         public async Task SubscribeEvents(params EventName[] events)
@@ -249,7 +244,6 @@
                     }
 
                     incomingMessages.OnCompleted();
-
                     disposables.Dispose();
                 }
             }

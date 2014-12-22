@@ -65,5 +65,15 @@ namespace NEventSocket.Tests.Fakes
         {
             return this.SendAsync("Content-Type: command/reply\nReply-Text: -ERR {0}\n\n".Fmt(error), CancellationToken.None);
         }
+
+        public Task SendApiResponseOk()
+        {
+            return this.SendAsync("Content-Type: api/response\nContent-Length: 3\n\n+OK", CancellationToken.None);
+        }
+
+        public Task SendApiResponseError(string error)
+        {
+            return this.SendAsync("Content-Type: api/response\nContent-Length: {0}\n\n-ERR {1}".Fmt(5 + error.Length, error), CancellationToken.None);
+        }
     }
 }

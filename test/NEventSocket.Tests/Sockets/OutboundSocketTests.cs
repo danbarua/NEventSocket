@@ -27,10 +27,10 @@ namespace NEventSocket.Tests.Sockets
             LogProvider.SetCurrentLogProvider(new ColouredConsoleLogProvider());
         }
 
-        [Fact(Timeout = 2000)]
+        [Fact(Timeout = 30000)]
         public void Disposing_the_listener_completes_the_message_observables()
         {
-            using (var listener = new OutboundListener(8084))
+            using (var listener = new OutboundListener(8085))
             {
                 listener.Start();
 
@@ -45,23 +45,25 @@ namespace NEventSocket.Tests.Sockets
                     connection.Events.Subscribe(_ => { }, () => eventsObservableCompleted = true);
                 });
 
-                var client = new FakeFreeSwitchSocket(8084);
-                ThreadUtils.WaitUntil(() => connected);
-                listener.Dispose(); // will dispose the socket
+                using (var client = new FakeFreeSwitchSocket(8085))
+                {
+                    ThreadUtils.WaitUntil(() => connected);
+                    listener.Dispose(); // will dispose the socket
 
-                ThreadUtils.WaitUntil(() => messagesObservableCompleted);
-                ThreadUtils.WaitUntil(() => eventsObservableCompleted);
+                    ThreadUtils.WaitUntil(() => messagesObservableCompleted);
+                    ThreadUtils.WaitUntil(() => eventsObservableCompleted);
 
-                Assert.True(connected, "Expect a connection to have been made.");
-                Assert.True(messagesObservableCompleted, "Expect the BasicMessage observable to be completed");
-                Assert.True(eventsObservableCompleted, "Expect the EventMessage observable to be completed");
+                    Assert.True(connected, "Expect a connection to have been made.");
+                    Assert.True(messagesObservableCompleted, "Expect the BasicMessage observable to be completed");
+                    Assert.True(eventsObservableCompleted, "Expect the EventMessage observable to be completed");
+                }
             }
         }
 
-        [Fact(Timeout = 2000)]
+        [Fact(Timeout = 30000)]
         public void When_FreeSwitch_disconnects_it_completes_the_message_observables()
         {
-            using (var listener = new OutboundListener(8084))
+            using (var listener = new OutboundListener(8086))
             {
                 listener.Start();
 
@@ -75,24 +77,26 @@ namespace NEventSocket.Tests.Sockets
                     connection.Messages.Subscribe(_ => { }, () => messagesObservableCompleted = true);
                     connection.Events.Subscribe(_ => { }, () => eventsObservableCompleted = true);
                 });
-                
-                var client = new FakeFreeSwitchSocket(8084);
-                ThreadUtils.WaitUntil(() => connected);
-                client.Dispose();
 
-                ThreadUtils.WaitUntil(() => messagesObservableCompleted);
-                ThreadUtils.WaitUntil(() => eventsObservableCompleted);
+                using (var client = new FakeFreeSwitchSocket(8086))
+                {
+                    ThreadUtils.WaitUntil(() => connected);
+                    client.Dispose();
 
-                Assert.True(connected, "Expect a connection to have been made.");
-                Assert.True(messagesObservableCompleted, "Expect the BasicMessage observable to be completed");
-                Assert.True(eventsObservableCompleted, "Expect the EventMessage observable to be completed");
+                    ThreadUtils.WaitUntil(() => messagesObservableCompleted);
+                    ThreadUtils.WaitUntil(() => eventsObservableCompleted);
+
+                    Assert.True(connected, "Expect a connection to have been made.");
+                    Assert.True(messagesObservableCompleted, "Expect the BasicMessage observable to be completed");
+                    Assert.True(eventsObservableCompleted, "Expect the EventMessage observable to be completed");
+                }
             }
         }
 
-        [Fact(Timeout = 1000)]
+        [Fact(Timeout = 30000)]
         public async Task Calling_Connect_on_a_new_OutboundSocket_should_populate_the_ChannelData()
         {
-            using (var listener = new OutboundListener(8084))
+            using (var listener = new OutboundListener(8087))
             {
                 listener.Start();
                 EventMessage channelData = null;
@@ -103,14 +107,16 @@ namespace NEventSocket.Tests.Sockets
                         channelData = await socket.Connect();
                     });
 
-                var fakeSocket = new FakeFreeSwitchSocket(8084);
-                await fakeSocket.SendChannelDataEvent();
+                using (var client = new FakeFreeSwitchSocket(8087))
+                {
+                    await client.SendChannelDataEvent();
 
-                ThreadUtils.WaitUntil(() => channelData != null);
+                    ThreadUtils.WaitUntil(() => channelData != null);
 
-                Assert.NotNull(channelData);
-                Assert.Equal(ChannelState.Execute, channelData.ChannelState);
-                Assert.Equal("RINGING", channelData.Headers["Channel-Call-State"]);
+                    Assert.NotNull(channelData);
+                    Assert.Equal(ChannelState.Execute, channelData.ChannelState);
+                    Assert.Equal("RINGING", channelData.Headers["Channel-Call-State"]);
+                }
             }
         }
     }

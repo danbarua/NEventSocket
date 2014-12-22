@@ -17,18 +17,19 @@
     {
         private static readonly ILog Log = LogProvider.GetCurrentClassLogger();
 
-        protected InboundSocket(string host, int port)
-            : base(new TcpClient(host, port))
+        protected InboundSocket(string host, int port, TimeSpan? timeout = null)
+            : base(new TcpClient(host, port), timeout)
         {
         }
 
-        public async static Task<InboundSocket> Connect(string host = "localhost", int port = 8021, string password = "ClueCon")
+        public async static Task<InboundSocket> Connect(string host = "localhost", int port = 8021, string password = "ClueCon", TimeSpan? timeout = null)
         {
-            var socket = new InboundSocket(host, port);
+            var socket = new InboundSocket(host, port, timeout);
 
             await socket.Messages
                 .FirstAsync(x => x.ContentType == ContentTypes.AuthRequest)
-                .Timeout(EventSocket.TimeOut, Observable.Throw<BasicMessage>(new TimeoutException("No Auth Request received within the specified timeout of {0}.".Fmt(EventSocket.TimeOut))))
+                .Do(_ => Log.Trace(() => "Received Auth Request"))
+                .Timeout(socket.TimeOut, Observable.Throw<BasicMessage>(new TimeoutException("No Auth Request received within the specified timeout of {0}.".Fmt(socket.TimeOut))))
                 .Do(_ => { },
                     ex => Log.ErrorException("Error waiting for AuthRequest.", ex))
                 .ToTask();
