@@ -100,10 +100,32 @@ namespace NEventSocket.Sockets
             return this;
         }
 
-        public BasicMessage ParseMessage()
+        public Parser Append(string next)
+        {
+            var parser = this;
+
+            foreach (char c in next)
+            {
+                parser = parser.Append(next);
+            }
+
+            return parser;
+        }
+
+        public BasicMessage ExtractMessage()
         {
             if (!this.Completed)
-                throw new InvalidOperationException("The message was not completely parsed.");
+            {
+                string errorMessage = "The message was not completely parsed.";
+
+                if (this.HasBody)
+                {
+                    errorMessage += "expected a body with length {0}, got {1} instead.".Fmt(
+                        contentLength, buffer.Length);
+                }
+
+                throw new InvalidOperationException(errorMessage);
+            }
 
             return this.HasBody ? new BasicMessage(this.headers, this.buffer.ToString()) : new BasicMessage(this.headers);
         }

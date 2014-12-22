@@ -30,5 +30,13 @@
         {
             get { return this.Headers[HeaderNames.ReplyText]; }
         }
+
+        public string ErrorMessage
+        {
+            get
+            {
+                return this.ReplyText != null && this.ReplyText.StartsWith("-ERR") ? this.ReplyText.Substring(5, this.ReplyText.Length - 5) : string.Empty;
+            }
+        }
     }
 }

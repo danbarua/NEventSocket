@@ -174,7 +174,7 @@ Reply-Text: %2BOK%0A
 Socket-Mode: async
 Control: full";
 
-        public const string CallState = @"Content-Length: 1754
+        public const string CallState = @"Content-Length: 1751
 Content-Type: text/event-plain
 
 Event-Name: CHANNEL_CALLSTATE
@@ -228,7 +228,7 @@ Caller-Screen-Bit: true
 Caller-Privacy-Hide-Name: false
 Caller-Privacy-Hide-Number: false";
 
-        public const string BackgroundJob = @"Content-Length: 625
+        public const string BackgroundJob = @"Content-Length: 584
 Content-Type: text/event-plain
 
 Job-UUID: 7f4db78a-17d7-11dd-b7a0-db4edd065621
@@ -248,6 +248,27 @@ Event-Calling-Line-Number: 609
 Content-Length: 41
 
 +OK 7f4de4bc-17d7-11dd-b7a0-db4edd065621";
+
+        public const string BackgroundJobError = @"Content-Length: 554
+Content-Type: text/event-plain
+
+Job-UUID: 7f4db78a-17d7-11dd-b7a0-db4edd065621
+Job-Command: originate
+Job-Command-Arg: sofia/default/1005%20'%26park'
+Event-Name: BACKGROUND_JOB
+Core-UUID: 42bdf272-16e6-11dd-b7a0-db4edd065621
+FreeSWITCH-Hostname: ser
+FreeSWITCH-IPv4: 192.168.1.104
+FreeSWITCH-IPv6: 127.0.0.1
+Event-Date-Local: 2008-05-02%2007%3A37%3A03
+Event-Date-GMT: Thu,%2001%20May%202008%2023%3A37%3A03%20GMT
+Event-Date-timestamp: 1209685023894968
+Event-Calling-File: mod_event_socket.c
+Event-Calling-Function: api_exec
+Event-Calling-Line-Number: 609
+Content-Length: 12
+
+-ERR Error";
 
         public const string DisconnectEvent = @"Content-Type: text/disconnect-notice
 Controlled-Session-UUID: ae4b8173-00ca-4c3e-a7e0-6fbb2a32a15d

@@ -68,7 +68,7 @@
     <Compile Include="Sockets\InboundSocketTests.cs" />
     <Compile Include="Sockets\OutboundSocketTests.cs" />
     <Compile Include="Sockets\OutboundListenerTests.cs" />
-    <Compile Include="Sockets\ParsingTests.cs" />
+    <Compile Include="Sockets\MessageParsingTests.cs" />
     <Compile Include="TestSupport\TestMessages.cs" />
     <Compile Include="TestSupport\ThreadUtils.cs" />
     <Compile Include="Util\StringExtensionsTests.cs" />

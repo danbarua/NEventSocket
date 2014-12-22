@@ -50,7 +50,8 @@
             Receiver
                 .SelectMany(x => Encoding.ASCII.GetString(x))
                 .AggregateUntil(() => new Parser(), (builder, ch) => builder.Append(ch), builder => builder.Completed)
-                .Select(builder => builder.ParseMessage()).Subscribe(msg => incomingMessages.OnNext(msg));
+                .Select(builder => builder.ExtractMessage())
+                .Subscribe(msg => incomingMessages.OnNext(msg));
 
             Log.Trace(() => "EventSocket initialized");
         }
@@ -61,6 +62,7 @@
             {
                 return timeOut;
             }
+
             set
             {
                 timeOut = value;

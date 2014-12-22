@@ -50,7 +50,7 @@
                             parser.Append(c);
                         }
 
-                        BasicMessage payload = parser.ParseMessage();
+                        BasicMessage payload = parser.ExtractMessage();
 
                         this.Headers = payload.Headers;
                         this.BodyText = payload.BodyText.Trim();

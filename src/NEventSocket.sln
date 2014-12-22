@@ -1,8 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NEventSocket.Specs", "..\test\NEventSocket.Specs\NEventSocket.Specs.csproj", "{4DB49BC2-C16A-46AC-91FF-36AE53F9864B}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NEventSocket", "NEventSocket\NEventSocket.csproj", "{83DCA19D-3FF7-4E60-A066-BAE1C5A7B65E}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionItems", "{E15B83EF-2CE1-4479-A457-D340DCA80869}"
@@ -31,10 +29,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{4DB49BC2-C16A-46AC-91FF-36AE53F9864B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{4DB49BC2-C16A-46AC-91FF-36AE53F9864B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{4DB49BC2-C16A-46AC-91FF-36AE53F9864B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{4DB49BC2-C16A-46AC-91FF-36AE53F9864B}.Release|Any CPU.Build.0 = Release|Any CPU
 		{83DCA19D-3FF7-4E60-A066-BAE1C5A7B65E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{83DCA19D-3FF7-4E60-A066-BAE1C5A7B65E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{83DCA19D-3FF7-4E60-A066-BAE1C5A7B65E}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -52,7 +46,6 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{4DB49BC2-C16A-46AC-91FF-36AE53F9864B} = {8A973BD1-83E8-4794-A81A-538CC7069BDC}
 		{731A678B-6827-468A-BFA1-AB2533947D61} = {8A973BD1-83E8-4794-A81A-538CC7069BDC}
 		{0486B4C4-BD02-4DF1-99C8-1188400B08E1} = {8A973BD1-83E8-4794-A81A-538CC7069BDC}
 	EndGlobalSection
