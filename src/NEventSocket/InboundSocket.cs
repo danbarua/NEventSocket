@@ -5,6 +5,8 @@
     using System.Reactive.Linq;
     using System.Reactive.Threading.Tasks;
     using System.Security;
+    using System.Text;
+    using System.Threading;
     using System.Threading.Tasks;
 
     using NEventSocket.FreeSwitch;
@@ -38,14 +40,27 @@
 
             if (!result.Success)
             {
-                Log.Error("InboundSocket authentication failed.");
-                socket.Dispose();
+                Log.Error("InboundSocket authentication failed ({0}).".Fmt(result.ErrorMessage));
                 throw new SecurityException("Invalid password");
             }
 
             Log.Trace(() => "InboundSocket authentication succeeded.");
 
             return socket;
+        }
+
+        public async Task<CommandReply> Auth(string password)
+        {
+            await SendAsync(Encoding.ASCII.GetBytes("auth {0}\n\n".Fmt(password)), CancellationToken.None);
+
+            return await Messages
+                            .FirstAsync(x => x.ContentType == ContentTypes.CommandReply)
+                            .Timeout(TimeOut, Observable.Throw<BasicMessage>(new TimeoutException("No Auth Reply received within the specified timeout of {0}.".Fmt(TimeOut))))
+                            .Do(_ => { },
+                                ex => Log.ErrorException("Error waiting for Auth Reply.", ex))
+                            .Select(x => new CommandReply(x))
+                            .Do(result => Log.Trace(() => "CommandReply received [{0}] for auth response".Fmt(result.ReplyText)))
+                            .ToTask();
         }
 
         public Task<OriginateResult> Originate(string endpoint, OriginateOptions options = null, string application = "park")
