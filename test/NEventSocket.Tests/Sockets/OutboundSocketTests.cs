@@ -10,6 +10,7 @@
 namespace NEventSocket.Tests.Sockets
 {
     using System;
+    using System.Reactive.Linq;
     using System.Threading.Tasks;
 
     using NEventSocket.FreeSwitch;
@@ -109,7 +110,8 @@ namespace NEventSocket.Tests.Sockets
 
                 using (var client = new FakeFreeSwitchSocket(listener.Port))
                 {
-                    await client.SendChannelDataEvent();
+                    client.MessagesReceived.FirstAsync(m => m.StartsWith("connect"))
+                          .Subscribe(async _ => await client.SendChannelDataEvent());
 
                     ThreadUtils.WaitUntil(() => channelData != null);
 
