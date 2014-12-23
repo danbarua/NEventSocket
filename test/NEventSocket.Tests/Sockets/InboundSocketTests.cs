@@ -172,49 +172,6 @@
         }
 
         [Fact(Timeout = 10000)]
-        public async Task when_no_subsequent_api_response_received_it_should_throw_a_TimeOutException()
-        {
-            using (var listener = new FakeFreeSwitchListener(0))
-            {
-                listener.Start();
-
-                listener.Connections.Subscribe(
-                    async socket =>
-                    {
-                        socket.MessagesReceived.Where(m => m.Equals("auth ClueCon"))
-                              .Take(1)
-                              .Subscribe(async m =>
-                              {
-                                  await socket.SendCommandReplyOk();
-                              });
-
-                        socket.MessagesReceived.Where(m => m.StartsWith("api first"))
-                              .Take(1)
-                              .Subscribe(
-                                  async m =>
-                                  {
-                                      await socket.SendApiResponseOk();
-                                  });
-
-                        await socket.Send("Content-Type: auth/request");
-                    });
-
-                using (var client = await InboundSocket.Connect("127.0.0.1", listener.Port, "ClueCon"))
-                {
-                    client.Messages.Subscribe(m => Console.WriteLine("TEST: " + m));
-
-                    var result = await client.Api("first");
-                    Assert.True(result.Success);
-
-                    client.TimeOut = TimeSpan.FromMilliseconds(500);
-                    var ex = Record.Exception(() => client.Api("second").Wait());
-                    Assert.NotNull(ex);
-                    Assert.IsType<TimeoutException>(ex.InnerException);
-                }
-            }
-        }
-
-        [Fact(Timeout = 10000)]
         public async Task can_send_command()
         {
             using (var listener = new FakeFreeSwitchListener(0))
@@ -277,50 +234,6 @@
                     client.Messages.Subscribe(m => Console.WriteLine("TEST: " + m));
                     client.TimeOut = TimeSpan.FromSeconds(1);
                     var ex = Record.Exception(() => client.SendCommand("test").Result);
-                    Assert.NotNull(ex);
-                    Assert.IsType<TimeoutException>(ex.InnerException);
-
-                    client.Exit();
-                }
-            }
-        }
-
-        [Fact(Timeout = 10000)]
-        public async Task when_no_subsequent_command_reply_received_it_should_throw_a_TimeOutException()
-        {
-            using (var listener = new FakeFreeSwitchListener(0))
-            {
-                listener.Start();
-
-                listener.Connections.Subscribe(
-                    async socket =>
-                    {
-                        socket.MessagesReceived.Where(m => m.Equals("auth ClueCon"))
-                              .Take(1)
-                              .Subscribe(async m =>
-                              {
-                                  await socket.SendCommandReplyOk();
-                              });
-
-                        socket.MessagesReceived.Where(m => m.Equals("test first"))
-                              .Take(1)
-                              .Subscribe(async m =>
-                              {
-                                  await socket.SendCommandReplyOk();
-                              });
-
-                        await socket.Send("Content-Type: auth/request");
-                    });
-
-                using (var client = await InboundSocket.Connect("127.0.0.1", listener.Port, "ClueCon"))
-                {
-                    client.Messages.Subscribe(m => Console.WriteLine("TEST: " + m));
-
-                    var response = await client.SendCommand("test first");
-                    Assert.True(response.Success);
-
-                    client.TimeOut = TimeSpan.FromSeconds(1);
-                    var ex = Record.Exception(() => client.SendCommand("test second").Result);
                     Assert.NotNull(ex);
                     Assert.IsType<TimeoutException>(ex.InnerException);
 
