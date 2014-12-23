@@ -30,16 +30,18 @@ namespace NEventSocket.Example
 
             Console.WriteLine("Starting...");
 
-            ChannelTest();
-
-            //OutboundSocketTest();
-            //InboundSocketTest();
-
-            //DtmfTest();
-            //PlayGetDigitsTest();
+            ApiTest();
             
             Console.WriteLine("Press [Enter] to exit.");
             Console.ReadLine();
+        }
+
+        private static async Task ApiTest()
+        {
+            using (var client = await InboundSocket.Connect())
+            {
+                Console.WriteLine((await client.Api("status")).BodyText);
+            }
         }
 
         private static async Task CallTracking()
