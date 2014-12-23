@@ -87,13 +87,20 @@ namespace NEventSocket.Sockets
                                       this.connections.Add(connection);
                                       this.observable.OnNext(connection);
 
-                                      connection.Disposed += (o, e) =>
-                                          {
-                                              Log.Trace(() => "Connection Disposed");
-                                              this.connections.Remove(connection);
-                                          };
+                                      connection.Disposed += ConnectionOnDisposed;
                                   },
                               ex => Log.ErrorFormat("Error handling inbound connection", ex));
+        }
+
+        private void ConnectionOnDisposed(object sender, EventArgs eventArgs)
+        {
+            var connection = sender as T;
+            if (connection != null)
+            {
+                Log.Trace(() => "Connection Disposed");
+                connection.Disposed -= this.ConnectionOnDisposed;
+                this.connections.Remove(connection);
+            }
         }
 
         public void Dispose()
