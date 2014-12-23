@@ -30,7 +30,7 @@ namespace NEventSocket.Tests.Sockets
         [Fact(Timeout = 30000)]
         public void Disposing_the_listener_completes_the_message_observables()
         {
-            using (var listener = new OutboundListener(8085))
+            using (var listener = new OutboundListener(0))
             {
                 listener.Start();
 
@@ -45,7 +45,7 @@ namespace NEventSocket.Tests.Sockets
                     connection.Events.Subscribe(_ => { }, () => eventsObservableCompleted = true);
                 });
 
-                using (var client = new FakeFreeSwitchSocket(8085))
+                using (var client = new FakeFreeSwitchSocket(listener.Port))
                 {
                     ThreadUtils.WaitUntil(() => connected);
                     listener.Dispose(); // will dispose the socket
@@ -63,7 +63,7 @@ namespace NEventSocket.Tests.Sockets
         [Fact(Timeout = 30000)]
         public void When_FreeSwitch_disconnects_it_completes_the_message_observables()
         {
-            using (var listener = new OutboundListener(8086))
+            using (var listener = new OutboundListener(0))
             {
                 listener.Start();
 
@@ -78,7 +78,7 @@ namespace NEventSocket.Tests.Sockets
                     connection.Events.Subscribe(_ => { }, () => eventsObservableCompleted = true);
                 });
 
-                using (var client = new FakeFreeSwitchSocket(8086))
+                using (var client = new FakeFreeSwitchSocket(listener.Port))
                 {
                     ThreadUtils.WaitUntil(() => connected);
                     client.Dispose();
@@ -96,7 +96,7 @@ namespace NEventSocket.Tests.Sockets
         [Fact(Timeout = 30000)]
         public async Task Calling_Connect_on_a_new_OutboundSocket_should_populate_the_ChannelData()
         {
-            using (var listener = new OutboundListener(8087))
+            using (var listener = new OutboundListener(0))
             {
                 listener.Start();
                 EventMessage channelData = null;
@@ -107,7 +107,7 @@ namespace NEventSocket.Tests.Sockets
                         channelData = await socket.Connect();
                     });
 
-                using (var client = new FakeFreeSwitchSocket(8087))
+                using (var client = new FakeFreeSwitchSocket(listener.Port))
                 {
                     await client.SendChannelDataEvent();
 

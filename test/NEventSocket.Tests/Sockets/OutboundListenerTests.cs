@@ -19,7 +19,7 @@
         [Fact(Timeout = 2000)]
         public void Disposing_the_listener_completes_the_connections_observable()
         {
-            using (var listener = new OutboundListener(8084))
+            using (var listener = new OutboundListener(0))
             {
                 listener.Start();
 
@@ -36,7 +36,7 @@
         [Fact(Timeout = 2000)]
         public void Disposing_the_listener_disposes_any_connected_clients()
         {
-            using (var listener = new OutboundListener(8084))
+            using (var listener = new OutboundListener(0))
             {
                 listener.Start();
 
@@ -49,7 +49,7 @@
                     socket.Disposed += (o, e) => disposed = true;
                 });
 
-                var client = new FakeFreeSwitchSocket(8084);
+               var client = new FakeFreeSwitchSocket(listener.Port);
 
                 ThreadUtils.WaitUntil(() => connected);
                 listener.Dispose();
@@ -61,7 +61,7 @@
         [Fact(Timeout = 2000)]
         public void a_new_connection_produces_an_outbound_socket()
         {
-            using (var listener = new OutboundListener(8084))
+            using (var listener = new OutboundListener(0))
             {
                 listener.Start();
 
@@ -69,7 +69,7 @@
 
                 listener.Connections.Subscribe((socket) => connected = true);
 
-                var client = new FakeFreeSwitchSocket(8084);
+                var client = new FakeFreeSwitchSocket(listener.Port);
 
                 ThreadUtils.WaitUntil(() => connected);
                 Assert.True(connected);
@@ -81,7 +81,7 @@
         {
             const int NumberOfConnections = 3;
 
-            using (var listener = new OutboundListener(8084))
+            using (var listener = new OutboundListener(0))
             {
                 listener.Start();
 
@@ -91,7 +91,7 @@
 
                 for (int i = 0; i < NumberOfConnections; i++)
                 {
-                    var client = new FakeFreeSwitchSocket(8084);
+                    var client = new FakeFreeSwitchSocket(listener.Port);
                 }
 
                 ThreadUtils.WaitUntil(() => connected == NumberOfConnections);

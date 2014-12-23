@@ -9,6 +9,7 @@ namespace NEventSocket.Sockets
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Net;
     using System.Net.Sockets;
     using System.Reactive;
     using System.Reactive.Linq;
@@ -55,6 +56,11 @@ namespace NEventSocket.Sockets
             get { return this.observable; }
         }
 
+        public int Port
+        {
+            get { return ((IPEndPoint)this.tcpListener.LocalEndpoint).Port; }
+        }
+
         /// <summary>
         /// Starts the Listener
         /// </summary>
@@ -67,7 +73,7 @@ namespace NEventSocket.Sockets
 
             this.tcpListener.Start();
 
-            Log.Trace(() => "Listener Started on Port {0}".Fmt(this.port));
+            Log.Trace(() => "Listener Started on Port {0}".Fmt(this.Port));
 
             this.subscription =
                 Observable.FromAsync(this.tcpListener.AcceptTcpClientAsync)
