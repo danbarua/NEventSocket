@@ -9,6 +9,7 @@ namespace NEventSocket.Tests.Fakes
     using System;
     using System.Net.Sockets;
     using System.Reactive.Linq;
+    using System.Reactive.Subjects;
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
@@ -23,13 +24,23 @@ namespace NEventSocket.Tests.Fakes
     /// </summary>
     public class FakeFreeSwitchSocket : ObservableSocket
     {
+        private readonly ISubject<string> incomingMessages = new Subject<string>();
+
         public FakeFreeSwitchSocket(TcpClient client)
             : base(client)
         {
+            this.Receiver.SelectMany(x => Encoding.ASCII.GetString(x))
+                .AggregateUntil(
+                    () => new StringBuilder(), (sb, c) => sb.Append(c), sb => sb.ToString().EndsWith("\n\n"))
+                .Select(x => x.ToString().Remove(x.Length - 2, 2))
+                .Subscribe(
+                    x => incomingMessages.OnNext(x),
+                    ex => incomingMessages.OnError(ex),
+                    () => incomingMessages.OnCompleted());
         }
 
         public FakeFreeSwitchSocket(int port)
-            : base(new TcpClient("127.0.0.1", port))
+            : this(new TcpClient("127.0.0.1", port))
         {
         }
 
@@ -37,11 +48,7 @@ namespace NEventSocket.Tests.Fakes
         {
             get
             {
-                return
-                    this.Receiver.SelectMany(x => Encoding.ASCII.GetString(x))
-                        .AggregateUntil(
-                            () => new StringBuilder(), (sb, c) => sb.Append(c), sb => sb.ToString().EndsWith("\n\n"))
-                        .Select(x => x.ToString().Remove(x.Length - 2, 2));
+                return incomingMessages;
             }
         }
 
