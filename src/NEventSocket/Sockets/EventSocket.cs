@@ -92,7 +92,7 @@
                         .ToObservable()
                         .Amb(
                                 Events
-                                    .FirstAsync(x => x.UUID == uuid && x.EventName == EventName.ChannelBridge)
+                                    .FirstOrDefaultAsync(x => x.UUID == uuid && x.EventName == EventName.ChannelBridge)
                                     .Do(x => Log.Trace(() => "Bridge {0} complete - {1}".Fmt(bridgeString, x.Headers[HeaderNames.OtherLegUniqueId]))))
                         .Select(x => new BridgeResult(x))
                         .ToTask();
