@@ -84,7 +84,7 @@
                                 || (options.ReturnRingReady && x.EventName == EventName.ChannelProgress)))
                               .Cast<BasicMessage>())
                     .LastAsync(x => ((x is BackgroundJobResult) && !((BackgroundJobResult)x).Success) || (x is EventMessage))
-                    .Select(OriginateResult.From)
+                    .Select(OriginateResult.FromBackgroundJobResultOrChannelEvent)
                     .ToTask();
         }
 

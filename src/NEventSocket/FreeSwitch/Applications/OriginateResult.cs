@@ -44,7 +44,7 @@
         /// </summary>
         public EventMessage ChannelData { get; protected set; }
 
-        public static OriginateResult From(BasicMessage message)
+        public static OriginateResult FromBackgroundJobResultOrChannelEvent(BasicMessage message)
         {
             var channelEvent = message as EventMessage;
             if (channelEvent != null)
