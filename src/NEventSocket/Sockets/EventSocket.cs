@@ -44,11 +44,11 @@
 
         private readonly CancellationTokenSource cts = new CancellationTokenSource();
 
-        protected EventSocket(TcpClient tcpClient, TimeSpan? timeout = null)
+        protected EventSocket(TcpClient tcpClient, TimeSpan? responseTimeOut = null)
             : base(tcpClient)
         {
             Log = LogProvider.GetLogger(this.GetType());
-            this.TimeOut = timeout ?? TimeSpan.FromSeconds(30);
+            this.ResponseTimeOut = responseTimeOut ?? TimeSpan.FromSeconds(30);
 
             this.Messages = incomingMessages;
 
@@ -61,7 +61,7 @@
             Log.Trace(() => "EventSocket initialized");
         }
 
-        public TimeSpan TimeOut { get; set; }
+        public TimeSpan ResponseTimeOut { get; set; }
 
         /// <summary> Gets an observable stream of BasicMessages </summary>
         public IObservable<BasicMessage> Messages { get; private set; }
@@ -112,12 +112,10 @@
             await SendAsync(Encoding.ASCII.GetBytes("api " + command + "\n\n"), cts.Token);
 
             return await Messages
-                .FirstOrDefaultAsync(x => x.ContentType == ContentTypes.ApiResponse)
-                .Timeout(TimeOut, Observable.Throw<BasicMessage>(new TimeoutException("No Api Response received within the specified timeout of {0}.".Fmt(TimeOut))))
-                .Do(_ => { },
-                    ex => Log.ErrorException("Error waiting for Api Response.", ex))
+                .FirstAsync(x => x.ContentType == ContentTypes.ApiResponse)
+                .Timeout(ResponseTimeOut, Observable.Throw<BasicMessage>(new TimeoutException("No Api Response received within the specified timeout of {0}.".Fmt(ResponseTimeOut))))
                 .Select(x => new ApiResponse(x))
-                .Do(result => Log.Trace(() => "ApiResponse received [{0}] for [{1}]".Fmt(result.BodyText.Replace("\n", string.Empty), command)))
+                .Do(result => Log.Trace(() => "ApiResponse received [{0}] for [{1}]".Fmt(result.BodyText.Replace("\n", string.Empty), command)), ex => Log.ErrorException("Error waiting for Api Response.", ex))
                 .ToTask(cts.Token);
         }
 
@@ -199,12 +197,10 @@
             await SendAsync(Encoding.ASCII.GetBytes(command + "\n\n"), cts.Token);
 
             return await Messages
-                            .FirstOrDefaultAsync(x => x.ContentType == ContentTypes.CommandReply)
-                            .Timeout(TimeOut, Observable.Throw<BasicMessage>(new TimeoutException("No Command Reply received within the specified timeout of {0}.".Fmt(TimeOut))))
-                            .Do(_ => { },
-                                ex => Log.ErrorException("Error waiting for Command Reply.", ex))
+                            .FirstAsync(x => x.ContentType == ContentTypes.CommandReply)
+                            .Timeout(ResponseTimeOut, Observable.Throw<BasicMessage>(new TimeoutException("No Command Reply received within the specified timeout of {0}.".Fmt(ResponseTimeOut))))
                             .Select(x => new CommandReply(x))
-                            .Do(result => Log.Trace(() => "CommandReply received [{0}] for [{1}]".Fmt(result.ReplyText.Replace("\n", string.Empty), command)))
+                            .Do(result => Log.Trace(() => "CommandReply received [{0}] for [{1}]".Fmt(result.ReplyText.Replace("\n", string.Empty), command)), ex => Log.ErrorException("Error waiting for Command Reply.", ex))
                             .ToTask(cts.Token);
         }
 

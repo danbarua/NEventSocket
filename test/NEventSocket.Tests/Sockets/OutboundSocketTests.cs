@@ -28,7 +28,7 @@ namespace NEventSocket.Tests.Sockets
             LogProvider.SetCurrentLogProvider(new ColouredConsoleLogProvider());
         }
 
-        [Fact(Timeout = 30000)]
+        [Fact(Timeout = 5000)]
         public void Disposing_the_listener_completes_the_message_observables()
         {
             using (var listener = new OutboundListener(0))
@@ -61,7 +61,7 @@ namespace NEventSocket.Tests.Sockets
             }
         }
 
-        [Fact(Timeout = 30000)]
+        [Fact(Timeout = 5000)]
         public void When_FreeSwitch_disconnects_it_completes_the_message_observables()
         {
             using (var listener = new OutboundListener(0))
@@ -94,7 +94,7 @@ namespace NEventSocket.Tests.Sockets
             }
         }
 
-        [Fact(Timeout = 30000)]
+        [Fact(Timeout = 5000)]
         public async Task Calling_Connect_on_a_new_OutboundSocket_should_populate_the_ChannelData()
         {
             using (var listener = new OutboundListener(0))

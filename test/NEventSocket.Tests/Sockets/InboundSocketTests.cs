@@ -19,7 +19,7 @@
             Logging.LogProvider.SetCurrentLogProvider(new ColouredConsoleLogProvider());
         }
 
-        [Fact(Timeout = 10000)]
+        [Fact(Timeout = 5000)]
         public async Task sending_a_correct_password_should_connect()
         {
             using (var listener = new FakeFreeSwitchListener(0))
@@ -62,7 +62,7 @@
             }
         }
 
-        [Fact(Timeout = 10000)]
+        [Fact(Timeout = 5000)]
         public async Task an_invalid_password_should_throw_a_SecurityException()
         {
             using (var listener = new FakeFreeSwitchListener(0))
@@ -89,7 +89,7 @@
             }
         }
 
-        [Fact(Timeout = 10000)]
+        [Fact(Timeout = 5000)]
         public void when_no_AuthRequest_received_it_should_throw_TimeoutException()
         {
             using (var listener = new FakeFreeSwitchListener(0))
@@ -101,7 +101,25 @@
             }
         }
 
-        [Fact(Timeout = 10000)]
+        [Fact(Timeout = 5000)]
+        public async Task when_no_response_to_auth_received_it_should_throw_TimeoutException()
+        {
+            using (var listener = new FakeFreeSwitchListener(0))
+            {
+                listener.Start();
+
+                listener.Connections.Subscribe(
+                    async socket =>
+                    {
+                        await socket.Send("Content-Type: auth/request");
+                    });
+
+                var aggregateException = Record.Exception(() => InboundSocket.Connect("127.0.0.1", listener.Port, "ClueCon", TimeSpan.FromMilliseconds(100)).Wait());
+                Assert.IsType<TimeoutException>(aggregateException.InnerException);
+            }
+        }
+
+        [Fact(Timeout = 5000)]
         public async Task can_send_api()
         {
             using (var listener = new FakeFreeSwitchListener(0))
@@ -139,39 +157,50 @@
             }
         }
 
-        [Fact(Timeout = 10000)]
-        public async Task when_no_api_response_received_it_should_throw_a_TimeOutException()
+        [Fact(Timeout = 5000)]
+        public void when_no_api_response_received_it_should_throw_a_TimeOutException()
         {
             using (var listener = new FakeFreeSwitchListener(0))
             {
                 listener.Start();
 
+                bool apiRequestReceived = false;
+
                 listener.Connections.Subscribe(
                     async socket =>
                     {
-                        socket.MessagesReceived.Where(m => m.Equals("auth ClueCon"))
-                              .Take(1)
+                        socket.MessagesReceived.FirstAsync(m => m.Equals("auth ClueCon"))
                               .Subscribe(async m =>
                               {
                                   await socket.SendCommandReplyOk();
                               });
 
+                        socket.MessagesReceived.FirstAsync(m => m.StartsWith("api"))
+                              .Subscribe(async m =>
+                                  {
+                                      apiRequestReceived = true;
+                                      await Task.Delay(1000);
+                                      await socket.SendApiResponseError("error");
+                                  });
+
                         await socket.Send("Content-Type: auth/request");
                     });
 
-                using (var client = await InboundSocket.Connect("127.0.0.1", listener.Port, "ClueCon"))
+                using (var client = InboundSocket.Connect("127.0.0.1", listener.Port, "ClueCon", TimeSpan.FromMilliseconds(100)).Result)
                 {
-                    client.TimeOut = TimeSpan.FromSeconds(1);
+                    client.ResponseTimeOut = TimeSpan.FromMilliseconds(100);
                     var ex = Record.Exception(() => client.Api("status").Wait());
+
                     Assert.NotNull(ex);
                     Assert.IsType<TimeoutException>(ex.InnerException);
+                    Assert.True(apiRequestReceived);
 
                     client.Exit();
                 }
             }
         }
 
-        [Fact(Timeout = 10000)]
+        [Fact(Timeout = 5000)]
         public async Task can_send_command()
         {
             using (var listener = new FakeFreeSwitchListener(0))
@@ -209,33 +238,41 @@
             }
         }
 
-        [Fact(Timeout = 10000)]
-        public async Task when_no_command_reply_received_it_should_throw_a_TimeOutException()
+        [Fact(Timeout = 5000)]
+        public void when_no_command_reply_received_it_should_throw_a_TimeOutException()
         {
             using (var listener = new FakeFreeSwitchListener(0))
             {
                 listener.Start();
 
+                bool commandRequestReceived = false;
+
                 listener.Connections.Subscribe(
                     async socket =>
                     {
-                        socket.MessagesReceived.Where(m => m.Equals("auth ClueCon"))
-                              .Take(1)
+                        socket.MessagesReceived.FirstAsync(m => m.Equals("auth ClueCon"))
                               .Subscribe(async m =>
                               {
                                   await socket.SendCommandReplyOk();
                               });
 
+                        socket.MessagesReceived.FirstAsync(m => m.StartsWith("test"))
+                              .Subscribe(async m =>
+                              {
+                                  commandRequestReceived = true;
+                                  await Task.Delay(1000);
+                                  await socket.SendCommandReplyError("error");
+                              });
+
                         await socket.Send("Content-Type: auth/request");
                     });
 
-                using (var client = await InboundSocket.Connect("127.0.0.1", listener.Port, "ClueCon"))
+                using (var client = InboundSocket.Connect("127.0.0.1", listener.Port, "ClueCon", TimeSpan.FromMilliseconds(100)).Result)
                 {
-                    client.Messages.Subscribe(m => Console.WriteLine("TEST: " + m));
-                    client.TimeOut = TimeSpan.FromSeconds(1);
-                    var ex = Record.Exception(() => client.SendCommand("test").Result);
+                    var ex = Record.Exception(() => client.SendCommand("test").Wait());
                     Assert.NotNull(ex);
                     Assert.IsType<TimeoutException>(ex.InnerException);
+                    Assert.True(commandRequestReceived);
 
                     client.Exit();
                 }

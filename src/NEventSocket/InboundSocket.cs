@@ -5,8 +5,6 @@
     using System.Reactive.Linq;
     using System.Reactive.Threading.Tasks;
     using System.Security;
-    using System.Text;
-    using System.Threading;
     using System.Threading.Tasks;
 
     using NEventSocket.FreeSwitch;
@@ -30,10 +28,8 @@
 
             await socket.Messages
                 .FirstAsync(x => x.ContentType == ContentTypes.AuthRequest)
-                .Do(_ => Log.Trace(() => "Received Auth Request"))
-                .Timeout(socket.TimeOut, Observable.Throw<BasicMessage>(new TimeoutException("No Auth Request received within the specified timeout of {0}.".Fmt(socket.TimeOut))))
-                .Do(_ => { },
-                    ex => Log.ErrorException("Error waiting for AuthRequest.", ex))
+                .Timeout(socket.ResponseTimeOut, Observable.Throw<BasicMessage>(new TimeoutException("No Auth Request received within the specified timeout of {0}.".Fmt(socket.ResponseTimeOut))))
+                .Do(_ => Log.Trace(() => "Received Auth Request"), ex => Log.ErrorException("Error waiting for AuthRequest.", ex))
                 .ToTask();
 
             var result = await socket.Auth(password);
@@ -47,20 +43,6 @@
             Log.Trace(() => "InboundSocket authentication succeeded.");
 
             return socket;
-        }
-
-        public async Task<CommandReply> Auth(string password)
-        {
-            await SendAsync(Encoding.ASCII.GetBytes("auth {0}\n\n".Fmt(password)), CancellationToken.None);
-
-            return await Messages
-                            .FirstAsync(x => x.ContentType == ContentTypes.CommandReply)
-                            .Timeout(TimeOut, Observable.Throw<BasicMessage>(new TimeoutException("No Auth Reply received within the specified timeout of {0}.".Fmt(TimeOut))))
-                            .Do(_ => { },
-                                ex => Log.ErrorException("Error waiting for Auth Reply.", ex))
-                            .Select(x => new CommandReply(x))
-                            .Do(result => Log.Trace(() => "CommandReply received [{0}] for auth response".Fmt(result.ReplyText)))
-                            .ToTask();
         }
 
         public Task<OriginateResult> Originate(string endpoint, OriginateOptions options = null, string application = "park")
