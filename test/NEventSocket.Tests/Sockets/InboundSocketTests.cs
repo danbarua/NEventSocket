@@ -151,8 +151,6 @@
                 {
                     var result = await client.Api("status");
                     Assert.True(result.Success);
-
-                    client.Exit();
                 }
             }
         }

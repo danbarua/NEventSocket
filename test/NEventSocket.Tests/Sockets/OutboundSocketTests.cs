@@ -95,7 +95,7 @@ namespace NEventSocket.Tests.Sockets
         }
 
         [Fact(Timeout = 5000)]
-        public async Task Calling_Connect_on_a_new_OutboundSocket_should_populate_the_ChannelData()
+        public void Calling_Connect_on_a_new_OutboundSocket_should_populate_the_ChannelData()
         {
             using (var listener = new OutboundListener(0))
             {
@@ -108,16 +108,141 @@ namespace NEventSocket.Tests.Sockets
                         channelData = await socket.Connect();
                     });
 
-                using (var client = new FakeFreeSwitchSocket(listener.Port))
+                using (var freeSwitch = new FakeFreeSwitchSocket(listener.Port))
                 {
-                    client.MessagesReceived.FirstAsync(m => m.StartsWith("connect"))
-                          .Subscribe(async _ => await client.SendChannelDataEvent());
+                    freeSwitch.MessagesReceived.FirstAsync(m => m.StartsWith("connect"))
+                          .Subscribe(async _ => await freeSwitch.SendChannelDataEvent());
 
                     ThreadUtils.WaitUntil(() => channelData != null);
 
                     Assert.NotNull(channelData);
                     Assert.Equal(ChannelState.Execute, channelData.ChannelState);
                     Assert.Equal("RINGING", channelData.Headers["Channel-Call-State"]);
+                }
+            }
+        }
+
+        [Fact(Timeout = 5000)]
+        public void can_send_api()
+        {
+            using (var listener = new OutboundListener(0))
+            {
+                listener.Start();
+
+                bool apiRequestReceived = false;
+                ApiResponse apiResponse = null;
+
+                listener.Connections.Subscribe(
+                    async (socket) =>
+                        {
+                            await socket.Connect();
+
+                            apiResponse = await socket.Api("status");
+                        });
+
+                using (var freeSwitch = new FakeFreeSwitchSocket(listener.Port))
+                {
+                    freeSwitch.MessagesReceived.FirstAsync(m => m.StartsWith("connect"))
+                              .Subscribe(async _ => await freeSwitch.SendChannelDataEvent());
+
+                    freeSwitch.MessagesReceived.FirstAsync(m => m.StartsWith("api")).Subscribe(
+                        async _ =>
+                            {
+                                apiRequestReceived = true;
+                                await freeSwitch.SendApiResponseOk();
+                            });
+
+                    ThreadUtils.WaitUntil(() => apiRequestReceived);
+
+                    Assert.True(apiRequestReceived);
+                    Assert.NotNull(apiResponse);
+                    Assert.True(apiResponse.Success);
+                }
+            }
+        }
+
+        [Fact(Timeout = 5000)]
+        public void can_send_command()
+        {
+            using (var listener = new OutboundListener(0))
+            {
+                listener.Start();
+
+                bool commandRequestReceived = false;
+                CommandReply commandReply = null;
+
+                listener.Connections.Subscribe(
+                    async (socket) =>
+                        {
+                            await socket.Connect();
+
+                            commandReply = await socket.Linger();
+                        });
+
+                using (var freeSwitch = new FakeFreeSwitchSocket(listener.Port))
+                {
+                    freeSwitch.MessagesReceived.FirstAsync(m => m.StartsWith("connect"))
+                          .Subscribe(async _ => await freeSwitch.SendChannelDataEvent());
+
+                    freeSwitch.MessagesReceived.FirstAsync(m => m.StartsWith("linger"))
+                          .Subscribe(async _ =>
+                              {
+                                  commandRequestReceived = true;
+                                  await freeSwitch.SendCommandReplyOk();
+                              });
+
+                    ThreadUtils.WaitUntil(() => commandRequestReceived);
+
+                    Assert.True(commandRequestReceived);
+                    Assert.NotNull(commandReply);
+                    Assert.True(commandReply.Success);
+                }
+            }
+        }
+
+        [Fact(Timeout = 5000)]
+        public void can_send_multple_commands()
+        {
+            using (var listener = new OutboundListener(0))
+            {
+                listener.Start();
+
+                bool commandRequestReceived = false;
+                CommandReply commandReply = null;
+
+                listener.Connections.Subscribe(
+                    async (socket) =>
+                    {
+                        await socket.Connect();
+
+                        commandReply = await socket.Linger();
+
+                        commandReply = await socket.NoLinger();
+                    });
+
+                using (var freeSwitch = new FakeFreeSwitchSocket(listener.Port))
+                {
+                    freeSwitch.MessagesReceived.FirstAsync(m => m.StartsWith("connect"))
+                          .Subscribe(async _ => await freeSwitch.SendChannelDataEvent());
+
+                    freeSwitch.MessagesReceived.FirstAsync(m => m.StartsWith("linger"))
+                          .Subscribe(async _ =>
+                          {
+                              await freeSwitch.SendCommandReplyOk();
+                          });
+
+                    freeSwitch.MessagesReceived.FirstAsync(m => m.StartsWith("linger"))
+                          .Subscribe(async _ =>
+                          {
+                              commandRequestReceived = true;
+                              await freeSwitch.SendCommandReplyError("FAILED");
+                          });
+
+                    ThreadUtils.WaitUntil(() => commandRequestReceived);
+
+                    Assert.True(commandRequestReceived);
+                    Assert.NotNull(commandReply);
+                    Assert.False(commandReply.Success);
                 }
             }
         }
