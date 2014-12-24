@@ -17,7 +17,10 @@ namespace NEventSocket.FreeSwitch.Applications
             : base(eventMessage)
         {
             this.Digits = eventMessage.GetVariable(channelVariable);
-            this.Result = (Status)Enum.Parse(typeof(Status), eventMessage.GetVariable("read_result"), true);
+            var readResult = eventMessage.GetVariable("read_result");
+            this.Result = !string.IsNullOrEmpty(readResult)
+                              ? (Status)Enum.Parse(typeof(Status), readResult, true)
+                              : Status.Failure;
         }
 
         public enum Status
