@@ -104,7 +104,7 @@
             await SendAsync(Encoding.ASCII.GetBytes("api " + command + "\n\n"), cts.Token);
 
             return await Messages
-                .FirstAsync(x => x.ContentType == ContentTypes.ApiResponse)
+                .FirstOrDefaultAsync(x => x.ContentType == ContentTypes.ApiResponse)
                 .Timeout(TimeOut, Observable.Throw<BasicMessage>(new TimeoutException("No Api Response received within the specified timeout of {0}.".Fmt(TimeOut))))
                 .Do(_ => { },
                     ex => Log.ErrorException("Error waiting for Api Response.", ex))
@@ -143,17 +143,23 @@
 
             return this.SendCommand(command)
                         .ToObservable()
-                        .Concat(Events.FirstAsync(x => x.UUID == uuid && x.EventName == EventName.ChannelExecuteComplete && x.Headers[HeaderNames.Application] == application).Cast<BasicMessage>())
+                        .Concat(Events.FirstOrDefaultAsync(x => x.UUID == uuid && x.EventName == EventName.ChannelExecuteComplete && x.Headers[HeaderNames.Application] == application).Cast<BasicMessage>())
                         .LastAsync()
                         .Cast<EventMessage>()
                         .Do(
                             x =>
-                            Log.Trace(() => 
-                                "{0} ChannelExecuteComplete [{1} {2} {3}]".Fmt(
-                                x.UUID,
-                                x.AnswerState,
-                                x.Headers[HeaderNames.Application],
-                                x.Headers[HeaderNames.ApplicationResponse])))
+                                {
+                                    if (x != null)
+                                    {
+                                        Log.Trace(
+                                            () =>
+                                            "{0} ChannelExecuteComplete [{1} {2} {3}]".Fmt(
+                                                x.UUID,
+                                                x.AnswerState,
+                                                x.Headers[HeaderNames.Application],
+                                                x.Headers[HeaderNames.ApplicationResponse]));
+                                    }
+                                })
                         .ToTask();
         }
 
@@ -171,7 +177,7 @@
 
             return this.SendCommand(backgroundApiCommand)
                         .ToObservable()
-                        .Concat(Events.FirstAsync(x => x.EventName == EventName.BackgroundJob && x.Headers[HeaderNames.JobUUID] == jobUUID.ToString())
+                        .Concat(Events.FirstOrDefaultAsync(x => x.EventName == EventName.BackgroundJob && x.Headers[HeaderNames.JobUUID] == jobUUID.ToString())
                                        .Cast<BasicMessage>())
                         .LastAsync()
                         .Cast<EventMessage>()
@@ -185,7 +191,7 @@
             await SendAsync(Encoding.ASCII.GetBytes(command + "\n\n"), cts.Token);
 
             return await Messages
-                            .FirstAsync(x => x.ContentType == ContentTypes.CommandReply)
+                            .FirstOrDefaultAsync(x => x.ContentType == ContentTypes.CommandReply)
                             .Timeout(TimeOut, Observable.Throw<BasicMessage>(new TimeoutException("No Command Reply received within the specified timeout of {0}.".Fmt(TimeOut))))
                             .Do(_ => { },
                                 ex => Log.ErrorException("Error waiting for Command Reply.", ex))
