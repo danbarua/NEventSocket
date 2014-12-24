@@ -5,6 +5,7 @@
     using System.Linq;
     using System.Net.Sockets;
     using System.Reactive.Linq;
+    using System.Reactive.Subjects;
     using System.Reactive.Threading.Tasks;
     using System.Text;
     using System.Threading;
@@ -49,7 +50,7 @@
                         .AggregateUntil(
                             () => new Parser(), (builder, ch) => builder.Append(ch), builder => builder.Completed)
                         .Select(builder => builder.ExtractMessage())
-                        .Publish()
+                        .Multicast(new ReplaySubject<BasicMessage>(1))
                         .RefCount();
 
             Log.Trace(() => "EventSocket initialized");
