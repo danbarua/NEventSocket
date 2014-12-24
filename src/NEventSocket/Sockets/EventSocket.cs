@@ -4,9 +4,7 @@
     using System.Collections.Generic;
     using System.Linq;
     using System.Net.Sockets;
-    using System.Reactive.Disposables;
     using System.Reactive.Linq;
-    using System.Reactive.Subjects;
     using System.Reactive.Threading.Tasks;
     using System.Text;
     using System.Threading;
@@ -20,12 +18,7 @@
 
     public abstract class EventSocket : ObservableSocket
     {
-
-        protected readonly CompositeDisposable disposables = new CompositeDisposable();
-
         private readonly ILog Log;
-
-        private readonly ISubject<BasicMessage> incomingMessages = new ReplaySubject<BasicMessage>(1); //new ReplaySubject<BasicMessage>(1);
         
         // minimum events required for this class to do its job
         private readonly HashSet<EventName> events = new HashSet<EventName>()
@@ -48,15 +41,14 @@
             : base(tcpClient)
         {
             Log = LogProvider.GetLogger(this.GetType());
-            this.ResponseTimeOut = responseTimeOut ?? TimeSpan.FromSeconds(30);
 
-            this.Messages = incomingMessages;
+            ResponseTimeOut = responseTimeOut ?? TimeSpan.FromSeconds(30);
 
-            disposables.Add(Receiver.SelectMany(x => Encoding.ASCII.GetString(x))
+            Messages =
+                Receiver.SelectMany(x => Encoding.ASCII.GetString(x))
                         .AggregateUntil(
                             () => new Parser(), (builder, ch) => builder.Append(ch), builder => builder.Completed)
-                        .Select(builder => builder.ExtractMessage())
-                        .Subscribe(msg => incomingMessages.OnNext(msg), err => incomingMessages.OnError(err)));
+                        .Select(builder => builder.ExtractMessage());
 
             Log.Trace(() => "EventSocket initialized");
         }
@@ -109,6 +101,7 @@
         public async Task<ApiResponse> Api(string command)
         {
             Log.Trace(() => "Sending [api {0}]".Fmt(command));
+
             await SendAsync(Encoding.ASCII.GetBytes("api " + command + "\n\n"), cts.Token);
 
             return await Messages
@@ -243,9 +236,6 @@
                     {
                         cts.Cancel();
                     }
-
-                    incomingMessages.OnCompleted();
-                    disposables.Dispose();
                 }
             }
 
