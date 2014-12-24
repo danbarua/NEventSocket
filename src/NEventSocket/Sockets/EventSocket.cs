@@ -20,7 +20,12 @@
 
     public abstract class EventSocket : ObservableSocket
     {
+
+        protected readonly CompositeDisposable disposables = new CompositeDisposable();
+
         private readonly ILog Log;
+
+        private readonly ISubject<BasicMessage> incomingMessages = new ReplaySubject<BasicMessage>(1); //new ReplaySubject<BasicMessage>(1);
         
         // minimum events required for this class to do its job
         private readonly HashSet<EventName> events = new HashSet<EventName>()
@@ -45,10 +50,13 @@
             Log = LogProvider.GetLogger(this.GetType());
             this.TimeOut = timeout ?? TimeSpan.FromSeconds(30);
 
-            this.Messages = Receiver.SelectMany(x => Encoding.ASCII.GetString(x))
+            this.Messages = incomingMessages;
+
+            disposables.Add(Receiver.SelectMany(x => Encoding.ASCII.GetString(x))
                         .AggregateUntil(
                             () => new Parser(), (builder, ch) => builder.Append(ch), builder => builder.Completed)
-                        .Select(builder => builder.ExtractMessage());
+                        .Select(builder => builder.ExtractMessage())
+                        .Subscribe(msg => incomingMessages.OnNext(msg), err => incomingMessages.OnError(err)));
 
             Log.Trace(() => "EventSocket initialized");
         }
@@ -239,6 +247,9 @@
                     {
                         cts.Cancel();
                     }
+
+                    incomingMessages.OnCompleted();
+                    disposables.Dispose();
                 }
             }
 
