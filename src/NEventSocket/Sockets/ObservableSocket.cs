@@ -115,6 +115,11 @@
                 var stream = GetStream();
                 await stream.WriteAsync(bytes, 0, bytes.Length, cancellationToken);
             }
+            catch (TaskCanceledException ex)
+            {
+                Log.Warn(() => "Write operation was cancelled.");
+                this.Dispose();
+            }
             catch (IOException ex)
             {
                 if (ex.InnerException is SocketException
