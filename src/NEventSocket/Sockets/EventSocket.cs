@@ -48,7 +48,9 @@
                 Receiver.SelectMany(x => Encoding.ASCII.GetString(x))
                         .AggregateUntil(
                             () => new Parser(), (builder, ch) => builder.Append(ch), builder => builder.Completed)
-                        .Select(builder => builder.ExtractMessage());
+                        .Select(builder => builder.ExtractMessage())
+                        .Publish()
+                        .RefCount();
 
             Log.Trace(() => "EventSocket initialized");
         }
