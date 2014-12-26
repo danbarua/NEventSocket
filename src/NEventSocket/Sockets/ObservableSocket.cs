@@ -33,7 +33,7 @@
 
         private IDisposable readSubscription;
 
-        private BlockingCollection<byte[]> received = new BlockingCollection<byte[]>(1024 * 1024);
+        private BlockingCollection<byte[]> received = new BlockingCollection<byte[]>(16);
 
         protected ObservableSocket(TcpClient tcpClient)
         {

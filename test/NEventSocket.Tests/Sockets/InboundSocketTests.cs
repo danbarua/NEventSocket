@@ -41,10 +41,10 @@
 
                         socket.MessagesReceived.Where(m => m.Equals("exit"))
                               .Subscribe(
-                                  _ =>
+                                  async _ =>
                                       {
                                           exitRequestReceived = true;
-                                          socket.Dispose();
+                                          await socket.SendCommandReplyOk();
                                       });
                         
                         await socket.Send("Content-Type: auth/request");
@@ -52,10 +52,10 @@
 
                 using (var client = await InboundSocket.Connect("127.0.0.1", listener.Port, "ClueCon"))
                 {
-
                     Assert.True(authRequestReceived);
 
                     client.Exit();
+
                     ThreadUtils.WaitUntil(() => exitRequestReceived);
                     Assert.True(exitRequestReceived);
                 }
@@ -230,8 +230,6 @@
                 {
                     var result = await client.SendCommand("test");
                     Assert.True(result.Success);
-
-                    client.Exit();
                 }
             }
         }
@@ -271,8 +269,6 @@
                     Assert.NotNull(ex);
                     Assert.IsType<TimeoutException>(ex.InnerException);
                     Assert.True(commandRequestReceived);
-
-                    client.Exit();
                 }
             }
         }

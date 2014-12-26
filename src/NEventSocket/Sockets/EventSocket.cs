@@ -43,7 +43,7 @@
         {
             Log = LogProvider.GetLogger(this.GetType());
 
-            ResponseTimeOut = responseTimeOut ?? TimeSpan.FromSeconds(30);
+            ResponseTimeOut = responseTimeOut ?? TimeSpan.FromSeconds(5);
 
             Messages =
                 Receiver.SelectMany(x => Encoding.ASCII.GetString(x))
@@ -101,18 +101,20 @@
                         .ToTask();
         }
 
-        public async Task<ApiResponse> Api(string command)
+        public Task<ApiResponse> Api(string command)
         {
             Log.Trace(() => "Sending [api {0}]".Fmt(command));
 
-            await SendAsync(Encoding.ASCII.GetBytes("api " + command + "\n\n"), cts.Token);
+            var query =
+                from send in SendAsync(Encoding.ASCII.GetBytes("api " + command + "\n\n"), cts.Token).ToObservable()
+                from reply in Messages.FirstAsync(x => x.ContentType == ContentTypes.ApiResponse)
+                select new { send, reply };
 
-            return await Messages
-                .FirstAsync(x => x.ContentType == ContentTypes.ApiResponse)
-                .Timeout(ResponseTimeOut, Observable.Throw<BasicMessage>(new TimeoutException("No Api Response received within the specified timeout of {0}.".Fmt(ResponseTimeOut))))
-                .Select(x => new ApiResponse(x))
-                .Do(result => Log.Trace(() => "ApiResponse received [{0}] for [{1}]".Fmt(result.BodyText.Replace("\n", string.Empty), command)), ex => Log.ErrorException("Error waiting for Api Response.", ex))
-                .ToTask(cts.Token);
+            return query.Select(x => new ApiResponse(x.reply))
+                    .Timeout(ResponseTimeOut, Observable.Throw<ApiResponse>(new TimeoutException("No Api Response received within the specified timeout of {0}.".Fmt(ResponseTimeOut))))
+                    .Select(x => new ApiResponse(x))
+                    .Do(result => Log.Trace(() => "ApiResponse received [{0}] for [{1}]".Fmt(result.BodyText.Replace("\n", string.Empty), command)), ex => Log.ErrorException("Error waiting for Api Response.", ex))
+                    .ToTask();
         }
 
         public Task<EventMessage> Execute(string uuid, string application, string applicationArguments = null, int loops = 1, bool eventLock = false, bool async = false)
@@ -187,17 +189,19 @@
                         .ToTask(cts.Token);
         }
 
-        public async Task<CommandReply> SendCommand(string command)
+        public Task<CommandReply> SendCommand(string command)
         {
             Log.Trace(() => "Sending [{0}]".Fmt(command));
-            await SendAsync(Encoding.ASCII.GetBytes(command + "\n\n"), cts.Token);
 
-            return await Messages
-                            .FirstAsync(x => x.ContentType == ContentTypes.CommandReply)
-                            .Timeout(ResponseTimeOut, Observable.Throw<BasicMessage>(new TimeoutException("No Command Reply received within the specified timeout of {0}.".Fmt(ResponseTimeOut))))
-                            .Select(x => new CommandReply(x))
-                            .Do(result => Log.Trace(() => "CommandReply received [{0}] for [{1}]".Fmt(result.ReplyText.Replace("\n", string.Empty), command)), ex => Log.ErrorException("Error waiting for Command Reply.", ex))
-                            .ToTask(cts.Token);
+            var query = from send in SendAsync(Encoding.ASCII.GetBytes(command + "\n\n"), cts.Token).ToObservable()
+                         from reply in
+                             Messages.FirstAsync(x => x.ContentType == ContentTypes.CommandReply)
+                         select new { send, reply };
+
+            return query.Select(x => new CommandReply(x.reply))
+                    .Timeout(ResponseTimeOut, Observable.Throw<CommandReply>(new TimeoutException("No Command Reply received within the specified timeout of {0}.".Fmt(ResponseTimeOut))))
+                    .Do(result => Log.Trace(() => "CommandReply received [{0}] for [{1}]".Fmt(result.ReplyText.Replace("\n", string.Empty), command)), ex => Log.ErrorException("Error waiting for Command Reply to [{0}].".Fmt(command), ex))        
+                    .ToTask();
         }
 
         public async Task SubscribeEvents(params EventName[] events)

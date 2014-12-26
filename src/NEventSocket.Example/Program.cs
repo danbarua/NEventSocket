@@ -31,6 +31,12 @@ namespace NEventSocket.Example
             Console.WriteLine("Starting...");
 
             ApiTest();
+
+            InboundSocketTest();
+
+            ChannelTest();
+
+            TaskScheduler.UnobservedTaskException += (o, e) => Console.WriteLine("unobserved " + e.Exception);
             
             Console.WriteLine("Press [Enter] to exit.");
             Console.ReadLine();
@@ -38,10 +44,18 @@ namespace NEventSocket.Example
 
         private static async Task ApiTest()
         {
-            using (var client = await InboundSocket.Connect())
-            {
-                Console.WriteLine((await client.Api("status")).BodyText);
-            }
+            //try
+           // {
+                using (var client = await InboundSocket.Connect("localhost", 8021, "ClueCon"))
+                {
+                    Console.WriteLine("got here");
+                    Console.WriteLine((await client.Api("status")).BodyText);
+                }
+           // }
+            //catch (Exception ex)
+            //{
+              //  Console.WriteLine("ERROR" + ex);
+            //}
         }
 
         private static async Task CallTracking()
@@ -77,7 +91,7 @@ namespace NEventSocket.Example
             client.Exit();
         }
 
-        private static async void PlayGetDigitsTest()
+        private static async Task PlayGetDigitsTest()
         {
             var client = await InboundSocket.Connect("10.10.10.36", 8021, "ClueCon");
             await client.SubscribeEvents(EventName.Dtmf);
@@ -175,7 +189,7 @@ namespace NEventSocket.Example
             }
         }
 
-        private static async void DtmfTest()
+        private static async Task DtmfTest()
         {
             var client = await InboundSocket.Connect("10.10.10.36", 8021, "ClueCon");
             Console.WriteLine("Authenticated!");
@@ -230,9 +244,9 @@ namespace NEventSocket.Example
             }
         }
 
-        private static async void InboundSocketTest()
+        private static async Task InboundSocketTest()
         {
-            var client = await InboundSocket.Connect("10.10.10.36", 8021, "ClueCon");
+            var client = await InboundSocket.Connect();
             Console.WriteLine("Authenticated!");
 
             await client.SubscribeEvents(EventName.Dtmf);
@@ -240,7 +254,7 @@ namespace NEventSocket.Example
             var originate =
                 await
                 client.Originate(
-                    Endpoint.User("1000"), 
+                    Endpoint.User("1001"), 
                     new OriginateOptions
                         {
                             CallerIdNumber = "123456789", 
@@ -445,7 +459,7 @@ namespace NEventSocket.Example
             listener.Start();
         }
 
-        private static async void ChannelTest()
+        private static void ChannelTest()
         {
             var listener = new OutboundListener(8084);
 
@@ -454,6 +468,7 @@ namespace NEventSocket.Example
                 {
                     await connection.Connect();
                     Console.WriteLine("New Socket connected");
+                    Console.WriteLine(connection.ChannelData);
 
                     var aLeg = new Channel(connection);
                     aLeg.HangupCallBack = (e) =>
