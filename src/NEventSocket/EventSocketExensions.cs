@@ -63,6 +63,8 @@
         {
             //todo: implement options for playback eg a-leg, b-leg, both, using uuid_displace
             if (options == null) options = new PlayOptions();
+
+            //todo: what if applicationresult is null (hang up occurs before the application completes)
             return new PlayResult(await eventSocket.ExecuteApplication(uuid, "playback", applicationArguments: file, loops: options.Loops));
         }
 

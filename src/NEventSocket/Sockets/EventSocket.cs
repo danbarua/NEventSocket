@@ -70,9 +70,7 @@
         {
             get
             {
-                return Messages
-                            .Where(x => x.ContentType == ContentTypes.EventPlain)
-                            .Select(x => new EventMessage(x));
+                return Messages.Where(x => x.ContentType == ContentTypes.EventPlain).Select(x => new EventMessage(x));
             }
         }
 
@@ -86,7 +84,7 @@
                 Messages.Where(x => x.ContentType == ContentTypes.ApiResponse)
                         .Take(1)
                         .Select(x => new ApiResponse(x))
-                        .Do(result => Log.Trace(() => "ApiResponse received [{0}] for [{1}]".Fmt(result.BodyText.Replace("\n", string.Empty), command)), ex => Log.ErrorException("Error waiting for Api Response to [{0}].".Fmt(command), ex))
+                        .Do(result => Log.Debug(() => "ApiResponse received [{0}] for [{1}]".Fmt(result.BodyText.Replace("\n", string.Empty), command)), ex => Log.ErrorException("Error waiting for Api Response to [{0}].".Fmt(command), ex))
                         .Subscribe(x => tcs.TrySetResult(x));
 
             SendAsync(Encoding.ASCII.GetBytes("api " + command + "\n\n"), cts.Token)
@@ -105,7 +103,7 @@
                 Messages.Where(x => x.ContentType == ContentTypes.CommandReply)
                         .Take(1)
                         .Select(x => new CommandReply(x))
-                        .Do(result => Log.Trace(() => "CommandReply received [{0}] for [{1}]".Fmt(result.ReplyText.Replace("\n", string.Empty), command)), ex => Log.ErrorException("Error waiting for Command Reply to [{0}].".Fmt(command), ex))
+                        .Do(result => Log.Debug(() => "CommandReply received [{0}] for [{1}]".Fmt(result.ReplyText.Replace("\n", string.Empty), command)), ex => Log.ErrorException("Error waiting for Command Reply to [{0}].".Fmt(command), ex))
                         .Subscribe(x => tcs.TrySetResult(x));
 
             SendAsync(Encoding.ASCII.GetBytes(command + "\n\n"), cts.Token)
@@ -152,7 +150,7 @@
                                 {
                                     if (executeCompleteEvent != null)
                                     {
-                                        Log.Trace(
+                                        Log.Debug(
                                             () =>
                                             "{0} ChannelExecuteComplete [{1} {2} {3}]".Fmt(
                                                 executeCompleteEvent.UUID,
@@ -215,14 +213,14 @@
                                 {
                                     if (bridgeEvent != null)
                                     {
-                                        Log.Trace(() => "Bridge {0} complete - {1}".Fmt(bridgeString, bridgeEvent.Headers[HeaderNames.OtherLegUniqueId]));
+                                        Log.Debug(() => "Bridge {0} complete - {1}".Fmt(bridgeString, bridgeEvent.Headers[HeaderNames.OtherLegUniqueId]));
                                     }
                                     else
                                     {
                                         Log.Trace(() => "No ChannelBridge event received for {0}".Fmt(bridgeString));
                                     }
                                 }))
-                        .Select(x => new BridgeResult(x))
+                        .Select(x => new BridgeResult(x)) //todo: what if we get neither, eg hangup or disconnect before either event arrives
                         .ToTask();
         }
 
