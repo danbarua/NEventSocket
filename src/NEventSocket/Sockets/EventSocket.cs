@@ -40,6 +40,8 @@
 
         private readonly CancellationTokenSource cts = new CancellationTokenSource();
 
+        private readonly object gate = new object();
+
         protected EventSocket(TcpClient tcpClient, TimeSpan? responseTimeOut = null)
             : base(tcpClient)
         {
@@ -78,38 +80,44 @@
         {
             Log.Trace(() => "Sending [api {0}]".Fmt(command));
 
-            var tcs = new TaskCompletionSource<ApiResponse>();
+            lock (gate)
+            {
+                var tcs = new TaskCompletionSource<ApiResponse>();
 
-            var subscription =
-                Messages.Where(x => x.ContentType == ContentTypes.ApiResponse)
-                        .Take(1)
-                        .Select(x => new ApiResponse(x))
-                        .Do(result => Log.Debug(() => "ApiResponse received [{0}] for [{1}]".Fmt(result.BodyText.Replace("\n", string.Empty), command)), ex => Log.ErrorException("Error waiting for Api Response to [{0}].".Fmt(command), ex))
-                        .Subscribe(x => tcs.TrySetResult(x));
+                var subscription =
+                    Messages.Where(x => x.ContentType == ContentTypes.ApiResponse)
+                            .Take(1)
+                            .Select(x => new ApiResponse(x))
+                            .Do(result => Log.Debug(() => "ApiResponse received [{0}] for [{1}]".Fmt(result.BodyText.Replace("\n", string.Empty), command)), ex => Log.ErrorException("Error waiting for Api Response to [{0}].".Fmt(command), ex))
+                            .Subscribe(x => tcs.TrySetResult(x));
 
-            SendAsync(Encoding.ASCII.GetBytes("api " + command + "\n\n"), cts.Token)
-                .ContinueOnFaultedOrCancelled(tcs, subscription.Dispose);
+                SendAsync(Encoding.ASCII.GetBytes("api " + command + "\n\n"), cts.Token)
+                    .ContinueOnFaultedOrCancelled(tcs, subscription.Dispose);
 
-            return tcs.Task;
+                return tcs.Task;
+            }
         }
 
         public Task<CommandReply> SendCommand(string command)
         {
             Log.Trace(() => "Sending [{0}]".Fmt(command));
 
-            var tcs = new TaskCompletionSource<CommandReply>();
+            lock (gate)
+            {
+                var tcs = new TaskCompletionSource<CommandReply>();
 
-            var subscription =
-                Messages.Where(x => x.ContentType == ContentTypes.CommandReply)
-                        .Take(1)
-                        .Select(x => new CommandReply(x))
-                        .Do(result => Log.Debug(() => "CommandReply received [{0}] for [{1}]".Fmt(result.ReplyText.Replace("\n", string.Empty), command)), ex => Log.ErrorException("Error waiting for Command Reply to [{0}].".Fmt(command), ex))
-                        .Subscribe(x => tcs.TrySetResult(x));
+                var subscription =
+                    Messages.Where(x => x.ContentType == ContentTypes.CommandReply)
+                            .Take(1)
+                            .Select(x => new CommandReply(x))
+                            .Do(result => Log.Debug(() => "CommandReply received [{0}] for [{1}]".Fmt(result.ReplyText.Replace("\n", string.Empty), command)), ex => Log.ErrorException("Error waiting for Command Reply to [{0}].".Fmt(command), ex))
+                            .Subscribe(x => tcs.TrySetResult(x));
 
-            SendAsync(Encoding.ASCII.GetBytes(command + "\n\n"), cts.Token)
-                .ContinueOnFaultedOrCancelled(tcs, subscription.Dispose);
+                SendAsync(Encoding.ASCII.GetBytes(command + "\n\n"), cts.Token)
+                    .ContinueOnFaultedOrCancelled(tcs, subscription.Dispose);
 
-            return tcs.Task;
+                return tcs.Task;
+            }
         }
 
         public Task<EventMessage> ExecuteApplication(string uuid, string application, string applicationArguments = null, int loops = 1, bool eventLock = false, bool async = false)
