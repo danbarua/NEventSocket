@@ -47,7 +47,7 @@
             return
                 eventSocket.SendApi(
                     "uuid_setvar_multi {0} {1}".Fmt(
-                        uuid, assignments.Aggregate(string.Empty, (a, s) => a += s + ";", s => s)));
+                        uuid, assignments.Aggregate(StringBuilderPool.Allocate(), (sb, s) => { sb.Append(s); sb.Append(";"); return sb; }, StringBuilderPool.ReturnAndFree)));
         }
 
         /// <summary>
@@ -71,6 +71,7 @@
         public static async Task<PlayGetDigitsResult> PlayGetDigits(
             this EventSocket eventSocket, string uuid, PlayGetDigitsOptions options)
         {
+            //todo: what if applicationresult is null (hang up occurs before the application completes)
             return new PlayGetDigitsResult(
                 await eventSocket.ExecuteApplication(uuid, "play_and_get_digits", options.ToString()), options.ChannelVariableName);
         }
@@ -78,6 +79,7 @@
         public static async Task<ReadResult> Read(
             this EventSocket eventSocket, string uuid, ReadOptions options)
         {
+            //todo: what if applicationresult is null (hang up occurs before the application completes)
             return new ReadResult(
                 await eventSocket.ExecuteApplication(uuid, "read", options.ToString()), options.ChannelVariableName);
         }
@@ -177,7 +179,7 @@
 
         public static void Exit(this EventSocket eventSocket)
         {
-            eventSocket.SendCommand("exit"); //will disconnect, no reply will arrive
+            eventSocket.SendCommand("exit"); //will disconnect, a reply might not arrive in time to be read
         }
 
         public static Task<CommandReply> FsLog(this EventSocket eventSocket, string logLevel)

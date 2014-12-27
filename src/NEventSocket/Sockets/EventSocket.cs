@@ -125,30 +125,30 @@
             if (uuid == null) throw new ArgumentNullException("uuid");
             if (application == null) throw new ArgumentNullException("application");
 
-            var command = "sendmsg {0}\ncall-command: execute\nexecute-app-name: {1}\n".Fmt(uuid, application);
+            var sb = StringBuilderPool.Allocate();
+            sb.AppendFormat("sendmsg {0}\ncall-command: execute\nexecute-app-name: {1}\n", uuid, application);
 
             if (eventLock)
             {
-                command += "event-lock: true\n";
+                sb.Append("event-lock: true\n");
             }
 
             if (loops > 1)
             {
-                command += "loops: " + loops + "\n";
+                sb.Append("loops: " + loops + "\n");
             }
 
             if (async)
             {
-                command += "async: true\n";
+                sb.Append("async: true\n");
             }
 
             if (applicationArguments != null)
             {
-                command += "content-type: text/plain\ncontent-length: {0}\n\n{1}\n".Fmt(
-                    applicationArguments.Length, applicationArguments);
+                sb.AppendFormat("content-type: text/plain\ncontent-length: {0}\n\n{1}\n", applicationArguments.Length, applicationArguments);
             }
 
-            var query = from send in this.SendCommand(command).ToObservable()
+            var query = from send in this.SendCommand(StringBuilderPool.ReturnAndFree(sb)).ToObservable()
                         from e in Events.FirstOrDefaultAsync(x => x.UUID == uuid && x.EventName == EventName.ChannelExecuteComplete && x.Headers[HeaderNames.Application] == application)
                         select e;
 
