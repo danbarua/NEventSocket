@@ -80,8 +80,10 @@
     <Compile Include="FreeSwitch\Endpoint.cs" />
     <Compile Include="FreeSwitch\Channel\IChannel.cs" />
     <Compile Include="FreeSwitch\HangupCause.cs" />
+    <Compile Include="InboundSocketExtensions.cs" />
     <Compile Include="Logging\LibLog.cs" />
     <Compile Include="OutboundListener.cs" />
+    <Compile Include="OutboundSocketExtensions.cs" />
     <Compile Include="Sockets\EventSocket.cs" />
     <Compile Include="InboundSocket.cs" />
     <Compile Include="Sockets\ObservableSocket.cs" />

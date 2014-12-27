@@ -46,11 +46,5 @@ namespace NEventSocket
                         })
                     .ToTask();
         }
-
-        public async Task<IChannel> GetChannel()
-        {
-            await this.Connect();
-            return new Channel(this.ChannelData, this);
-        }
     }
 }

@@ -10,6 +10,7 @@
 namespace NEventSocket.FreeSwitch.Channel
 {
     using System;
+    using System.Reactive.Concurrency;
     using System.Reactive.Disposables;
     using System.Reactive.Linq;
     using System.Threading.Tasks;
@@ -43,8 +44,8 @@ namespace NEventSocket.FreeSwitch.Channel
         public Channel(OutboundSocket outboundSocket)
             : this(outboundSocket.ChannelData, outboundSocket)
         {
-            this.eventSocket.Linger().Wait();
-            this.eventSocket.SubscribeEvents().Wait();
+            outboundSocket.Linger().Wait();
+            outboundSocket.SubscribeEvents().Wait();
         }
 
         public Channel(EventMessage eventMessage, EventSocket eventSocket)
@@ -184,7 +185,7 @@ namespace NEventSocket.FreeSwitch.Channel
                 this.bridgedLegUUID = other.UUID;
 
                 eventSocket.Events.Where(x => x.UUID == bridgedLegUUID && x.EventName == EventName.ChannelHangup)
-                           .Take(1)
+                           .Take(1, Scheduler.Default)
                            .Subscribe(
                                x =>
                                    {
@@ -207,7 +208,7 @@ namespace NEventSocket.FreeSwitch.Channel
                 //only works on inbound sockets
                 subscriptions.Add(
                     eventSocket.Events.Where(x => x.UUID == options.UUID && x.EventName == EventName.ChannelProgress)
-                               .Take(1)
+                               .Take(1, Scheduler.Default)
                                .Subscribe(onProgress));
             }
 

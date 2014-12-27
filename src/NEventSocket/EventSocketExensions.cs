@@ -95,35 +95,6 @@
             return eventSocket.ExecuteApplication(uuid, "spandsp_stop_dtmf");
         }
 
-        public static Task<CommandReply> Linger(this EventSocket eventSocket)
-        {
-            //todo: move to outbound socket
-            return eventSocket.SendCommand("linger");
-        }
-
-        public static Task<CommandReply> NoLinger(this EventSocket eventSocket)
-        {
-            //todo: move to outbound socket
-            return eventSocket.SendCommand("nolinger");
-        }
-
-        /// <summary>
-        /// The 'myevents' subscription allows your inbound socket connection to behave like an outbound socket connect. 
-        /// It will "lock on" to the events for a particular uuid and will ignore all other events, closing the socket when
-        /// the channel goes away or closing the channel when the socket disconnects and all applications have finished executing.
-        /// https://wiki.freeswitch.org/wiki/Mod_event_socket#event
-        /// </summary>
-        /// <remarks>
-        /// Once the socket connection has locked on to the events for this particular uuid it will NEVER see any events that are 
-        /// not related to the channel, even if subsequent event commands are sent. If you need to monitor a specific channel/uuid 
-        /// and you need watch for other events as well then it is best to use a filter.
-        /// </remarks>
-        public static Task<CommandReply> MyEvents(this EventSocket eventSocket, string uuid)
-        {
-            //todo: move to inbound socket
-            return eventSocket.SendCommand("myevents {0} plain".Fmt(uuid));
-        }
-
         public static Task<CommandReply> DivertEventsOn(this EventSocket eventSocket)
         {
             return eventSocket.SendCommand("divert_events on");
