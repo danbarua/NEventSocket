@@ -119,7 +119,6 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="IEventSocket.cs" />
     <Compile Include="Sockets\ObservableListener.cs" />
     <Compile Include="Sockets\Parser.cs" />
     <Compile Include="Util\AsyncLock.cs" />

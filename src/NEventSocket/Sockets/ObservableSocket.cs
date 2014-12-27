@@ -41,9 +41,7 @@
 
             this.tcpClient = tcpClient;
 
-            receiver = received.GetConsumingEnumerable()
-                .ToObservable(Scheduler.Default)
-                .TakeUntil(receiverTermination);
+            receiver = received.GetConsumingEnumerable().ToObservable(Scheduler.Default).TakeUntil(receiverTermination);
 
             readSubscription = Observable.Defer(
                 () =>
@@ -56,7 +54,6 @@
                     })
                     .Repeat()
                     .TakeWhile(x => x.Any())
-                    //.Do(bytes => Log.Trace(() => "Bytes received: {0}".Fmt(Encoding.ASCII.GetString(bytes))))
                     .Subscribe(
                         (bytes) => received.Add(bytes),
                         ex =>

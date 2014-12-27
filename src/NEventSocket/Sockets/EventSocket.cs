@@ -1,11 +1,13 @@
 ﻿namespace NEventSocket.Sockets
 {
     using System;
+    using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Linq;
     using System.Net.Sockets;
+    using System.Reactive.Concurrency;
+    using System.Reactive.Disposables;
     using System.Reactive.Linq;
-    using System.Reactive.Subjects;
     using System.Reactive.Threading.Tasks;
     using System.Text;
     using System.Threading;
@@ -50,8 +52,10 @@
                         .AggregateUntil(
                             () => new Parser(), (builder, ch) => builder.Append(ch), builder => builder.Completed)
                         .Select(builder => builder.ExtractMessage())
-                        .Multicast(new ReplaySubject<BasicMessage>(1))
+                        .Do(x => Log.Trace("Received [{0}].".Fmt(x.ContentType)))
+                        .Publish()
                         .RefCount();
+
 
             Log.Trace(() => "EventSocket initialized");
         }
@@ -94,9 +98,19 @@
             return await Execute(uuid, "bridge", bridgeString)
                         .ToObservable()
                         .Amb(
-                                Events
-                                    .FirstOrDefaultAsync(x => x.UUID == uuid && x.EventName == EventName.ChannelBridge)
-                                    .Do(x => Log.Trace(() => "Bridge {0} complete - {1}".Fmt(bridgeString, x.Headers[HeaderNames.OtherLegUniqueId]))))
+                            Events
+                                .FirstOrDefaultAsync(x => x.UUID == uuid && x.EventName == EventName.ChannelBridge)
+                                .Do(bridgeEvent =>
+                                    {
+                                        if (bridgeEvent != null)
+                                        {
+                                            Log.Trace(() => "Bridge {0} complete - {1}".Fmt(bridgeString, bridgeEvent.Headers[HeaderNames.OtherLegUniqueId]));
+                                        }
+                                        else
+                                        {
+                                            Log.Trace(() => "No ChannelBridge event received for {0}".Fmt(bridgeString));
+                                        }
+                                    }))
                         .Select(x => new BridgeResult(x))
                         .ToTask();
         }
@@ -105,16 +119,19 @@
         {
             Log.Trace(() => "Sending [api {0}]".Fmt(command));
 
-            var query =
-                from send in SendAsync(Encoding.ASCII.GetBytes("api " + command + "\n\n"), cts.Token).ToObservable()
-                from reply in Messages.FirstAsync(x => x.ContentType == ContentTypes.ApiResponse)
-                select new { send, reply };
+            var tcs = new TaskCompletionSource<ApiResponse>();
 
-            return query.Select(x => new ApiResponse(x.reply))
-                    .Timeout(ResponseTimeOut, Observable.Throw<ApiResponse>(new TimeoutException("No Api Response received within the specified timeout of {0}.".Fmt(ResponseTimeOut))))
-                    .Select(x => new ApiResponse(x))
-                    .Do(result => Log.Trace(() => "ApiResponse received [{0}] for [{1}]".Fmt(result.BodyText.Replace("\n", string.Empty), command)), ex => Log.ErrorException("Error waiting for Api Response.", ex))
-                    .ToTask();
+            var subscription =
+                Messages.Where(x => x.ContentType == ContentTypes.ApiResponse)
+                        .Take(1, Scheduler.Default)
+                        .Select(x => new ApiResponse(x))
+                        .Do(result => Log.Trace(() => "ApiResponse received [{0}] for [{1}]".Fmt(result.BodyText.Replace("\n", string.Empty), command)), ex => Log.ErrorException("Error waiting for Api Response to [{0}].".Fmt(command), ex))
+                        .Subscribe(x => tcs.TrySetResult(x));
+
+            SendAsync(Encoding.ASCII.GetBytes("api " + command + "\n\n"), cts.Token)
+                .ContinueOnFaultedOrCancelled(tcs, subscription.Dispose);
+
+            return tcs.Task;
         }
 
         public Task<EventMessage> Execute(string uuid, string application, string applicationArguments = null, int loops = 1, bool eventLock = false, bool async = false)
@@ -145,23 +162,27 @@
                     applicationArguments.Length, applicationArguments);
             }
 
-            return this.SendCommand(command)
-                        .ToObservable()
-                        .Concat(Events.FirstOrDefaultAsync(x => x.UUID == uuid && x.EventName == EventName.ChannelExecuteComplete && x.Headers[HeaderNames.Application] == application).Cast<BasicMessage>())
-                        .LastAsync()
-                        .Cast<EventMessage>()
-                        .Do(
-                            x =>
+            var query = from send in this.SendCommand(command).ToObservable()
+                        from e in Events.FirstOrDefaultAsync(x => x.UUID == uuid && x.EventName == EventName.ChannelExecuteComplete && x.Headers[HeaderNames.Application] == application)
+                        select e;
+
+            return query
+                    .Do(
+                            executeCompleteEvent =>
                                 {
-                                    if (x != null)
+                                    if (executeCompleteEvent != null)
                                     {
                                         Log.Trace(
                                             () =>
                                             "{0} ChannelExecuteComplete [{1} {2} {3}]".Fmt(
-                                                x.UUID,
-                                                x.AnswerState,
-                                                x.Headers[HeaderNames.Application],
-                                                x.Headers[HeaderNames.ApplicationResponse]));
+                                                executeCompleteEvent.UUID,
+                                                executeCompleteEvent.AnswerState,
+                                                executeCompleteEvent.Headers[HeaderNames.Application],
+                                                executeCompleteEvent.Headers[HeaderNames.ApplicationResponse]));
+                                    }
+                                    else
+                                    {
+                                        Log.Trace(() => "No ChannelExecuteComplete event received for {0}".Fmt(application));
                                     }
                                 })
                         .ToTask();
@@ -179,29 +200,30 @@
             /* We'll get a CommandReply message immediately acknowledging the job request,
              * then followed up with a BackgroundJob event matching our JobUUID when the job is complete. */
 
-            return this.SendCommand(backgroundApiCommand)
-                        .ToObservable()
-                        .Concat(Events.FirstOrDefaultAsync(x => x.EventName == EventName.BackgroundJob && x.Headers[HeaderNames.JobUUID] == jobUUID.ToString())
-                                       .Cast<BasicMessage>())
-                        .LastAsync()
-                        .Cast<EventMessage>()
-                        .Select(x => new BackgroundJobResult(x))
-                        .ToTask(cts.Token);
+            var query = from send in SendCommand(backgroundApiCommand).ToObservable()
+                        from e in Events.FirstOrDefaultAsync(x => x.EventName == EventName.BackgroundJob && x.Headers[HeaderNames.JobUUID] == jobUUID.ToString())
+                        select new BackgroundJobResult(e);
+
+            return query.ToTask(cts.Token);
         }
 
         public Task<CommandReply> SendCommand(string command)
         {
             Log.Trace(() => "Sending [{0}]".Fmt(command));
 
-            var query = from send in SendAsync(Encoding.ASCII.GetBytes(command + "\n\n"), cts.Token).ToObservable()
-                         from reply in
-                             Messages.FirstAsync(x => x.ContentType == ContentTypes.CommandReply)
-                         select new { send, reply };
+            var tcs = new TaskCompletionSource<CommandReply>();
 
-            return query.Select(x => new CommandReply(x.reply))
-                    .Timeout(ResponseTimeOut, Observable.Throw<CommandReply>(new TimeoutException("No Command Reply received within the specified timeout of {0}.".Fmt(ResponseTimeOut))))
-                    .Do(result => Log.Trace(() => "CommandReply received [{0}] for [{1}]".Fmt(result.ReplyText.Replace("\n", string.Empty), command)), ex => Log.ErrorException("Error waiting for Command Reply to [{0}].".Fmt(command), ex))        
-                    .ToTask();
+            var subscription =
+                Messages.Where(x => x.ContentType == ContentTypes.CommandReply)
+                        .Take(1, Scheduler.Default)
+                        .Select(x => new CommandReply(x))
+                        .Do(result => Log.Trace(() => "CommandReply received [{0}] for [{1}]".Fmt(result.ReplyText.Replace("\n", string.Empty), command)), ex => Log.ErrorException("Error waiting for Command Reply to [{0}].".Fmt(command), ex))
+                        .Subscribe(x => tcs.TrySetResult(x));
+
+            SendAsync(Encoding.ASCII.GetBytes(command + "\n\n"), cts.Token)
+                .ContinueOnFaultedOrCancelled(tcs, subscription.Dispose);
+
+            return tcs.Task;
         }
 
         public async Task SubscribeEvents(params EventName[] events)
@@ -226,7 +248,7 @@
         public void OnHangup(string uuid, Action<EventMessage> action)
         {
             Events.Where(x => x.UUID == uuid && x.EventName == EventName.ChannelHangup)
-                  .Take(1)
+                  .Take(1, Scheduler.Default)
                   .Subscribe(action);
         }
 

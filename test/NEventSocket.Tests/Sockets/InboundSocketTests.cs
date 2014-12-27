@@ -5,6 +5,7 @@
     using System.Security;
     using System.Threading.Tasks;
 
+    using NEventSocket.FreeSwitch;
     using NEventSocket.Logging.LogProviders;
     using NEventSocket.Sockets;
     using NEventSocket.Tests.Fakes;
@@ -101,7 +102,7 @@
             }
         }
 
-        [Fact(Timeout = 5000)]
+        [Fact(Timeout = 5000, Skip = "Removing timeouts")]
         public async Task when_no_response_to_auth_received_it_should_throw_TimeoutException()
         {
             using (var listener = new FakeFreeSwitchListener(0))
@@ -155,7 +156,7 @@
             }
         }
 
-        [Fact(Timeout = 5000)]
+        [Fact(Timeout = 5000, Skip = "Removing timeouts")]
         public void when_no_api_response_received_it_should_throw_a_TimeOutException()
         {
             using (var listener = new FakeFreeSwitchListener(0))
@@ -235,6 +236,52 @@
         }
 
         [Fact(Timeout = 5000)]
+        public async Task can_send_multiple_commands()
+        {
+            using (var listener = new FakeFreeSwitchListener(0))
+            {
+                listener.Start();
+
+                listener.Connections.Subscribe(
+                    async socket =>
+                    {
+                        socket.MessagesReceived.Where(m => m.Equals("auth ClueCon"))
+                              .Take(1)
+                              .Subscribe(async m =>
+                              {
+                                  await socket.SendCommandReplyOk();
+                              });
+
+                        socket.MessagesReceived.Where(m => m.StartsWith("test"))
+                              .Take(1)
+                              .Subscribe(
+                                  async m =>
+                                  {
+                                      await socket.SendCommandReplyOk();
+                                  });
+
+                       socket.MessagesReceived.FirstAsync(m => m.StartsWith("event"))
+                              .Subscribe(
+                                  async m =>
+                                  {
+                                      await socket.SendCommandReplyError("FAILED");
+                                  });
+
+                        await socket.Send("Content-Type: auth/request");
+                    });
+
+                using (var client = await InboundSocket.Connect("127.0.0.1", listener.Port, "ClueCon"))
+                {
+                    var result = await client.SendCommand("test");
+                    Assert.True(result.Success);
+
+                    result = await client.SendCommand("event CHANNEL_ANSWER");
+                    Assert.False(result.Success);
+                }
+            }
+        }
+
+        [Fact(Timeout = 5000, Skip = "Removing timeouts")]
         public void when_no_command_reply_received_it_should_throw_a_TimeOutException()
         {
             using (var listener = new FakeFreeSwitchListener(0))

@@ -2,6 +2,7 @@
 {
     using System;
     using System.Net.Sockets;
+    using System.Reactive.Concurrency;
     using System.Reactive.Linq;
     using System.Reactive.Threading.Tasks;
     using System.Security;
@@ -27,7 +28,8 @@
             var socket = new InboundSocket(host, port, timeout);
 
             await socket.Messages
-                .FirstAsync(x => x.ContentType == ContentTypes.AuthRequest)
+                .Where(x => x.ContentType == ContentTypes.AuthRequest)
+                .Take(1, Scheduler.Default)
                 .Timeout(socket.ResponseTimeOut, Observable.Throw<BasicMessage>(new TimeoutException("No Auth Request received within the specified timeout of {0}.".Fmt(socket.ResponseTimeOut))))
                 .Do(_ => Log.Trace(() => "Received Auth Request"), ex => Log.ErrorException("Error waiting for AuthRequest.", ex))
                 .ToTask();

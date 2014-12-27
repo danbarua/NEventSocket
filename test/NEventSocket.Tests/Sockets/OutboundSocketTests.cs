@@ -231,11 +231,11 @@ namespace NEventSocket.Tests.Sockets
                               await freeSwitch.SendCommandReplyOk();
                           });
 
-                    freeSwitch.MessagesReceived.FirstAsync(m => m.StartsWith("linger"))
+                    freeSwitch.MessagesReceived.FirstAsync(m => m.StartsWith("nolinger"))
                           .Subscribe(async _ =>
                           {
-                              commandRequestReceived = true;
                               await freeSwitch.SendCommandReplyError("FAILED");
+                              commandRequestReceived = true;
                           });
 
                     ThreadUtils.WaitUntil(() => commandRequestReceived);

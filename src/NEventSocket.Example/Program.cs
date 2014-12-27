@@ -44,18 +44,13 @@ namespace NEventSocket.Example
 
         private static async Task ApiTest()
         {
-            //try
-           // {
-                using (var client = await InboundSocket.Connect("localhost", 8021, "ClueCon"))
-                {
-                    Console.WriteLine("got here");
-                    Console.WriteLine((await client.Api("status")).BodyText);
-                }
-           // }
-            //catch (Exception ex)
-            //{
-              //  Console.WriteLine("ERROR" + ex);
-            //}
+            using (var client = await InboundSocket.Connect("localhost", 8021, "ClueCon"))
+            {
+                Console.WriteLine("got here");
+                Console.WriteLine((await client.Api("status")).BodyText);
+                Console.WriteLine((await client.Api("blah")).BodyText);
+                Console.WriteLine((await client.Api("status")).BodyText);
+            }
         }
 
         private static async Task CallTracking()
@@ -485,6 +480,7 @@ namespace NEventSocket.Example
                         };
 
                     await aLeg.Answer();
+                    await aLeg.PlayFile("ivr/8000/ivr-call_being_transferred.wav");
                     await aLeg.SetChannelVariable("bridge_filter_dtmf", "true");
                     await connection.Execute(aLeg.UUID, "digit_action_set_realm", "feature_codes");
                     await connection.SubscribeCustomEvents("NEventSocket::FeatureCode");
