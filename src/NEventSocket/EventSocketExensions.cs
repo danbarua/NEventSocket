@@ -26,12 +26,12 @@
         public static Task<ApiResponse> Api(this EventSocket eventSocket, string command, string arg = null)
         {
             if (command == null) throw new ArgumentNullException("command");
-            return eventSocket.Api(arg != null ? "{0} {1}".Fmt(command, arg) : command);
+            return eventSocket.SendApi(arg != null ? "{0} {1}".Fmt(command, arg) : command);
         }
 
         public static Task<ApiResponse> SetChannelVariable(this EventSocket eventSocket, string uuid, string variable, object value)
         {
-            return eventSocket.Api("uuid_setvar {0} {1} {2}".Fmt(uuid, variable, value));
+            return eventSocket.SendApi("uuid_setvar {0} {1} {2}".Fmt(uuid, variable, value));
         }
 
         /// <summary>
@@ -45,7 +45,7 @@
             this EventSocket eventSocket, string uuid, params string[] assignments)
         {
             return
-                eventSocket.Api(
+                eventSocket.SendApi(
                     "uuid_setvar_multi {0} {1}".Fmt(
                         uuid, assignments.Aggregate(string.Empty, (a, s) => a += s + ";", s => s)));
         }
@@ -63,36 +63,36 @@
         {
             //todo: implement options for playback eg a-leg, b-leg, both, using uuid_displace
             if (options == null) options = new PlayOptions();
-            return new PlayResult(await eventSocket.Execute(uuid, "playback", applicationArguments: file, loops: options.Loops));
+            return new PlayResult(await eventSocket.ExecuteApplication(uuid, "playback", applicationArguments: file, loops: options.Loops));
         }
 
         public static async Task<PlayGetDigitsResult> PlayGetDigits(
             this EventSocket eventSocket, string uuid, PlayGetDigitsOptions options)
         {
             return new PlayGetDigitsResult(
-                await eventSocket.Execute(uuid, "play_and_get_digits", options.ToString()), options.ChannelVariableName);
+                await eventSocket.ExecuteApplication(uuid, "play_and_get_digits", options.ToString()), options.ChannelVariableName);
         }
 
         public static async Task<ReadResult> Read(
             this EventSocket eventSocket, string uuid, ReadOptions options)
         {
             return new ReadResult(
-                await eventSocket.Execute(uuid, "read", options.ToString()), options.ChannelVariableName);
+                await eventSocket.ExecuteApplication(uuid, "read", options.ToString()), options.ChannelVariableName);
         }
 
         public static Task<EventMessage> Say(this EventSocket eventSocket, string uuid, SayOptions options)
         {
-            return eventSocket.Execute(uuid, "say", options.ToString());
+            return eventSocket.ExecuteApplication(uuid, "say", options.ToString());
         }
 
         public static Task<EventMessage> StartDtmf(this EventSocket eventSocket, string uuid)
         {
-            return eventSocket.Execute(uuid, "spandsp_start_dtmf");
+            return eventSocket.ExecuteApplication(uuid, "spandsp_start_dtmf");
         }
 
         public static Task<EventMessage> Stoptmf(this EventSocket eventSocket, string uuid)
         {
-            return eventSocket.Execute(uuid, "spandsp_stop_dtmf");
+            return eventSocket.ExecuteApplication(uuid, "spandsp_stop_dtmf");
         }
 
         public static Task<CommandReply> Linger(this EventSocket eventSocket)

@@ -47,9 +47,9 @@ namespace NEventSocket.Example
             using (var client = await InboundSocket.Connect("localhost", 8021, "ClueCon"))
             {
                 Console.WriteLine("got here");
-                Console.WriteLine((await client.Api("status")).BodyText);
-                Console.WriteLine((await client.Api("blah")).BodyText);
-                Console.WriteLine((await client.Api("status")).BodyText);
+                Console.WriteLine((await client.SendApi("status")).BodyText);
+                Console.WriteLine((await client.SendApi("blah")).BodyText);
+                Console.WriteLine((await client.SendApi("status")).BodyText);
             }
         }
 
@@ -219,7 +219,7 @@ namespace NEventSocket.Example
                         //"spandsp_dtmf_rx_threshold=-32");
                     //"spandsp_dtmf_rx_twist=32",
                     //"spandsp_dtmf_rx_reverse_twist=7");
-                await client.Execute(uuid, "spandsp_start_dtmf");
+                await client.ExecuteApplication(uuid, "spandsp_start_dtmf");
 
                 client.OnHangup(uuid,
                           e =>
@@ -360,7 +360,7 @@ namespace NEventSocket.Example
                     await client.SetChannelVariable(uuid, "RECORD_MIN_SEC", 0);
                     await client.SetChannelVariable(uuid, "RECORD_STEREO", "true");
 
-                    var recordingResult = await client.Api("uuid_record {0} start {1}".Fmt(uuid, recordingPath));
+                    var recordingResult = await client.SendApi("uuid_record {0} start {1}".Fmt(uuid, recordingPath));
                     Console.WriteLine("Recording... " + recordingResult.Success);
 
                     if (recordingResult.Success)
@@ -373,27 +373,27 @@ namespace NEventSocket.Example
                                     {
                                         case "1":
                                             Console.WriteLine("Mask recording");
-                                            await client.Api("uuid_record {0} mask {1}".Fmt(uuid, recordingPath));
+                                            await client.SendApi("uuid_record {0} mask {1}".Fmt(uuid, recordingPath));
                                             await
-                                                client.Execute(
+                                                client.ExecuteApplication(
                                                     uuid,
                                                     "displace_session",
                                                     applicationArguments: "{0} m".Fmt("ivr/8000/ivr-recording_paused.wav"));
                                             break;
                                         case "2":
                                             Console.WriteLine("Unmask recording");
-                                            await client.Api("uuid_record {0} unmask {1}".Fmt(uuid, recordingPath));
+                                            await client.SendApi("uuid_record {0} unmask {1}".Fmt(uuid, recordingPath));
                                             await
-                                                client.Execute(
+                                                client.ExecuteApplication(
                                                     uuid,
                                                     "displace_session",
                                                     applicationArguments: "{0} m".Fmt("ivr/8000/ivr-begin_recording.wav"));
                                             break;
                                         case "3":
                                             Console.WriteLine("Stop recording");
-                                            await client.Api("uuid_record {0} stop {1}".Fmt(uuid, recordingPath));
+                                            await client.SendApi("uuid_record {0} stop {1}".Fmt(uuid, recordingPath));
                                             await
-                                                client.Execute(
+                                                client.ExecuteApplication(
                                                     uuid,
                                                     "displace_session",
                                                     applicationArguments: "{0} m".Fmt("ivr/8000/ivr-recording_stopped.wav"));
@@ -437,7 +437,7 @@ namespace NEventSocket.Example
                                 EventName.Dtmf);
 
                         await connection.Linger();
-                        await connection.Execute(uuid, "answer");
+                        await connection.ExecuteApplication(uuid, "answer");
 
                         var result =
                             await
@@ -482,7 +482,7 @@ namespace NEventSocket.Example
                     await aLeg.Answer();
                     await aLeg.PlayFile("ivr/8000/ivr-call_being_transferred.wav");
                     await aLeg.SetChannelVariable("bridge_filter_dtmf", "true");
-                    await connection.Execute(aLeg.UUID, "digit_action_set_realm", "feature_codes");
+                    await connection.ExecuteApplication(aLeg.UUID, "digit_action_set_realm", "feature_codes");
                     await connection.SubscribeCustomEvents("NEventSocket::FeatureCode");
 
                     var bridgeOptions = new BridgeOptions()
@@ -578,7 +578,7 @@ namespace NEventSocket.Example
                                                         connection.SetChannelVariable(
                                                             bridgeOptions.UUID, "transfer_ringback", "tone_stream://%(400,200,400,450);%(400,2000,400,450);loops=-1");
                                                     await
-                                                        connection.Execute(
+                                                        connection.ExecuteApplication(
                                                             bridgeOptions.UUID, "att_xfer", "user/{0}".Fmt(digits.Digits));
 
 

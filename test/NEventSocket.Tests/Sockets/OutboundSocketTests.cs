@@ -137,7 +137,7 @@ namespace NEventSocket.Tests.Sockets
                         {
                             await socket.Connect();
 
-                            apiResponse = await socket.Api("status");
+                            apiResponse = await socket.SendApi("status");
                         });
 
                 using (var freeSwitch = new FakeFreeSwitchSocket(listener.Port))

@@ -76,46 +76,7 @@
             }
         }
 
-        public async Task<BridgeResult> Bridge(string uuid, string endpoint, BridgeOptions options = null)
-        {
-            if (options == null) options = new BridgeOptions();
-            if (string.IsNullOrEmpty(options.UUID)) options.UUID = Guid.NewGuid().ToString();
-
-            var bridgeString = string.Format("{0}{1}", options, endpoint);
-
-            //some bridge options need to be set in channel vars
-            if (options.ChannelVariables.Any())
-            {
-                await this.SetMultipleChannelVariables(
-                    uuid, options.ChannelVariables.Select(kvp => kvp.Key + "='" + kvp.Value + "'").ToArray());
-            }
-
-            /* If the bridge fails to connect we'll get a CHANNEL_EXECUTE_COMPLETE event with a failure message and the Execute task will complete.
-             * If the bridge succeeds, that event won't arrive until after the bridged leg hangs up and completes the call.
-             * In this case, we want to return a result as soon as the b-leg picks up and connects so we'll merge with the CHANNEL_BRIDGE event
-             * observable.Amb(otherObservable) will propogate the first sequence to produce a result. */
-
-            return await Execute(uuid, "bridge", bridgeString)
-                        .ToObservable()
-                        .Amb(
-                            Events
-                                .FirstOrDefaultAsync(x => x.UUID == uuid && x.EventName == EventName.ChannelBridge)
-                                .Do(bridgeEvent =>
-                                    {
-                                        if (bridgeEvent != null)
-                                        {
-                                            Log.Trace(() => "Bridge {0} complete - {1}".Fmt(bridgeString, bridgeEvent.Headers[HeaderNames.OtherLegUniqueId]));
-                                        }
-                                        else
-                                        {
-                                            Log.Trace(() => "No ChannelBridge event received for {0}".Fmt(bridgeString));
-                                        }
-                                    }))
-                        .Select(x => new BridgeResult(x))
-                        .ToTask();
-        }
-
-        public Task<ApiResponse> Api(string command)
+        public Task<ApiResponse> SendApi(string command)
         {
             Log.Trace(() => "Sending [api {0}]".Fmt(command));
 
@@ -134,7 +95,26 @@
             return tcs.Task;
         }
 
-        public Task<EventMessage> Execute(string uuid, string application, string applicationArguments = null, int loops = 1, bool eventLock = false, bool async = false)
+        public Task<CommandReply> SendCommand(string command)
+        {
+            Log.Trace(() => "Sending [{0}]".Fmt(command));
+
+            var tcs = new TaskCompletionSource<CommandReply>();
+
+            var subscription =
+                Messages.Where(x => x.ContentType == ContentTypes.CommandReply)
+                        .Take(1, Scheduler.Default)
+                        .Select(x => new CommandReply(x))
+                        .Do(result => Log.Trace(() => "CommandReply received [{0}] for [{1}]".Fmt(result.ReplyText.Replace("\n", string.Empty), command)), ex => Log.ErrorException("Error waiting for Command Reply to [{0}].".Fmt(command), ex))
+                        .Subscribe(x => tcs.TrySetResult(x));
+
+            SendAsync(Encoding.ASCII.GetBytes(command + "\n\n"), cts.Token)
+                .ContinueOnFaultedOrCancelled(tcs, subscription.Dispose);
+
+            return tcs.Task;
+        }
+
+        public Task<EventMessage> ExecuteApplication(string uuid, string application, string applicationArguments = null, int loops = 1, bool eventLock = false, bool async = false)
         {
             if (uuid == null) throw new ArgumentNullException("uuid");
             if (application == null) throw new ArgumentNullException("application");
@@ -207,24 +187,45 @@
             return query.ToTask(cts.Token);
         }
 
-        public Task<CommandReply> SendCommand(string command)
+        public async Task<BridgeResult> Bridge(string uuid, string endpoint, BridgeOptions options = null)
         {
-            Log.Trace(() => "Sending [{0}]".Fmt(command));
+            if (options == null) options = new BridgeOptions();
+            if (string.IsNullOrEmpty(options.UUID)) options.UUID = Guid.NewGuid().ToString();
 
-            var tcs = new TaskCompletionSource<CommandReply>();
+            var bridgeString = string.Format("{0}{1}", options, endpoint);
 
-            var subscription =
-                Messages.Where(x => x.ContentType == ContentTypes.CommandReply)
-                        .Take(1, Scheduler.Default)
-                        .Select(x => new CommandReply(x))
-                        .Do(result => Log.Trace(() => "CommandReply received [{0}] for [{1}]".Fmt(result.ReplyText.Replace("\n", string.Empty), command)), ex => Log.ErrorException("Error waiting for Command Reply to [{0}].".Fmt(command), ex))
-                        .Subscribe(x => tcs.TrySetResult(x));
+            //some bridge options need to be set in channel vars
+            if (options.ChannelVariables.Any())
+            {
+                await this.SetMultipleChannelVariables(
+                    uuid, options.ChannelVariables.Select(kvp => kvp.Key + "='" + kvp.Value + "'").ToArray());
+            }
 
-            SendAsync(Encoding.ASCII.GetBytes(command + "\n\n"), cts.Token)
-                .ContinueOnFaultedOrCancelled(tcs, subscription.Dispose);
+            /* If the bridge fails to connect we'll get a CHANNEL_EXECUTE_COMPLETE event with a failure message and the Execute task will complete.
+             * If the bridge succeeds, that event won't arrive until after the bridged leg hangs up and completes the call.
+             * In this case, we want to return a result as soon as the b-leg picks up and connects so we'll merge with the CHANNEL_BRIDGE event
+             * observable.Amb(otherObservable) will propogate the first sequence to produce a result. */
 
-            return tcs.Task;
+            return await ExecuteApplication(uuid, "bridge", bridgeString)
+                        .ToObservable()
+                        .Amb(
+                            Events
+                                .FirstOrDefaultAsync(x => x.UUID == uuid && x.EventName == EventName.ChannelBridge)
+                                .Do(bridgeEvent =>
+                                {
+                                    if (bridgeEvent != null)
+                                    {
+                                        Log.Trace(() => "Bridge {0} complete - {1}".Fmt(bridgeString, bridgeEvent.Headers[HeaderNames.OtherLegUniqueId]));
+                                    }
+                                    else
+                                    {
+                                        Log.Trace(() => "No ChannelBridge event received for {0}".Fmt(bridgeString));
+                                    }
+                                }))
+                        .Select(x => new BridgeResult(x))
+                        .ToTask();
         }
+
 
         public async Task SubscribeEvents(params EventName[] events)
         {

@@ -178,7 +178,7 @@ namespace NEventSocket.FreeSwitch.Channel
 
             if (this.AnswerState != AnswerState.Answered && other.AnswerState != AnswerState.Answered) throw new InvalidOperationException("At least one channel must be Answered to bridge them");
 
-            var result = await this.eventSocket.Api("uuid_bridge {0} {1}".Fmt(UUID, other.UUID));
+            var result = await this.eventSocket.SendApi("uuid_bridge {0} {1}".Fmt(UUID, other.UUID));
             if (result.Success)
             {
                 this.bridgedLegUUID = other.UUID;
@@ -240,42 +240,42 @@ namespace NEventSocket.FreeSwitch.Channel
 
         public Task Execute(string application, string args)
         {
-            return eventSocket.Execute(UUID, application, args);
+            return eventSocket.ExecuteApplication(UUID, application, args);
         }
 
         public Task Execute(string uuid, string application, string args)
         {
-            return eventSocket.Execute(uuid, application, args);
+            return eventSocket.ExecuteApplication(uuid, application, args);
         }
 
         public Task Hold()
         {
-            return eventSocket.Api("uuid_hold toggle " + UUID);
+            return eventSocket.SendApi("uuid_hold toggle " + UUID);
         }
 
         public Task Park()
         {
-            return eventSocket.Execute(UUID, "park");
+            return eventSocket.ExecuteApplication(UUID, "park");
         }
 
         public Task RingReady()
         {
-            return eventSocket.Execute(UUID, "ring_ready");
+            return eventSocket.ExecuteApplication(UUID, "ring_ready");
         }
 
         public Task Answer()
         {
-            return eventSocket.Execute(UUID, "answer");
+            return eventSocket.ExecuteApplication(UUID, "answer");
         }
 
         public Task Hangup(HangupCause hangupCause = FreeSwitch.HangupCause.NormalClearing)
         {
-            return eventSocket.Api("uuid_kill {0} {1}".Fmt(UUID, hangupCause.ToString().ToUpperWithUnderscores()));
+            return eventSocket.SendApi("uuid_kill {0} {1}".Fmt(UUID, hangupCause.ToString().ToUpperWithUnderscores()));
         }
 
         public Task Sleep(int milliseconds)
         {
-            return eventSocket.Execute(UUID, "sleep", milliseconds.ToString());
+            return eventSocket.ExecuteApplication(UUID, "sleep", milliseconds.ToString());
         }
 
         public async Task PlayFile(string file, Leg leg = Leg.ALeg, string terminator = null)
@@ -293,14 +293,14 @@ namespace NEventSocket.FreeSwitch.Channel
             {
                 case Leg.Both:
                     await Task.WhenAll(
-                        eventSocket.Execute(this.UUID, "displace_session", "{0} m{1}".Fmt(file, "w")),
-                        eventSocket.Execute(this.UUID, "displace_session", "{0} m{1}".Fmt(file, "r")));
+                        eventSocket.ExecuteApplication(this.UUID, "displace_session", "{0} m{1}".Fmt(file, "w")),
+                        eventSocket.ExecuteApplication(this.UUID, "displace_session", "{0} m{1}".Fmt(file, "r")));
                     break;
                 case Leg.ALeg:
-                    await this.eventSocket.Execute(this.UUID, "displace_session", "{0} m{1}".Fmt(file, "w"));
+                    await this.eventSocket.ExecuteApplication(this.UUID, "displace_session", "{0} m{1}".Fmt(file, "w"));
                     break;
                 case Leg.BLeg:
-                    await this.eventSocket.Execute(this.UUID, "displace_session", "{0} m{1}".Fmt(file, "r"));
+                    await this.eventSocket.ExecuteApplication(this.UUID, "displace_session", "{0} m{1}".Fmt(file, "r"));
                     break;
                 default:
                     throw new NotSupportedException("Leg {0} is not supported".Fmt(leg));
@@ -330,7 +330,7 @@ namespace NEventSocket.FreeSwitch.Channel
             }
 
             this.recordingPath = file;
-            await eventSocket.Api("uuid_record {0} start {1} {2}".Fmt(UUID, recordingPath, maxSeconds));
+            await eventSocket.SendApi("uuid_record {0} start {1} {2}".Fmt(UUID, recordingPath, maxSeconds));
             Log.Debug(() => "Channel {0} is recording to {1}".Fmt(UUID, recordingPath));
         }
 
@@ -342,7 +342,7 @@ namespace NEventSocket.FreeSwitch.Channel
             }
             else
             {
-                await eventSocket.Api("uuid_record {0} mask {1}".Fmt(UUID, recordingPath));
+                await eventSocket.SendApi("uuid_record {0} mask {1}".Fmt(UUID, recordingPath));
                 Log.Debug(() => "Channel {0} has masked recording to {1}".Fmt(UUID, recordingPath));
             }
         }
@@ -355,7 +355,7 @@ namespace NEventSocket.FreeSwitch.Channel
             }
             else
             {
-                await eventSocket.Api("uuid_record {0} unmask {1}".Fmt(UUID, recordingPath));
+                await eventSocket.SendApi("uuid_record {0} unmask {1}".Fmt(UUID, recordingPath));
                 Log.Debug(() => "Channel {0} has unmasked recording to {1}".Fmt(UUID, recordingPath));
             }
         }
@@ -368,7 +368,7 @@ namespace NEventSocket.FreeSwitch.Channel
             }
             else
             {
-                await eventSocket.Api("uuid_record {0} stop {1}".Fmt(UUID, recordingPath));
+                await eventSocket.SendApi("uuid_record {0} stop {1}".Fmt(UUID, recordingPath));
                 this.recordingPath = null;
                 Log.Debug(() => "Channel {0} has stopped recording to {1}".Fmt(UUID, recordingPath));
             }
@@ -388,7 +388,7 @@ namespace NEventSocket.FreeSwitch.Channel
         public Task SetChannelVariable(string name, string value)
         {
             Log.Debug(() => "Channel {0} setting variable '{1}' to '{2}'".Fmt(UUID, name, value));
-            return eventSocket.Api("uuid_setvar {0} {1} {2}".Fmt(UUID, name, value));
+            return eventSocket.SendApi("uuid_setvar {0} {1} {2}".Fmt(UUID, name, value));
         }
 
         public void Dispose()

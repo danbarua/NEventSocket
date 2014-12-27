@@ -150,7 +150,7 @@
 
                 using (var client = await InboundSocket.Connect("127.0.0.1", listener.Port, "ClueCon"))
                 {
-                    var result = await client.Api("status");
+                    var result = await client.SendApi("status");
                     Assert.True(result.Success);
                 }
             }
@@ -188,7 +188,7 @@
                 using (var client = InboundSocket.Connect("127.0.0.1", listener.Port, "ClueCon", TimeSpan.FromMilliseconds(100)).Result)
                 {
                     client.ResponseTimeOut = TimeSpan.FromMilliseconds(100);
-                    var ex = Record.Exception(() => client.Api("status").Wait());
+                    var ex = Record.Exception(() => client.SendApi("status").Wait());
 
                     Assert.NotNull(ex);
                     Assert.IsType<TimeoutException>(ex.InnerException);
