@@ -3,6 +3,8 @@
     using System.Linq;
     using System.Text;
 
+    using NEventSocket.Util;
+
     /// <summary>
     /// Represents a call to the play_and_get_digits application
     /// </summary>
@@ -150,7 +152,8 @@
                 //todo: Freeswitch is not excluding "*" when set to numbers only - investigate
 
                 //converts "12345" into "^(1|2|3|4|5)+"
-                var sb = new StringBuilder("^(");
+                var sb = StringBuilderPool.Allocate();
+                sb.Append("^(");
 
                 for (int i = 0; i < value.Length; i++)
                 {
@@ -163,7 +166,7 @@
                 }
 
                 sb.Append(")+");
-                digitsRegex = sb.ToString();
+                digitsRegex = StringBuilderPool.ReturnAndFree(sb);
             }
         }
 

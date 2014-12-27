@@ -185,7 +185,7 @@ namespace NEventSocket.FreeSwitch.Channel
                 this.bridgedLegUUID = other.UUID;
 
                 eventSocket.Events.Where(x => x.UUID == bridgedLegUUID && x.EventName == EventName.ChannelHangup)
-                           .Take(1, Scheduler.Default)
+                           .Take(1)
                            .Subscribe(
                                x =>
                                    {
@@ -208,7 +208,7 @@ namespace NEventSocket.FreeSwitch.Channel
                 //only works on inbound sockets
                 subscriptions.Add(
                     eventSocket.Events.Where(x => x.UUID == options.UUID && x.EventName == EventName.ChannelProgress)
-                               .Take(1, Scheduler.Default)
+                               .Take(1)
                                .Subscribe(onProgress));
             }
 

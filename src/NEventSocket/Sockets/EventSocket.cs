@@ -84,7 +84,7 @@
 
             var subscription =
                 Messages.Where(x => x.ContentType == ContentTypes.ApiResponse)
-                        .Take(1, Scheduler.Default)
+                        .Take(1)
                         .Select(x => new ApiResponse(x))
                         .Do(result => Log.Trace(() => "ApiResponse received [{0}] for [{1}]".Fmt(result.BodyText.Replace("\n", string.Empty), command)), ex => Log.ErrorException("Error waiting for Api Response to [{0}].".Fmt(command), ex))
                         .Subscribe(x => tcs.TrySetResult(x));
@@ -103,7 +103,7 @@
 
             var subscription =
                 Messages.Where(x => x.ContentType == ContentTypes.CommandReply)
-                        .Take(1, Scheduler.Default)
+                        .Take(1)
                         .Select(x => new CommandReply(x))
                         .Do(result => Log.Trace(() => "CommandReply received [{0}] for [{1}]".Fmt(result.ReplyText.Replace("\n", string.Empty), command)), ex => Log.ErrorException("Error waiting for Command Reply to [{0}].".Fmt(command), ex))
                         .Subscribe(x => tcs.TrySetResult(x));
@@ -249,7 +249,7 @@
         public void OnHangup(string uuid, Action<EventMessage> action)
         {
             Events.Where(x => x.UUID == uuid && x.EventName == EventName.ChannelHangup)
-                  .Take(1, Scheduler.Default)
+                  .Take(1)
                   .Subscribe(action);
         }
 

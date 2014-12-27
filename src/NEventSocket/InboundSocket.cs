@@ -29,7 +29,7 @@
 
             await socket.Messages
                 .Where(x => x.ContentType == ContentTypes.AuthRequest)
-                .Take(1, Scheduler.Default)
+                .Take(1)
                 .Timeout(socket.ResponseTimeOut, Observable.Throw<BasicMessage>(new TimeoutException("No Auth Request received within the specified timeout of {0}.".Fmt(socket.ResponseTimeOut))))
                 .Do(_ => Log.Trace(() => "Received Auth Request"), ex => Log.ErrorException("Error waiting for AuthRequest.", ex))
                 .ToTask();

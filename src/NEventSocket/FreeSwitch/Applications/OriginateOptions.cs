@@ -125,7 +125,7 @@
 
         public override string ToString()
         {
-            var sb = new StringBuilder();
+            var sb = StringBuilderPool.Allocate();
             sb.Append("{");
 
             sb.Append(parameters.ToOriginateString());
@@ -136,7 +136,7 @@
 
             sb.Append("}");
 
-            return sb.ToString();
+            return StringBuilderPool.ReturnAndFree(sb);
         }
     }
 }

@@ -16,5 +16,10 @@
         {
             SharedPools.Default<StringBuilder>().ClearAndFree(builder);
         }
+
+        public static string ReturnAndFree(StringBuilder builder)
+        {
+            return SharedPools.Default<StringBuilder>().ReturnAndFree(builder);
+        }
     }
 }

@@ -60,7 +60,7 @@
         /// <returns>A <see cref="string"/> representation of the BasicMessage instance.</returns>
         public override string ToString()
         {
-            var sb = new StringBuilder();
+            var sb = StringBuilderPool.Allocate();
             sb.AppendLine("Headers:\n");
 
             foreach (var h in Headers.OrderBy(x => x.Key))
@@ -73,7 +73,7 @@
                 sb.AppendLine(BodyText);
             }
 
-            return sb.ToString();
+            return StringBuilderPool.ReturnAndFree(sb);
         }
     }
 }

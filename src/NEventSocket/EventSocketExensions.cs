@@ -152,14 +152,14 @@
             if (headers == null) headers = new Dictionary<string, string>();
 
             var headersString = headers.Aggregate(
-                new StringBuilder(),
+                StringBuilderPool.Allocate(),
                 (sb, kvp) =>
                     {
                         sb.AppendFormat("{0}: {1}", kvp.Key, kvp.Value);
                         sb.Append("\n");
                         return sb;
                     },
-                sb => sb.ToString());
+                StringBuilderPool.ReturnAndFree);
 
             return eventSocket.SendCommand("sendevent {0}\n{1}".Fmt(eventName, headersString));
         }

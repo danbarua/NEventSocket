@@ -109,6 +109,27 @@
             pool.Free(sb);
         }
 
+        public static string ReturnAndFree(this ObjectPool<StringBuilder> pool, StringBuilder sb)
+        {
+            if (sb == null)
+            {
+                return null;
+            }
+
+            var theString = sb.ToString();
+
+            sb.Clear();
+
+            if (sb.Capacity > StringBuilderCapacityThreshold)
+            {
+                sb.Capacity = StringBuilderCapacityThreshold;
+            }
+
+            pool.Free(sb);
+
+            return theString;
+        }
+
         public static void ClearAndFree<T>(this ObjectPool<HashSet<T>> pool, HashSet<T> set)
         {
             if (set == null)

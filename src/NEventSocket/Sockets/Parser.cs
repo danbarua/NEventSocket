@@ -24,18 +24,13 @@ namespace NEventSocket.Sockets
     {
         private static readonly ILog Log = LogProvider.GetCurrentClassLogger();
 
-        private readonly StringBuilder buffer;// = new StringBuilder(); // StringBuilder in .Net 4 uses a Linked List internally to avoid expensive reallocations. Faster but uses marginally more memory.
+        private StringBuilder buffer = StringBuilderPool.Allocate(); // StringBuilder in .Net 4 uses a Linked List internally to avoid expensive reallocations. Faster but uses marginally more memory.
 
         private char previous;
 
         private int? contentLength;
 
         private IDictionary<string, string> headers;
-
-        public Parser()
-        {
-            buffer = StringBuilderPool.Allocate();
-        }
 
         /// <summary>
         /// Gets a value indicating whether parsing an incoming message has completed.
@@ -132,9 +127,10 @@ namespace NEventSocket.Sockets
                 throw new InvalidOperationException(errorMessage);
             }
 
-            var response = this.HasBody ? new BasicMessage(this.headers, buffer.ToString()) : new BasicMessage(this.headers);
+            var result = this.HasBody ? new BasicMessage(this.headers, buffer.ToString()) : new BasicMessage(this.headers);
             StringBuilderPool.Free(buffer);
-            return response;
+            buffer = null;
+            return result;
         }
     }
 }

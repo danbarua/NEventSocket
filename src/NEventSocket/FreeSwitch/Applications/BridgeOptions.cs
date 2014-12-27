@@ -158,7 +158,7 @@ namespace NEventSocket.FreeSwitch.Api
         [DebuggerStepThrough]
         public override string ToString()
         {
-            var sb = new StringBuilder();
+            var sb = StringBuilderPool.Allocate();
             sb.Append("{");
             
             sb.Append(parameters.ToOriginateString());
@@ -167,7 +167,7 @@ namespace NEventSocket.FreeSwitch.Api
 
             sb.Append("}");
 
-            return sb.ToString();
+            return StringBuilderPool.ReturnAndFree(sb);
         }
     }
 }

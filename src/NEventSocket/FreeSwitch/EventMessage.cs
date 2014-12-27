@@ -163,7 +163,7 @@
 
         public override string ToString()
         {
-            var sb = new StringBuilder();
+            var sb = StringBuilderPool.Allocate();
             sb.AppendLine("Event Headers:");
 
             foreach (var h in Headers.OrderBy(x => x.Key))
@@ -175,7 +175,7 @@
                 sb.AppendLine(BodyText);
             }
 
-            return sb.ToString();
+            return StringBuilderPool.ReturnAndFree(sb);
         }
     }
 }
