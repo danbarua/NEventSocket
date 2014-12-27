@@ -47,10 +47,11 @@
                 () =>
                     {
                         var stream = tcpClient.GetStream();
-                        var buffer = new byte[8192]; //todo: use bufferpool or socketasynceventargs
+                        var buffer = SharedPools.ByteArray.Allocate(); //new byte[8192]; //todo: use bufferpool or socketasynceventargs
                         return
                             Observable.FromAsync(() => stream.ReadAsync(buffer, 0, buffer.Length))
-                                      .Select(x => buffer.Take(x).ToArray());
+                                      .Select(x => buffer.Take(x).ToArray())
+                                      .Do(_ => SharedPools.ByteArray.Free(buffer));
                     })
                     .Repeat()
                     .TakeWhile(x => x.Any())
