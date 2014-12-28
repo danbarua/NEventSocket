@@ -8,7 +8,6 @@
     using System.Threading.Tasks;
 
     using NEventSocket.FreeSwitch;
-    using NEventSocket.FreeSwitch.Applications;
     using NEventSocket.Logging;
     using NEventSocket.Sockets;
     using NEventSocket.Util;
@@ -16,6 +15,7 @@
     public static class EventSocketExensions
     {
         private static readonly ILog Log = LogProvider.GetLogger(typeof(EventSocket));
+
 
         public static Task<CommandReply> Auth(this EventSocket eventSocket, string password)
         {

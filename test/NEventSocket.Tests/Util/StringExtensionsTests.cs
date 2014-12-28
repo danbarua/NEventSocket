@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="StringExtensionsTests.cs" company="Business Systems (UK) Ltd">
+// <copyright file="StringExtensionsTests.cs" company="Dan Barua">
 //   Copyright © Business Systems (UK) Ltd and contributors. All rights reserved.
 // </copyright>
 // <summary>

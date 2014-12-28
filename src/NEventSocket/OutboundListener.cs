@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="OutboundListener.cs" company="Business Systems (UK) Ltd">
-//   (C) Business Systems (UK) Ltd
+// <copyright file="OutboundListener.cs" company="Dan Barua">
+//   (C) Dan Barua and contributors. Licensed under the Mozilla Public License.
 // </copyright>
 // <summary>
 //   Listens for Outbound connections from FreeSwitch

@@ -11,6 +11,8 @@
     <AssemblyName>NEventSocket</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\..\</SolutionDir>
+    <RestorePackages>true</RestorePackages>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -55,30 +57,30 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\CommonAssemblyInfo.cs">
-      <Link>Properties\CommonAssemblyInfo.cs</Link>
+    <Compile Include="..\..\SharedAssemblyInfo.cs">
+      <Link>Properties\SharedAssemblyInfo.cs</Link>
     </Compile>
-    <Compile Include="FreeSwitch\Applications\BridgeResult.cs" />
-    <Compile Include="FreeSwitch\Applications\Leg.cs" />
-    <Compile Include="FreeSwitch\Applications\PlayGetDigitsOptions.cs" />
-    <Compile Include="FreeSwitch\Applications\PlayGetDigitsResult.cs" />
-    <Compile Include="FreeSwitch\Applications\PlayOptions.cs" />
-    <Compile Include="FreeSwitch\Applications\PlayResult.cs" />
-    <Compile Include="FreeSwitch\Applications\ReadOptions.cs" />
-    <Compile Include="FreeSwitch\Applications\ReadResult.cs" />
-    <Compile Include="FreeSwitch\Applications\SayGender.cs" />
-    <Compile Include="FreeSwitch\Applications\SayMethod.cs" />
-    <Compile Include="FreeSwitch\Applications\SayOptions.cs" />
-    <Compile Include="FreeSwitch\Applications\SayType.cs" />
-    <Compile Include="FreeSwitch\Channel\Channel.cs" />
+    <Compile Include="FreeSwitch\BridgeResult.cs" />
+    <Compile Include="FreeSwitch\Leg.cs" />
+    <Compile Include="FreeSwitch\PlayGetDigitsOptions.cs" />
+    <Compile Include="FreeSwitch\PlayGetDigitsResult.cs" />
+    <Compile Include="FreeSwitch\PlayOptions.cs" />
+    <Compile Include="FreeSwitch\PlayResult.cs" />
+    <Compile Include="FreeSwitch\ReadOptions.cs" />
+    <Compile Include="FreeSwitch\ReadResult.cs" />
+    <Compile Include="FreeSwitch\SayGender.cs" />
+    <Compile Include="FreeSwitch\SayMethod.cs" />
+    <Compile Include="FreeSwitch\SayOptions.cs" />
+    <Compile Include="FreeSwitch\SayType.cs" />
+    <Compile Include="Channels\Channel.cs" />
     <Compile Include="FreeSwitch\FreeSwitchException.cs" />
     <Compile Include="FreeSwitch\AnswerState.cs" />
-    <Compile Include="FreeSwitch\Applications\BridgeOptions.cs" />
-    <Compile Include="FreeSwitch\Applications\OriginateOptions.cs" />
-    <Compile Include="FreeSwitch\Applications\OriginateResult.cs" />
-    <Compile Include="FreeSwitch\Applications\ApplicationResult.cs" />
+    <Compile Include="FreeSwitch\BridgeOptions.cs" />
+    <Compile Include="FreeSwitch\OriginateOptions.cs" />
+    <Compile Include="FreeSwitch\OriginateResult.cs" />
+    <Compile Include="FreeSwitch\ApplicationResult.cs" />
     <Compile Include="FreeSwitch\Endpoint.cs" />
-    <Compile Include="FreeSwitch\Channel\IChannel.cs" />
+    <Compile Include="Channels\IChannel.cs" />
     <Compile Include="FreeSwitch\HangupCause.cs" />
     <Compile Include="InboundSocketExtensions.cs" />
     <Compile Include="Logging\LibLog.cs" />
@@ -174,5 +176,7 @@
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Enable NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
     <Error Condition="!Exists('..\..\packages\StyleCop.MSBuild.4.7.49.0\build\StyleCop.MSBuild.Targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\StyleCop.MSBuild.4.7.49.0\build\StyleCop.MSBuild.Targets'))" />
+    <Error Condition="!Exists('$(SolutionDir)\.nuget\NuGet.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(SolutionDir)\.nuget\NuGet.targets'))" />
   </Target>
+  <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
 </Project>

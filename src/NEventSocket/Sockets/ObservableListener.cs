@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="ObservableListener.cs" company="Business Systems (UK) Ltd">
-//   (C) Business Systems (UK) Ltd
+// <copyright file="ObservableListener.cs" company="Dan Barua">
+//   (C) Dan Barua and contributors. Licensed under the Mozilla Public License.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 

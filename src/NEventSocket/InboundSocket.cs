@@ -9,7 +9,6 @@
     using System.Threading.Tasks;
 
     using NEventSocket.FreeSwitch;
-    using NEventSocket.FreeSwitch.Applications;
     using NEventSocket.Logging;
     using NEventSocket.Sockets;
     using NEventSocket.Util;

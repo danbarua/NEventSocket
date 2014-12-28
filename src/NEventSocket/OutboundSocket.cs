@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="OutboundSocket.cs" company="Business Systems (UK) Ltd">
-//   (C) Business Systems (UK) Ltd
+// <copyright file="OutboundSocket.cs" company="Dan Barua">
+//   (C) Dan Barua and contributors. Licensed under the Mozilla Public License.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -12,7 +12,6 @@ namespace NEventSocket
     using System.Threading.Tasks;
 
     using NEventSocket.FreeSwitch;
-    using NEventSocket.FreeSwitch.Channel;
     using NEventSocket.Logging;
     using NEventSocket.Sockets;
     using NEventSocket.Util;

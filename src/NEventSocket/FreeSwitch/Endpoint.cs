@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="Endpoint.cs" company="Business Systems (UK) Ltd">
-//   (C) Business Systems (UK) Ltd
+// <copyright file="Endpoint.cs" company="Dan Barua">
+//   (C) Dan Barua and contributors. Licensed under the Mozilla Public License.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 

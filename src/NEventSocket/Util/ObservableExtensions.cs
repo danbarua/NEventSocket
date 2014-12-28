@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="ObservableExtensions.cs" company="Business Systems (UK) Ltd">
+// <copyright file="ObservableExtensions.cs" company="Dan Barua">
 //   Copyright © Business Systems (UK) Ltd and contributors. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------

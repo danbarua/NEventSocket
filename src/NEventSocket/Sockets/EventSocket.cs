@@ -14,8 +14,6 @@
     using System.Threading.Tasks;
 
     using NEventSocket.FreeSwitch;
-    using NEventSocket.FreeSwitch.Api;
-    using NEventSocket.FreeSwitch.Applications;
     using NEventSocket.Logging;
     using NEventSocket.Util;
 

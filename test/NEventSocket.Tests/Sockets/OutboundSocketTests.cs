@@ -1,12 +1,4 @@
-﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="OutboundSocketTests.cs" company="Business Systems (UK) Ltd">
-//   Copyright © Business Systems (UK) Ltd and contributors. All rights reserved.
-// </copyright>
-// <summary>
-//   Defines the OutboundSocketTests type.
-// </summary>
-// --------------------------------------------------------------------------------------------------------------------
-
+﻿
 namespace NEventSocket.Tests.Sockets
 {
     using System;

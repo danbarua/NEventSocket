@@ -1,7 +1,5 @@
 ﻿namespace NEventSocket.FreeSwitch
 {
-    using NEventSocket.FreeSwitch.Applications;
-
     public static class HeaderNames
     {
         public const string ContentLength = "Content-Length";

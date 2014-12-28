@@ -2,6 +2,31 @@
   <Analyzers>
     <Analyzer AnalyzerId="StyleCop.CSharp.DocumentationRules">
       <Rules>
+        <Rule Name="FileHeaderMustHaveValidCompanyText">
+            <RuleSettings>
+                <BooleanProperty Name="Enabled">False</BooleanProperty>
+            </RuleSettings>
+        </Rule>
+        <Rule Name="FileHeaderMustHaveCopyrightText">
+            <RuleSettings>
+                <BooleanProperty Name="Enabled">False</BooleanProperty>
+            </RuleSettings>
+        </Rule>
+        <Rule Name="FileHeaderMustContainFileName">
+            <RuleSettings>
+                <BooleanProperty Name="Enabled">False</BooleanProperty>
+            </RuleSettings>
+        </Rule>
+        <Rule Name="FileHeaderFileNameDocumentationMustMatchFileName">
+            <RuleSettings>
+                <BooleanProperty Name="Enabled">False</BooleanProperty>
+            </RuleSettings>
+        </Rule>
+        <Rule Name="FileHeaderMustHaveSummary">
+            <RuleSettings>
+                <BooleanProperty Name="Enabled">False</BooleanProperty>
+            </RuleSettings>
+        </Rule>
         <Rule Name="ElementsMustBeDocumented">
           <RuleSettings>
             <BooleanProperty Name="Enabled">False</BooleanProperty>
@@ -189,8 +214,6 @@
         </Rule>
       </Rules>
       <AnalyzerSettings>
-        <StringProperty Name="CompanyName">Business Systems (UK) Ltd</StringProperty>
-        <StringProperty Name="Copyright">Copyright © Business Systems (UK) Ltd and contributors. All rights reserved.</StringProperty>
         <BooleanProperty Name="IgnorePrivates">True</BooleanProperty>
         <BooleanProperty Name="IgnoreInternals">True</BooleanProperty>
       </AnalyzerSettings>

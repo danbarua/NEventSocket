@@ -4,7 +4,6 @@
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Globalization;
-    using System.Text;
 
     public static class StringExtensions
     {
@@ -36,7 +35,8 @@
         {
             if (string.IsNullOrEmpty(camelCaseString)) return camelCaseString;
 
-            var sb = new StringBuilder(camelCaseString.Length);
+            var sb = StringBuilderPool.Allocate();
+            sb.EnsureCapacity(camelCaseString.Length);
 
             for (int i = 0; i < camelCaseString.Length; i++)
             {
@@ -49,7 +49,7 @@
                 else sb.Append(char.ToUpper(c));
             }
 
-            return sb.ToString();
+            return StringBuilderPool.ReturnAndFree(sb);
         }
 
         [DebuggerStepThrough]
@@ -57,7 +57,9 @@
         {
             if (string.IsNullOrEmpty(underscoreString)) return underscoreString;
 
-            var sb = new StringBuilder(underscoreString.Length);
+            var sb = StringBuilderPool.Allocate();
+            sb.EnsureCapacity(underscoreString.Length);
+
             bool capitalizeNext = true;
 
             foreach (var c in underscoreString)
@@ -80,7 +82,7 @@
                 }
             }
 
-            return sb.ToString();
+            return StringBuilderPool.ReturnAndFree(sb);
         }
 
         /// <summary>
@@ -159,16 +161,17 @@
         /// <summary>
         /// Joins a set of key-value pairs into an originate parameters string.
         /// </summary>
+        [DebuggerStepThrough]
         public static string ToOriginateString(this IDictionary<string, string> dictionary)
         {
-            var sb = new StringBuilder();
+            var sb = StringBuilderPool.Allocate();
 
             foreach (var kvp in dictionary)
             {
                 sb.AppendFormat("{0}='{1}',", kvp.Key, kvp.Value);
             }
 
-            return sb.ToString();
+            return StringBuilderPool.ReturnAndFree(sb);
         }
     }
 }

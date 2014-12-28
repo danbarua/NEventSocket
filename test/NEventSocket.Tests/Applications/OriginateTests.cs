@@ -2,8 +2,7 @@
 {
     using System;
 
-    using NEventSocket.FreeSwitch.Api;
-    using NEventSocket.FreeSwitch.Applications;
+    using NEventSocket.FreeSwitch;
 
     using Xunit;
 

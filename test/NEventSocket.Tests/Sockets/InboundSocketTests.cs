@@ -6,6 +6,7 @@
     using System.Threading.Tasks;
 
     using NEventSocket.FreeSwitch;
+    using NEventSocket.Logging;
     using NEventSocket.Logging.LogProviders;
     using NEventSocket.Sockets;
     using NEventSocket.Tests.Fakes;

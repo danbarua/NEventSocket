@@ -2,8 +2,8 @@
 {
     using System.Threading.Tasks;
 
+    using NEventSocket.Channels;
     using NEventSocket.FreeSwitch;
-    using NEventSocket.FreeSwitch.Channel;
 
     public static class OutboundSocketExtensions
     {
