@@ -1,12 +1,18 @@
-﻿namespace NEventSocket.FreeSwitch
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="BasicMessage.cs" company="Dan Barua">
+//   (C) Dan Barua and contributors. Licensed under the Mozilla Public License.
+// </copyright>
+// --------------------------------------------------------------------------------------------------------------------
+
+namespace NEventSocket.FreeSwitch
 {
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using System.Text;
     using System.Text.RegularExpressions;
 
     using NEventSocket.Util;
+    using NEventSocket.Util.ObjectPooling;
 
     /// <summary>
     /// Represents a Message recieved through the Event Socket.
@@ -14,9 +20,14 @@
     [Serializable]
     public class BasicMessage
     {
-        protected static readonly Regex ContentLengthPattern = new Regex("^\\s*Content-Length\\s*:\\s*(\\d+)\\s*$", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Multiline);
-        protected static readonly Regex ReplyTextPattern = new Regex("^\\s*Reply-Text\\s*:\\s*([\\S ]+)\\s*$", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Multiline);
-        protected static readonly Regex CommandErrorPattern = new Regex("^\\s*Content-Length\\s*:\\s*(\\d+)\\s*$.*^$^.*(-ERR)", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Multiline);
+        protected static readonly Regex ContentLengthPattern = new Regex(
+            "^\\s*Content-Length\\s*:\\s*(\\d+)\\s*$", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Multiline);
+
+        protected static readonly Regex ReplyTextPattern = new Regex(
+            "^\\s*Reply-Text\\s*:\\s*([\\S ]+)\\s*$", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Multiline);
+
+        protected static readonly Regex CommandErrorPattern = new Regex(
+            "^\\s*Content-Length\\s*:\\s*(\\d+)\\s*$.*^$^.*(-ERR)", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Multiline);
 
         public BasicMessage(IDictionary<string, string> headers)
         {
@@ -41,7 +52,10 @@
         /// <summary>Gets the Content Type header.</summary>
         public string ContentType
         {
-            get { return Headers.GetValueOrDefault(HeaderNames.ContentType); }
+            get
+            {
+                return Headers.GetValueOrDefault(HeaderNames.ContentType);
+            }
         }
 
         /// <summary>Gets the content length.</summary>
@@ -50,9 +64,7 @@
             get
             {
                 int contentLength;
-                return int.TryParse(Headers.GetValueOrDefault(HeaderNames.ContentLength), out contentLength)
-                           ? contentLength
-                           : 0;
+                return int.TryParse(Headers.GetValueOrDefault(HeaderNames.ContentLength), out contentLength) ? contentLength : 0;
             }
         }
 
@@ -64,7 +76,9 @@
             sb.AppendLine("Headers:\n");
 
             foreach (var h in Headers.OrderBy(x => x.Key))
+            {
                 sb.AppendFormat("\t{0}:{1}\n".Fmt(h.Key, h.Value));
+            }
 
             if (BodyText != null)
             {

@@ -1,4 +1,10 @@
-﻿namespace NEventSocket
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="InboundSocketExtensions.cs" company="Dan Barua">
+//   (C) Dan Barua and contributors. Licensed under the Mozilla Public License.
+// </copyright>
+// --------------------------------------------------------------------------------------------------------------------
+
+namespace NEventSocket
 {
     using System.Threading.Tasks;
 

@@ -1,31 +1,44 @@
-﻿namespace NEventSocket
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="EventSocketExensions.cs" company="Dan Barua">
+//   (C) Dan Barua and contributors. Licensed under the Mozilla Public License.
+// </copyright>
+// --------------------------------------------------------------------------------------------------------------------
+
+namespace NEventSocket
 {
     using System;
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
-    using System.Text;
     using System.Threading.Tasks;
 
     using NEventSocket.FreeSwitch;
     using NEventSocket.Logging;
     using NEventSocket.Sockets;
     using NEventSocket.Util;
+    using NEventSocket.Util.ObjectPooling;
 
     public static class EventSocketExensions
     {
         private static readonly ILog Log = LogProvider.GetLogger(typeof(EventSocket));
 
-
         public static Task<CommandReply> Auth(this EventSocket eventSocket, string password)
         {
-            if (password == null) throw new ArgumentNullException("password");
+            if (password == null)
+            {
+                throw new ArgumentNullException("password");
+            }
+
             return eventSocket.SendCommand("auth {0}".Fmt(password));
         }
 
         public static Task<ApiResponse> Api(this EventSocket eventSocket, string command, string arg = null)
         {
-            if (command == null) throw new ArgumentNullException("command");
+            if (command == null)
+            {
+                throw new ArgumentNullException("command");
+            }
+
             return eventSocket.SendApi(arg != null ? "{0} {1}".Fmt(command, arg) : command);
         }
 
@@ -41,13 +54,20 @@
         /// <param name="uuid">The Channel UUID</param>
         /// <param name="assignments">Array of assignments in the form "foo=value", "bar=value".</param>
         /// <returns>A Task[EventMessage] representing the CHANNEL_EXECUTE_COMPLETE event.</returns>
-        public static Task<ApiResponse> SetMultipleChannelVariables(
-            this EventSocket eventSocket, string uuid, params string[] assignments)
+        public static Task<ApiResponse> SetMultipleChannelVariables(this EventSocket eventSocket, string uuid, params string[] assignments)
         {
-            return
-                eventSocket.SendApi(
-                    "uuid_setvar_multi {0} {1}".Fmt(
-                        uuid, assignments.Aggregate(StringBuilderPool.Allocate(), (sb, s) => { sb.Append(s); sb.Append(";"); return sb; }, StringBuilderPool.ReturnAndFree)));
+            return eventSocket.SendApi(
+                "uuid_setvar_multi {0} {1}".Fmt(
+                    uuid, 
+                    assignments.Aggregate(
+                        StringBuilderPool.Allocate(), 
+                        (sb, s) =>
+                            {
+                                sb.Append(s);
+                                sb.Append(";");
+                                return sb;
+                            }, 
+                        StringBuilderPool.ReturnAndFree)));
         }
 
         /// <summary>
@@ -61,27 +81,27 @@
         /// <exception cref="FileNotFoundException">Throws FileNotFoundException if FreeSwitch is unable to play the file.</exception>
         public static async Task<PlayResult> Play(this EventSocket eventSocket, string uuid, string file, PlayOptions options = null)
         {
-            //todo: implement options for playback eg a-leg, b-leg, both, using uuid_displace
-            if (options == null) options = new PlayOptions();
+            // todo: implement options for playback eg a-leg, b-leg, both, using uuid_displace
+            if (options == null)
+            {
+                options = new PlayOptions();
+            }
 
-            //todo: what if applicationresult is null (hang up occurs before the application completes)
+            // todo: what if applicationresult is null (hang up occurs before the application completes)
             return new PlayResult(await eventSocket.ExecuteApplication(uuid, "playback", applicationArguments: file, loops: options.Loops));
         }
 
-        public static async Task<PlayGetDigitsResult> PlayGetDigits(
-            this EventSocket eventSocket, string uuid, PlayGetDigitsOptions options)
+        public static async Task<PlayGetDigitsResult> PlayGetDigits(this EventSocket eventSocket, string uuid, PlayGetDigitsOptions options)
         {
-            //todo: what if applicationresult is null (hang up occurs before the application completes)
+            // todo: what if applicationresult is null (hang up occurs before the application completes)
             return new PlayGetDigitsResult(
                 await eventSocket.ExecuteApplication(uuid, "play_and_get_digits", options.ToString()), options.ChannelVariableName);
         }
 
-        public static async Task<ReadResult> Read(
-            this EventSocket eventSocket, string uuid, ReadOptions options)
+        public static async Task<ReadResult> Read(this EventSocket eventSocket, string uuid, ReadOptions options)
         {
-            //todo: what if applicationresult is null (hang up occurs before the application completes)
-            return new ReadResult(
-                await eventSocket.ExecuteApplication(uuid, "read", options.ToString()), options.ChannelVariableName);
+            // todo: what if applicationresult is null (hang up occurs before the application completes)
+            return new ReadResult(await eventSocket.ExecuteApplication(uuid, "read", options.ToString()), options.ChannelVariableName);
         }
 
         public static Task<EventMessage> Say(this EventSocket eventSocket, string uuid, SayOptions options)
@@ -121,8 +141,16 @@
 
         public static Task<CommandReply> Filter(this EventSocket eventSocket, string header, string value)
         {
-            if (header == null) throw new ArgumentNullException("header");
-            if (value == null) throw new ArgumentNullException("value");
+            if (header == null)
+            {
+                throw new ArgumentNullException("header");
+            }
+
+            if (value == null)
+            {
+                throw new ArgumentNullException("value");
+            }
+
             return eventSocket.SendCommand("filter {0} {1}".Fmt(header, value));
         }
 
@@ -133,14 +161,26 @@
 
         public static Task<CommandReply> FilterDelete(this EventSocket eventSocket, string header)
         {
-            if (header == null) throw new ArgumentNullException("header");
+            if (header == null)
+            {
+                throw new ArgumentNullException("header");
+            }
+
             return eventSocket.SendCommand("filter delete {0}".Fmt(header));
         }
 
         public static Task<CommandReply> FilterDelete(this EventSocket eventSocket, string header, string value)
         {
-            if (header == null) throw new ArgumentNullException("header");
-            if (value == null) throw new ArgumentNullException("value");
+            if (header == null)
+            {
+                throw new ArgumentNullException("header");
+            }
+
+            if (value == null)
+            {
+                throw new ArgumentNullException("value");
+            }
+
             return eventSocket.SendCommand("filter delete {0} {1}".Fmt(header, value));
         }
 
@@ -150,36 +190,48 @@
             return SendEvent(eventSocket, eventName.ToString().ToUpperWithUnderscores(), headers);
         }
 
-        public static Task<CommandReply> SendEvent(this EventSocket eventSocket, string eventName, IDictionary<string, string> headers = null)
+        public static Task<CommandReply> SendEvent(
+            this EventSocket eventSocket, string eventName, IDictionary<string, string> headers = null)
         {
-            if (eventName == null) throw new ArgumentNullException("eventName");
-            if (headers == null) headers = new Dictionary<string, string>();
+            if (eventName == null)
+            {
+                throw new ArgumentNullException("eventName");
+            }
+
+            if (headers == null)
+            {
+                headers = new Dictionary<string, string>();
+            }
 
             var headersString = headers.Aggregate(
-                StringBuilderPool.Allocate(),
+                StringBuilderPool.Allocate(), 
                 (sb, kvp) =>
                     {
                         sb.AppendFormat("{0}: {1}", kvp.Key, kvp.Value);
                         sb.Append("\n");
                         return sb;
-                    },
+                    }, 
                 StringBuilderPool.ReturnAndFree);
 
             return eventSocket.SendCommand("sendevent {0}\n{1}".Fmt(eventName, headersString));
         }
 
-        public static Task<CommandReply> Hangup(this EventSocket eventSocket, string uuid, HangupCause hangupCause = HangupCause.NormalClearing)
+        public static Task<CommandReply> Hangup(
+            this EventSocket eventSocket, string uuid, HangupCause hangupCause = HangupCause.NormalClearing)
         {
-            if (uuid == null) throw new ArgumentNullException("uuid");
+            if (uuid == null)
+            {
+                throw new ArgumentNullException("uuid");
+            }
+
             return
                 eventSocket.SendCommand(
-                    "sendmsg {0}\ncall-command: hangup\nhangup-cause: {1}".Fmt(
-                        uuid, hangupCause.ToString().ToUpperWithUnderscores()));
+                    "sendmsg {0}\ncall-command: hangup\nhangup-cause: {1}".Fmt(uuid, hangupCause.ToString().ToUpperWithUnderscores()));
         }
 
         public static void Exit(this EventSocket eventSocket)
         {
-            eventSocket.SendCommand("exit"); //will disconnect, a reply might not arrive in time to be read
+            eventSocket.SendCommand("exit"); // will disconnect, a reply might not arrive in time to be read
         }
 
         public static Task<CommandReply> FsLog(this EventSocket eventSocket, string logLevel)

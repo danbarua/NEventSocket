@@ -1,13 +1,18 @@
-﻿namespace NEventSocket.FreeSwitch
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="EventMessage.cs" company="Dan Barua">
+//   (C) Dan Barua and contributors. Licensed under the Mozilla Public License.
+// </copyright>
+// --------------------------------------------------------------------------------------------------------------------
+
+namespace NEventSocket.FreeSwitch
 {
     using System;
     using System.Linq;
-    using System.Text;
 
     using NEventSocket.Logging;
-
     using NEventSocket.Sockets;
     using NEventSocket.Util;
+    using NEventSocket.Util.ObjectPooling;
 
     /// <summary>
     ///     Represents an Event Message received through the EventSocket
@@ -16,10 +21,6 @@
     public class EventMessage : BasicMessage
     {
         private static readonly ILog Log = LogProvider.GetCurrentClassLogger();
-
-        protected EventMessage()
-        {
-        }
 
         public EventMessage(BasicMessage basicMessage)
         {
@@ -31,7 +32,6 @@
                  * This Command-Reply message contains a CHANNEL_DATA event message buried in its headers.
                  * In this case, we can hydrate an event message from a message of content type Command-Reply.
                  */
-
                 if (basicMessage.Headers.ContainsKey(HeaderNames.EventName))
                 {
                     this.Headers = basicMessage.Headers;
@@ -44,29 +44,31 @@
             }
 
             // normally, the content of the event will be in the BasicMessage's body text and will need to be parsed to produce an EventMessage
-            if (string.IsNullOrEmpty(basicMessage.BodyText)) throw new ArgumentException("Message did not contain an event body.");
+            if (string.IsNullOrEmpty(basicMessage.BodyText))
+            {
+                throw new ArgumentException("Message did not contain an event body.");
+            }
 
             try
             {
                 if (!basicMessage.BodyText.Contains(HeaderNames.ContentLength))
                 {
-                    //body text consists of key-value-pair event headers
+                    // body text consists of key-value-pair event headers
                     this.Headers = basicMessage.BodyText.ParseKeyValuePairs("\n", ": ");
                     this.BodyText = null;
                 }
                 else
                 {
-                    //...but some Event Messages also carry a body payload, eg. a BACKGROUND_JOB event
+                    // ...but some Event Messages also carry a body payload, eg. a BACKGROUND_JOB event
                     // which is a message carried inside an EventMessage carried inside a BasicMessage..
                     // yo dawg, i heard you like messages...
-
                     var parser = new Parser();
-                    foreach (char c in basicMessage.BodyText)
+                    foreach (var c in basicMessage.BodyText)
                     {
                         parser.Append(c);
                     }
 
-                    BasicMessage payload = parser.ExtractMessage();
+                    var payload = parser.ExtractMessage();
 
                     this.Headers = payload.Headers;
                     this.BodyText = payload.BodyText.Trim();
@@ -78,6 +80,10 @@
                 Log.Error(this.BodyText);
                 throw;
             }
+        }
+
+        protected EventMessage()
+        {
         }
 
         /// <summary>
@@ -109,9 +115,8 @@
         {
             get
             {
-                //channel state = "CS_NEW"
-                //strip first 3 chars and then parse it to ChannelState enum.
-
+                // channel state = "CS_NEW"
+                // strip first 3 chars and then parse it to ChannelState enum.
                 var channelState = Headers.GetValueOrDefault(HeaderNames.ChannelState);
                 channelState = channelState.Substring(3, channelState.Length - 3);
                 return channelState.HeaderToEnum<ChannelState>();
@@ -139,7 +144,6 @@
                 return Headers.GetValueOrDefault(HeaderNames.HangupCause).HeaderToEnumOrNull<HangupCause>();
             }
         }
-        
 
         /// <summary>
         /// Retrieves a header from the Headers dictionary, returning null if the key is not found.
@@ -167,7 +171,9 @@
             sb.AppendLine("Event Headers:");
 
             foreach (var h in Headers.OrderBy(x => x.Key))
+            {
                 sb.AppendLine("\t" + h.Key + " : " + h.Value);
+            }
 
             if (!string.IsNullOrEmpty(BodyText))
             {

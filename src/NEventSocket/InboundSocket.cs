@@ -1,8 +1,13 @@
-﻿namespace NEventSocket
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="InboundSocket.cs" company="Dan Barua">
+//   (C) Dan Barua and contributors. Licensed under the Mozilla Public License.
+// </copyright>
+// --------------------------------------------------------------------------------------------------------------------
+
+namespace NEventSocket
 {
     using System;
     using System.Net.Sockets;
-    using System.Reactive.Concurrency;
     using System.Reactive.Linq;
     using System.Reactive.Threading.Tasks;
     using System.Security;
@@ -17,21 +22,25 @@
     {
         private static readonly ILog Log = LogProvider.GetCurrentClassLogger();
 
-        protected InboundSocket(string host, int port, TimeSpan? timeout = null)
-            : base(new TcpClient(host, port), timeout)
+        protected InboundSocket(string host, int port, TimeSpan? timeout = null) : base(new TcpClient(host, port), timeout)
         {
         }
 
-        public async static Task<InboundSocket> Connect(string host = "localhost", int port = 8021, string password = "ClueCon", TimeSpan? timeout = null)
+        public static async Task<InboundSocket> Connect(
+            string host = "localhost", int port = 8021, string password = "ClueCon", TimeSpan? timeout = null)
         {
             var socket = new InboundSocket(host, port, timeout);
 
-            await socket.Messages
-                .Where(x => x.ContentType == ContentTypes.AuthRequest)
-                .Take(1)
-                .Timeout(socket.ResponseTimeOut, Observable.Throw<BasicMessage>(new TimeoutException("No Auth Request received within the specified timeout of {0}.".Fmt(socket.ResponseTimeOut))))
-                .Do(_ => Log.Trace(() => "Received Auth Request"), ex => Log.ErrorException("Error waiting for AuthRequest.", ex))
-                .ToTask();
+            await
+                socket.Messages.Where(x => x.ContentType == ContentTypes.AuthRequest)
+                      .Take(1)
+                      .Timeout(
+                          socket.ResponseTimeOut, 
+                          Observable.Throw<BasicMessage>(
+                              new TimeoutException(
+                                  "No Auth Request received within the specified timeout of {0}.".Fmt(socket.ResponseTimeOut))))
+                      .Do(_ => Log.Trace(() => "Received Auth Request"), ex => Log.ErrorException("Error waiting for AuthRequest.", ex))
+                      .ToTask();
 
             var result = await socket.Auth(password);
 
@@ -48,24 +57,30 @@
 
         public Task<OriginateResult> Originate(string endpoint, OriginateOptions options = null, string application = "park")
         {
-            if (options == null) options = new OriginateOptions();
+            if (options == null)
+            {
+                options = new OriginateOptions();
+            }
 
             // if no UUID provided, we'll set one now and use that to filter for the correct channel events
             // this way, one inbound socket can originate many calls and we can complete the correct
             // TaskCompletionSource for each originated call.
-            if (string.IsNullOrEmpty(options.UUID)) options.UUID = Guid.NewGuid().ToString();
+            if (string.IsNullOrEmpty(options.UUID))
+            {
+                options.UUID = Guid.NewGuid().ToString();
+            }
 
             var originateString = string.Format("{0}{1} &{2}", options, endpoint, application);
 
-             return
+            return
                 this.BackgroundJob("originate", originateString)
                     .ToObservable()
                     .Merge(
                         Events.FirstAsync(
-                            x => x.UUID == options.UUID
+                            x =>
+                            x.UUID == options.UUID
                             && (x.EventName == EventName.ChannelAnswer || x.EventName == EventName.ChannelHangup
-                                || (options.ReturnRingReady && x.EventName == EventName.ChannelProgress)))
-                              .Cast<BasicMessage>())
+                                || (options.ReturnRingReady && x.EventName == EventName.ChannelProgress))).Cast<BasicMessage>())
                     .LastAsync(x => ((x is BackgroundJobResult) && !((BackgroundJobResult)x).Success) || (x is EventMessage))
                     .Select(OriginateResult.FromBackgroundJobResultOrChannelEvent)
                     .ToTask();

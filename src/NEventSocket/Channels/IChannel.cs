@@ -1,4 +1,10 @@
-﻿namespace NEventSocket.Channels
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="IChannel.cs" company="Dan Barua">
+//   (C) Dan Barua and contributors. Licensed under the Mozilla Public License.
+// </copyright>
+// --------------------------------------------------------------------------------------------------------------------
+
+namespace NEventSocket.Channels
 {
     using System;
     using System.Threading.Tasks;
@@ -22,7 +28,7 @@
         string this[string variableName] { get; }
 
         Task Bridge(IChannel other);
-        
+
         Task<BridgeResult> Bridge(string destination, BridgeOptions options, Action<EventMessage> onProgress = null);
 
         Task Hold();

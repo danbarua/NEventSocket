@@ -1,4 +1,10 @@
-﻿namespace NEventSocket.FreeSwitch
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="OriginateResult.cs" company="Dan Barua">
+//   (C) Dan Barua and contributors. Licensed under the Mozilla Public License.
+// </copyright>
+// --------------------------------------------------------------------------------------------------------------------
+
+namespace NEventSocket.FreeSwitch
 {
     using System;
 
@@ -20,7 +26,10 @@
         {
             this.Success = backgroundJobResult.Success;
 
-            if (!this.Success) this.HangupCause = backgroundJobResult.ErrorMessage.HeaderToEnumOrNull<HangupCause>();
+            if (!this.Success)
+            {
+                this.HangupCause = backgroundJobResult.ErrorMessage.HeaderToEnumOrNull<HangupCause>();
+            }
 
             this.ResponseText = backgroundJobResult.ErrorMessage;
         }
@@ -32,12 +41,10 @@
         /// </summary>
         public bool Success { get; protected set; }
 
-
         /// <summary>
         /// Gets the response text from the application
         /// </summary>
         public string ResponseText { get; protected set; }
-
 
         /// <summary>
         /// Gets an <see cref="EventMessage">EventMessage</see> contanining the ChannelData for the call.

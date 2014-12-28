@@ -1,12 +1,8 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="Parser.cs" company="Dan Barua">
-//   Copyright © Business Systems (UK) Ltd and contributors. All rights reserved.
+//   (C) Dan Barua and contributors. Licensed under the Mozilla Public License.
 // </copyright>
-// <summary>
-//   A simple state-machine for parsing incoming EventSocket messages.
-// </summary>
 // --------------------------------------------------------------------------------------------------------------------
-
 namespace NEventSocket.Sockets
 {
     using System;
@@ -16,6 +12,7 @@ namespace NEventSocket.Sockets
     using NEventSocket.FreeSwitch;
     using NEventSocket.Logging;
     using NEventSocket.Util;
+    using NEventSocket.Util.ObjectPooling;
 
     /// <summary>
     /// A simple state-machine for parsing incoming EventSocket messages.
@@ -24,7 +21,8 @@ namespace NEventSocket.Sockets
     {
         private static readonly ILog Log = LogProvider.GetCurrentClassLogger();
 
-        private StringBuilder buffer = StringBuilderPool.Allocate(); // StringBuilder in .Net 4 uses a Linked List internally to avoid expensive reallocations. Faster but uses marginally more memory.
+        // StringBuilder in .Net 4 uses a Linked List internally to avoid expensive reallocations. Faster but uses marginally more memory.
+        private StringBuilder buffer = StringBuilderPool.Allocate();
 
         private char previous;
 
@@ -104,7 +102,7 @@ namespace NEventSocket.Sockets
         {
             var parser = this;
 
-            foreach (char c in next)
+            foreach (var c in next)
             {
                 parser = parser.Append(next);
             }
@@ -116,12 +114,11 @@ namespace NEventSocket.Sockets
         {
             if (!this.Completed)
             {
-                string errorMessage = "The message was not completely parsed.";
+                var errorMessage = "The message was not completely parsed.";
 
                 if (this.HasBody)
                 {
-                    errorMessage += "expected a body with length {0}, got {1} instead.".Fmt(
-                        contentLength, buffer.Length);
+                    errorMessage += "expected a body with length {0}, got {1} instead.".Fmt(contentLength, buffer.Length);
                 }
 
                 throw new InvalidOperationException(errorMessage);

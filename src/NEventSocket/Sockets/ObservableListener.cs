@@ -3,7 +3,6 @@
 //   (C) Dan Barua and contributors. Licensed under the Mozilla Public License.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
-
 namespace NEventSocket.Sockets
 {
     using System;
@@ -21,15 +20,21 @@ namespace NEventSocket.Sockets
     public abstract class ObservableListener<T> : IDisposable where T : ObservableSocket
     {
         private readonly ILog Log;
+
         private readonly Subject<Unit> listenerTermination = new Subject<Unit>();
+
         private readonly List<T> connections = new List<T>();
+
         private readonly Subject<T> observable = new Subject<T>();
+
         private readonly int port;
+
         private readonly Func<TcpClient, T> observableSocketCreator;
 
-
         private bool disposed;
+
         private IDisposable subscription;
+
         private TcpListener tcpListener;
 
         /// <summary>Starts the Listener on the given port</summary>
@@ -47,18 +52,23 @@ namespace NEventSocket.Sockets
             this.Dispose(false);
         }
 
-
         /// <summary>
         /// Observable sequence of all outbound connections from FreeSwitch.
         /// </summary>
         public IObservable<T> Connections
         {
-            get { return this.observable; }
+            get
+            {
+                return this.observable;
+            }
         }
 
         public int Port
         {
-            get { return ((IPEndPoint)this.tcpListener.LocalEndpoint).Port; }
+            get
+            {
+                return ((IPEndPoint)this.tcpListener.LocalEndpoint).Port;
+            }
         }
 
         /// <summary>
@@ -67,7 +77,9 @@ namespace NEventSocket.Sockets
         public void Start()
         {
             if (this.disposed)
+            {
                 throw new ObjectDisposedException(this.ToString());
+            }
 
             this.tcpListener = TcpListener.Create(this.port);
 
@@ -88,19 +100,8 @@ namespace NEventSocket.Sockets
                                       this.observable.OnNext(connection);
 
                                       connection.Disposed += ConnectionOnDisposed;
-                                  },
+                                  }, 
                               ex => Log.ErrorFormat("Error handling inbound connection", ex));
-        }
-
-        private void ConnectionOnDisposed(object sender, EventArgs eventArgs)
-        {
-            var connection = sender as T;
-            if (connection != null)
-            {
-                Log.Trace(() => "Connection Disposed");
-                connection.Disposed -= this.ConnectionOnDisposed;
-                this.connections.Remove(connection);
-            }
         }
 
         public void Dispose()
@@ -140,6 +141,17 @@ namespace NEventSocket.Sockets
 
                 Log.Trace(() => "Disposed");
                 this.disposed = true;
+            }
+        }
+
+        private void ConnectionOnDisposed(object sender, EventArgs eventArgs)
+        {
+            var connection = sender as T;
+            if (connection != null)
+            {
+                Log.Trace(() => "Connection Disposed");
+                connection.Disposed -= this.ConnectionOnDisposed;
+                this.connections.Remove(connection);
             }
         }
     }

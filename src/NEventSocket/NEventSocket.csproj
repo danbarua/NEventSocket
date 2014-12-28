@@ -126,12 +126,11 @@
     <Compile Include="Sockets\ObservableListener.cs" />
     <Compile Include="Sockets\Parser.cs" />
     <Compile Include="Util\AsyncLock.cs" />
-    <Compile Include="Util\ObjectPool.cs" />
+    <Compile Include="Util\ObjectPooling\ObjectPool.cs" />
     <Compile Include="Util\ObservableExtensions.cs" />
-    <Compile Include="Util\PooledObject.cs" />
-    <Compile Include="Util\SharedPoolExtensions.cs" />
-    <Compile Include="Util\SharedPools.cs" />
-    <Compile Include="Util\StringBuilderPool.cs" />
+    <Compile Include="Util\ObjectPooling\SharedPoolExtensions.cs" />
+    <Compile Include="Util\ObjectPooling\SharedPools.cs" />
+    <Compile Include="Util\ObjectPooling\StringBuilderPool.cs" />
     <Compile Include="Util\StringExtensions.cs" />
     <Compile Include="Util\TaskHelper.cs" />
   </ItemGroup>

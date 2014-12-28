@@ -3,7 +3,6 @@
 //   (C) Dan Barua and contributors. Licensed under the Mozilla Public License.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
-
 namespace NEventSocket.FreeSwitch
 {
     using NEventSocket.Util;
@@ -66,7 +65,13 @@ namespace NEventSocket.FreeSwitch
 
         public override string ToString()
         {
-            return string.Format("{0} {1} {2} {3} {4}", this.ModuleName, this.Type.ToString().ToUpperWithUnderscores().ToUpperInvariant(), this.Method.ToString().ToLowerInvariant(), this.Gender.ToString().ToUpperInvariant(), this.Text);
+            return string.Format(
+                "{0} {1} {2} {3} {4}", 
+                this.ModuleName, 
+                this.Type.ToString().ToUpperWithUnderscores().ToUpperInvariant(), 
+                this.Method.ToString().ToLowerInvariant(), 
+                this.Gender.ToString().ToUpperInvariant(), 
+                this.Text);
         }
     }
 }

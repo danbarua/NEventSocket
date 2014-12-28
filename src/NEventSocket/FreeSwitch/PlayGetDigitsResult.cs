@@ -1,9 +1,14 @@
-﻿namespace NEventSocket.FreeSwitch
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="PlayGetDigitsResult.cs" company="Dan Barua">
+//   (C) Dan Barua and contributors. Licensed under the Mozilla Public License.
+// </copyright>
+// --------------------------------------------------------------------------------------------------------------------
+
+namespace NEventSocket.FreeSwitch
 {
     public class PlayGetDigitsResult : ApplicationResult
     {
-        public PlayGetDigitsResult(EventMessage eventMessage, string channelVariable)
-            : base(eventMessage)
+        public PlayGetDigitsResult(EventMessage eventMessage, string channelVariable) : base(eventMessage)
         {
             this.Digits = eventMessage.GetVariable(channelVariable);
 

@@ -1,12 +1,11 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="ObservableExtensions.cs" company="Dan Barua">
-//   Copyright © Business Systems (UK) Ltd and contributors. All rights reserved.
+//   (C) Dan Barua and contributors. Licensed under the Mozilla Public License.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 namespace NEventSocket.Util
 {
     using System;
-    using System.Collections.Generic;
     using System.Reactive.Linq;
 
     /// <summary>The observable extensions.</summary>
@@ -26,80 +25,24 @@ namespace NEventSocket.Util
             Func<TAccumulate, TSource, TAccumulate> accumulator, 
             Func<TAccumulate, bool> predicate)
         {
-            return Observable.Create<TAccumulate>(observer =>
-            {
-                var accumulate = seed();
-
-                return source.Subscribe(
-                    value =>
-                        {
-                            accumulate = accumulator(accumulate, value);
-
-                                if (predicate(accumulate))
-                                {
-                                    observer.OnNext(accumulate);
-                                    accumulate = seed();
-                                }
-                        },
-                    observer.OnError,
-                    observer.OnCompleted);
-            });
-        }
-
-        /// <summary>The buffer until.</summary>
-        /// <param name="source">The source.</param>
-        /// <param name="other">The other.</param>
-        /// <typeparam name="TSource"></typeparam>
-        /// <typeparam name="TOther"></typeparam>
-        /// <returns>The <see cref="IObservable{T}"/>.</returns>
-        public static IObservable<IList<TSource>> BufferUntil<TSource, TOther>(
-            this IObservable<TSource> source, IObservable<TOther> other)
-        {
-            return Observable.Defer<IList<TSource>>(
-                () =>
+            return Observable.Create<TAccumulate>(
+                observer =>
                     {
-                        var list = new List<TSource>();
+                        var accumulate = seed();
 
-                        return from completeSignal in source
-                                       .TakeUntil(other)
-                                       .Do(value =>
-                                            {
-                                                lock (list)
-                                                {
-                                                    list.Add(value);
-                                                }
-                                            })
-                                    .Select(_ => false)
-                                    .Concat(Observable.Return(true))
-                               where completeSignal
-                               select list.AsReadOnly();
-                    });
-        }
-
-        /// <summary>The buffer until.</summary>
-        /// <param name="source">The source.</param>
-        /// <param name="predicate">The predicate.</param>
-        /// <typeparam name="T"></typeparam>
-        /// <returns>The <see cref="IObservable"/>.</returns>
-        public static IObservable<IEnumerable<T>> BufferUntil<T>(
-            this IObservable<T> source, Func<IEnumerable<T>, bool> predicate)
-        {
-            return Observable.Create<IEnumerable<T>>(
-                o =>
-                    {
-                        var buffer = new List<T>();
                         return source.Subscribe(
-                            n =>
+                            value =>
                                 {
-                                    buffer.Add(n);
-                                    if (predicate(buffer))
+                                    accumulate = accumulator(accumulate, value);
+
+                                    if (predicate(accumulate))
                                     {
-                                        o.OnNext(buffer);
-                                        buffer = new List<T>();
+                                        observer.OnNext(accumulate);
+                                        accumulate = seed();
                                     }
                                 }, 
-                            o.OnError, 
-                            o.OnCompleted);
+                            observer.OnError, 
+                            observer.OnCompleted);
                     });
         }
     }

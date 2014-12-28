@@ -1,4 +1,13 @@
-﻿namespace NEventSocket.Util
+﻿// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
+
+[module: System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.DocumentationRules", "*", Justification = "Third Party Library Code")]
+[module: System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.OrderingRules", "*", Justification = "Third Party Library Code")]
+[module: System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.LayoutRules", "*", Justification = "Third Party Library Code")]
+[module: System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.MaintainabilityRules", "*", Justification = "Third Party Library Code")]
+[module: System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.ReadabilityRules", "*", Justification = "Third Party Library Code")]
+[module: System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.NamingRules", "*", Justification = "Third Party Library Code")]
+[module: System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.SpacingRules", "*", Justification = "Third Party Library Code")]
+namespace NEventSocket.Util.ObjectPooling
 {
     using System.Collections.Generic;
     using System.Text;
@@ -8,41 +17,6 @@
         private const int Threshold = 512;
 
         private const int StringBuilderCapacityThreshold = 512;
-
-        public static PooledObject<StringBuilder> GetPooledObject(this ObjectPool<StringBuilder> pool)
-        {
-            return PooledObject<StringBuilder>.Create(pool);
-        }
-
-        public static PooledObject<Stack<TItem>> GetPooledObject<TItem>(this ObjectPool<Stack<TItem>> pool)
-        {
-            return PooledObject<Stack<TItem>>.Create(pool);
-        }
-
-        public static PooledObject<Queue<TItem>> GetPooledObject<TItem>(this ObjectPool<Queue<TItem>> pool)
-        {
-            return PooledObject<Queue<TItem>>.Create(pool);
-        }
-
-        public static PooledObject<HashSet<TItem>> GetPooledObject<TItem>(this ObjectPool<HashSet<TItem>> pool)
-        {
-            return PooledObject<HashSet<TItem>>.Create(pool);
-        }
-
-        public static PooledObject<Dictionary<TKey, TValue>> GetPooledObject<TKey, TValue>(this ObjectPool<Dictionary<TKey, TValue>> pool)
-        {
-            return PooledObject<Dictionary<TKey, TValue>>.Create(pool);
-        }
-
-        public static PooledObject<List<TItem>> GetPooledObject<TItem>(this ObjectPool<List<TItem>> pool)
-        {
-            return PooledObject<List<TItem>>.Create(pool);
-        }
-
-        public static PooledObject<T> GetPooledObject<T>(this ObjectPool<T> pool) where T : class
-        {
-            return new PooledObject<T>(pool, p => p.Allocate(), (p, o) => p.Free(o));
-        }
 
         public static StringBuilder AllocateAndClear(this ObjectPool<StringBuilder> pool)
         {

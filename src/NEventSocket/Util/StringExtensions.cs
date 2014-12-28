@@ -1,9 +1,16 @@
-﻿namespace NEventSocket.Util
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="StringExtensions.cs" company="Dan Barua">
+//   (C) Dan Barua and contributors. Licensed under the Mozilla Public License.
+// </copyright>
+// --------------------------------------------------------------------------------------------------------------------
+namespace NEventSocket.Util
 {
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Globalization;
+
+    using NEventSocket.Util.ObjectPooling;
 
     public static class StringExtensions
     {
@@ -33,20 +40,30 @@
         [DebuggerStepThrough]
         public static string ToUpperWithUnderscores(this string camelCaseString)
         {
-            if (string.IsNullOrEmpty(camelCaseString)) return camelCaseString;
+            if (string.IsNullOrEmpty(camelCaseString))
+            {
+                return camelCaseString;
+            }
 
             var sb = StringBuilderPool.Allocate();
             sb.EnsureCapacity(camelCaseString.Length);
 
-            for (int i = 0; i < camelCaseString.Length; i++)
+            for (var i = 0; i < camelCaseString.Length; i++)
             {
                 var c = camelCaseString[i];
                 if (char.IsUpper(c))
                 {
-                    if (i != 0) sb.Append('_');
+                    if (i != 0)
+                    {
+                        sb.Append('_');
+                    }
+
                     sb.Append(char.ToUpper(c));
                 }
-                else sb.Append(char.ToUpper(c));
+                else
+                {
+                    sb.Append(char.ToUpper(c));
+                }
             }
 
             return StringBuilderPool.ReturnAndFree(sb);
@@ -55,12 +72,15 @@
         [DebuggerStepThrough]
         public static string ToCamelCase(this string underscoreString)
         {
-            if (string.IsNullOrEmpty(underscoreString)) return underscoreString;
+            if (string.IsNullOrEmpty(underscoreString))
+            {
+                return underscoreString;
+            }
 
             var sb = StringBuilderPool.Allocate();
             sb.EnsureCapacity(underscoreString.Length);
 
-            bool capitalizeNext = true;
+            var capitalizeNext = true;
 
             foreach (var c in underscoreString)
             {
@@ -94,18 +114,24 @@
         /// <returns>A <see cref="System.Collections.Generic.IDictionary{string, string}"/> containing the key-value pairs.</returns>
         /// <exception cref="FormatException">Thrown when an invalid key-value pair is encountered.</exception>
         [DebuggerStepThrough]
-        public static IDictionary<string, string> ParseKeyValuePairs(this string inputString, string keyValuePairDelimiter, string keyValueDelimiter)
+        public static IDictionary<string, string> ParseKeyValuePairs(
+            this string inputString, string keyValuePairDelimiter, string keyValueDelimiter)
         {
             var dictionary = new Dictionary<string, string>();
 
-            if (string.IsNullOrEmpty(inputString)) return dictionary;
+            if (string.IsNullOrEmpty(inputString))
+            {
+                return dictionary;
+            }
 
             var split = inputString.Split(new[] { keyValuePairDelimiter }, StringSplitOptions.RemoveEmptyEntries);
 
             foreach (var s in split)
             {
                 if (s.IndexOf(keyValueDelimiter, StringComparison.Ordinal) == -1)
+                {
                     throw new FormatException("Value provided was not a valid key-value pair - '{0}'".Fmt(s));
+                }
 
                 var kvp = s.Split(new[] { keyValueDelimiter }, StringSplitOptions.RemoveEmptyEntries);
 
@@ -131,7 +157,10 @@
         {
             TEnum result;
 
-            if (Enum.TryParse(inputString.ToCamelCase(), out result)) return result;
+            if (Enum.TryParse(inputString.ToCamelCase(), out result))
+            {
+                return result;
+            }
 
             return null;
         }

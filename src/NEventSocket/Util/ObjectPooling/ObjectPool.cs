@@ -1,8 +1,31 @@
-﻿namespace NEventSocket.Util
+﻿// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
+
+// define TRACE_LEAKS to get additional diagnostics that can lead to the leak sources. note: it will
+// make everything about 2-3x slower
+// 
+// #define TRACE_LEAKS
+
+// define DETECT_LEAKS to detect possible leaks
+// #if DEBUG
+// #define DETECT_LEAKS  //for now always enable DETECT_LEAKS in debug.
+// #endif
+
+[module: System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.DocumentationRules", "*", Justification = "Third Party Library Code")]
+[module: System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.OrderingRules", "*", Justification = "Third Party Library Code")]
+[module: System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.LayoutRules", "*", Justification = "Third Party Library Code")]
+[module: System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.MaintainabilityRules", "*", Justification = "Third Party Library Code")]
+[module: System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.ReadabilityRules", "*", Justification = "Third Party Library Code")]
+[module: System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.NamingRules", "*", Justification = "Third Party Library Code")]
+[module: System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.SpacingRules", "*", Justification = "Third Party Library Code")]
+namespace NEventSocket.Util.ObjectPooling
 {
     using System;
     using System.Diagnostics;
     using System.Threading;
+#if DETECT_LEAKS
+    using System.Runtime.CompilerServices;
+#endif
+
 
     /// <summary>
     /// Generic implementation of object pooling pattern with predefined pool size limit. The main
@@ -44,6 +67,51 @@
         // than "new T()".
         private readonly Factory factory;
 
+#if DETECT_LEAKS
+        private static readonly ConditionalWeakTable<T, LeakTracker> leakTrackers = new ConditionalWeakTable<T, LeakTracker>();
+ 
+        private class LeakTracker : IDisposable
+        {
+            private volatile bool disposed;
+ 
+#if TRACE_LEAKS
+            internal volatile System.Diagnostics.StackTrace Trace = null;
+#endif
+
+            public void Dispose()
+            {
+                disposed = true;
+                GC.SuppressFinalize(this);
+            }
+ 
+            private string GetTrace()
+            {
+#if TRACE_LEAKS
+                return Trace == null? "": Trace.ToString();
+#else
+                return "Leak tracing information is disabled. Define TRACE_LEAKS on ObjectPool`1.cs to get more info \n";
+#endif
+            }
+ 
+            ~LeakTracker()
+            {
+                if (!this.disposed &&
+                    !Environment.HasShutdownStarted &&
+                    !AppDomain.CurrentDomain.IsFinalizingForUnload())
+                {
+                    string report = string.Format("Pool detected potential leaking of {0}. \n Location of the leak: \n {1} ",
+                        typeof(T).ToString(),
+                        GetTrace());
+ 
+                    // If you are seeing this message it means that object has been allocated from the pool 
+                    // and has not been returned back. This is not critical, but turns pool into rather 
+                    // inefficient kind of "new".
+                    Debug.WriteLine("TRACEOBJECTPOOLLEAKS_BEGIN\n" + report + "TRACEOBJECTPOOLLEAKS_END");
+                }
+            }
+        }
+#endif
+
         internal ObjectPool(Factory factory)
             : this(factory, Environment.ProcessorCount * 2)
         { }
@@ -81,6 +149,15 @@
                 inst = this.AllocateSlow();
             }
 
+#if DETECT_LEAKS
+            var tracker = new LeakTracker();
+            leakTrackers.Add(inst, tracker);
+ 
+#if TRACE_LEAKS
+            var frame = new System.Diagnostics.StackTrace(false);
+            tracker.Trace = frame;
+#endif
+#endif
             return inst;
         }
 
@@ -118,6 +195,7 @@
         internal void Free(T obj)
         {
             this.Validate(obj);
+            this.ForgetTrackedObject(obj);
 
             if (this.firstItem == null)
             {
@@ -146,6 +224,41 @@
                     break;
                 }
             }
+        }
+
+        /// <summary>
+        /// Removes an object from leak tracking.  
+        /// 
+        /// This is called when an object is returned to the pool.  It may also be explicitly 
+        /// called if an object allocated from the pool is intentionally not being returned
+        /// to the pool.  This can be of use with pooled arrays if the consumer wants to 
+        /// return a larger array to the pool than was originally allocated.
+        /// </summary>
+        [Conditional("DEBUG")]
+        internal void ForgetTrackedObject(T old, T replacement = null)
+        {
+#if DETECT_LEAKS
+            LeakTracker tracker;
+            if (leakTrackers.TryGetValue(old, out tracker))
+            {
+                tracker.Dispose();
+                leakTrackers.Remove(old);
+            }
+            else
+            {
+                string report = string.Format("Object of type {0} was freed, but was not from pool. \n Callstack: \n {1} ",
+                    typeof(T).ToString(),
+                    new System.Diagnostics.StackTrace(false));
+ 
+                Debug.WriteLine("TRACEOBJECTPOOLLEAKS_BEGIN\n" + report + "TRACEOBJECTPOOLLEAKS_END");
+            }
+ 
+            if (replacement != null)
+            {
+                tracker = new LeakTracker();
+                leakTrackers.Add(replacement, tracker);
+            }
+#endif
         }
 
         [Conditional("DEBUG")]

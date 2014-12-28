@@ -1,4 +1,10 @@
-﻿namespace NEventSocket.Sockets
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="ObservableSocket.cs" company="Dan Barua">
+//   (C) Dan Barua and contributors. Licensed under the Mozilla Public License.
+// </copyright>
+// --------------------------------------------------------------------------------------------------------------------
+
+namespace NEventSocket.Sockets
 {
     using System;
     using System.Collections.Concurrent;
@@ -14,8 +20,8 @@
     using System.Threading.Tasks;
 
     using NEventSocket.Logging;
-
     using NEventSocket.Util;
+    using NEventSocket.Util.ObjectPooling;
 
     public abstract class ObservableSocket : IDisposable
     {
@@ -47,21 +53,18 @@
                 () =>
                     {
                         var stream = tcpClient.GetStream();
-                        var buffer = SharedPools.ByteArray.Allocate(); //new byte[8192]; //todo: use bufferpool or socketasynceventargs
+                        var buffer = SharedPools.ByteArray.Allocate(); // new byte[8192]; //todo: use bufferpool or socketasynceventargs
                         return
                             Observable.FromAsync(() => stream.ReadAsync(buffer, 0, buffer.Length))
                                       .Select(x => buffer.Take(x).ToArray())
                                       .Do(_ => SharedPools.ByteArray.Free(buffer));
-                    })
-                    .Repeat()
-                    .TakeWhile(x => x.Any())
-                    .Subscribe(
-                        (bytes) => received.Add(bytes),
+                    }).Repeat().TakeWhile(x => x.Any()).Subscribe(
+                        (bytes) => received.Add(bytes), 
                         ex =>
                             {
                                 Log.ErrorException("Read Failed", ex);
                                 Dispose();
-                            },
+                            }, 
                         () =>
                             {
                                 Log.Trace(() => "Read Observable Completed");
@@ -76,9 +79,21 @@
 
         public event EventHandler Disposed = (sender, args) => { };
 
-        public bool IsConnected { get { return tcpClient != null && tcpClient.Connected; } }
+        public bool IsConnected
+        {
+            get
+            {
+                return tcpClient != null && tcpClient.Connected;
+            }
+        }
 
-        protected IObservable<byte[]> Receiver { get { return receiver; } }
+        protected IObservable<byte[]> Receiver
+        {
+            get
+            {
+                return receiver;
+            }
+        }
 
         /// <summary>
         /// Asynchronously writes the given message to the socket.
@@ -103,9 +118,15 @@
         /// <exception cref="InvalidOperationException">If not connected.</exception>
         public async Task SendAsync(byte[] bytes, CancellationToken cancellationToken)
         {
-            if (disposed) throw new ObjectDisposedException(ToString());
-            
-            if (!IsConnected) throw new InvalidOperationException("Not connected");
+            if (disposed)
+            {
+                throw new ObjectDisposedException(ToString());
+            }
+
+            if (!IsConnected)
+            {
+                throw new InvalidOperationException("Not connected");
+            }
 
             try
             {
@@ -204,7 +225,7 @@
                         }
                     }
                 }
-                
+
                 disposed = true;
 
                 Disposed(this, EventArgs.Empty);

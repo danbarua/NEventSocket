@@ -1,4 +1,10 @@
-﻿namespace NEventSocket.FreeSwitch
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="BackgroundJobResult.cs" company="Dan Barua">
+//   (C) Dan Barua and contributors. Licensed under the Mozilla Public License.
+// </copyright>
+// --------------------------------------------------------------------------------------------------------------------
+
+namespace NEventSocket.FreeSwitch
 {
     using System;
 
@@ -31,7 +37,9 @@
         {
             get
             {
-                return this.BodyText != null && this.BodyText.StartsWith("-ERR ") ? this.BodyText.Substring(5, this.BodyText.Length - 5) : this.BodyText;
+                return this.BodyText != null && this.BodyText.StartsWith("-ERR ")
+                           ? this.BodyText.Substring(5, this.BodyText.Length - 5)
+                           : this.BodyText;
             }
         }
     }

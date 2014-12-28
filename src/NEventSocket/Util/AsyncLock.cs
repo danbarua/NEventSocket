@@ -1,4 +1,10 @@
-﻿namespace NEventSocket.Util
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="AsyncLock.cs" company="Dan Barua">
+//   (C) Dan Barua and contributors. Licensed under the Mozilla Public License.
+// </copyright>
+// --------------------------------------------------------------------------------------------------------------------
+
+namespace NEventSocket.Util
 {
     using System;
     using System.Threading;
@@ -6,29 +12,36 @@
 
     internal sealed class AsyncLock
     {
-        private readonly SemaphoreSlim m_semaphore = new SemaphoreSlim(1, 1);
-        private readonly Task<IDisposable> m_releaser;
+        private readonly SemaphoreSlim semaphore = new SemaphoreSlim(1, 1);
+
+        private readonly Task<IDisposable> releaser;
 
         public AsyncLock()
         {
-            m_releaser = Task.FromResult((IDisposable)new Releaser(this));
+            this.releaser = Task.FromResult((IDisposable)new Releaser(this));
         }
 
         public Task<IDisposable> LockAsync()
         {
-            var wait = m_semaphore.WaitAsync();
-            return wait.IsCompleted ?
-                        m_releaser :
-                        wait.ContinueWith((_, state) => (IDisposable)state,
-                            m_releaser.Result, CancellationToken.None,
-            TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+            var wait = this.semaphore.WaitAsync();
+            return wait.IsCompleted
+                       ? this.releaser
+                       : wait.ContinueWith((_, state) => (IDisposable)state, this.releaser.Result, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
         }
 
         private sealed class Releaser : IDisposable
         {
-            private readonly AsyncLock m_toRelease;
-            internal Releaser(AsyncLock toRelease) { m_toRelease = toRelease; }
-            public void Dispose() { m_toRelease.m_semaphore.Release(); }
+            private readonly AsyncLock toRelease;
+
+            internal Releaser(AsyncLock toRelease)
+            {
+                this.toRelease = toRelease;
+            }
+
+            public void Dispose()
+            {
+                this.toRelease.semaphore.Release();
+            }
         }
     }
 }

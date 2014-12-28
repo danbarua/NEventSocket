@@ -2,31 +2,26 @@
 // <copyright file="ReadResult.cs" company="Dan Barua">
 //   (C) Dan Barua and contributors. Licensed under the Mozilla Public License.
 // </copyright>
-// <summary>
-//   Defines the ReadResult type.
-// </summary>
 // --------------------------------------------------------------------------------------------------------------------
-
 namespace NEventSocket.FreeSwitch
 {
     using System;
 
     public class ReadResult : ApplicationResult
     {
-        public ReadResult(EventMessage eventMessage, string channelVariable)
-            : base(eventMessage)
+        public ReadResult(EventMessage eventMessage, string channelVariable) : base(eventMessage)
         {
             this.Digits = eventMessage.GetVariable(channelVariable);
             var readResult = eventMessage.GetVariable("read_result");
-            this.Result = !string.IsNullOrEmpty(readResult)
-                              ? (Status)Enum.Parse(typeof(Status), readResult, true)
-                              : Status.Failure;
+            this.Result = !string.IsNullOrEmpty(readResult) ? (Status)Enum.Parse(typeof(Status), readResult, true) : Status.Failure;
         }
 
         public enum Status
         {
-            Success,
-            Timeout,
+            Success, 
+
+            Timeout, 
+
             Failure
         }
 

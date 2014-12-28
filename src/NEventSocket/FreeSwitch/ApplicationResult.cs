@@ -3,7 +3,6 @@
 //   (C) Dan Barua and contributors. Licensed under the Mozilla Public License.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
-
 namespace NEventSocket.FreeSwitch
 {
     public abstract class ApplicationResult
@@ -17,7 +16,9 @@ namespace NEventSocket.FreeSwitch
             this.ChannelData = eventMessage;
 
             if (this.ChannelData.Headers.ContainsKey(HeaderNames.ApplicationResponse))
+            {
                 this.ResponseText = this.ChannelData.Headers[HeaderNames.ApplicationResponse];
+            }
         }
 
         /// <summary>

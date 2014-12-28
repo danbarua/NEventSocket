@@ -1,13 +1,20 @@
-﻿namespace NEventSocket.FreeSwitch
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="PlayGetDigitsOptions.cs" company="Dan Barua">
+//   (C) Dan Barua and contributors. Licensed under the Mozilla Public License.
+// </copyright>
+// --------------------------------------------------------------------------------------------------------------------
+
+namespace NEventSocket.FreeSwitch
 {
     using NEventSocket.Util;
+    using NEventSocket.Util.ObjectPooling;
 
     /// <summary>
     /// Represents a call to the play_and_get_digits application
     /// </summary>
     public class PlayGetDigitsOptions
     {
-        private const string channelVariableName = "play_get_digits_result";
+        private string channelVariableName = "play_get_digits_result";
 
         private int maxDigits = 128;
 
@@ -15,7 +22,7 @@
 
         private string terminatorDigits = "#";
 
-        private string digitsRegex = @"^(0|1|2|3|4|5|6|7|8|9|\*|#)+"; //or "\d+";
+        private string digitsRegex = @"^(0|1|2|3|4|5|6|7|8|9|\*|#)+"; // or "\d+";
 
         private int maxTries = 5;
 
@@ -146,20 +153,28 @@
         {
             set
             {
-                //todo: Freeswitch is not excluding "*" when set to numbers only - investigate
+                // todo: Freeswitch is not excluding "*" when set to numbers only - investigate
 
-                //converts "12345" into "^(1|2|3|4|5)+"
+                // converts "12345" into "^(1|2|3|4|5)+"
                 var sb = StringBuilderPool.Allocate();
                 sb.Append("^(");
 
-                for (int i = 0; i < value.Length; i++)
+                for (var i = 0; i < value.Length; i++)
                 {
-                    char digit = value[i];
-                    if (digit == '*') sb.Append(@"\*");
-                    else sb.Append(digit);
+                    var digit = value[i];
+                    if (digit == '*')
+                    {
+                        sb.Append(@"\*");
+                    }
+                    else
+                    {
+                        sb.Append(digit);
+                    }
 
                     if (i != value.Length - 1)
+                    {
                         sb.Append("|");
+                    }
                 }
 
                 sb.Append(")+");
@@ -186,27 +201,32 @@
         /// <summary>
         /// Gets the name of the channel variable which will contain the result
         /// </summary>
-        public string ChannelVariableName 
-        { 
+        public string ChannelVariableName
+        {
             get
             {
                 return channelVariableName;
+            }
+
+            set
+            {
+                this.channelVariableName = value;
             }
         }
 
         public override string ToString()
         {
             return string.Format(
-                "{0} {1} {2} {3} {4} {5} {6} {7} {8} {9}",
-                this.MinDigits,
-                this.MaxDigits,
-                this.MaxTries,
-                this.TimeoutMs,
-                this.TerminatorDigits,
-                this.PromptAudioFile,
-                this.BadInputAudioFile,
-                channelVariableName,
-                this.digitsRegex,
+                "{0} {1} {2} {3} {4} {5} {6} {7} {8} {9}", 
+                this.MinDigits, 
+                this.MaxDigits, 
+                this.MaxTries, 
+                this.TimeoutMs, 
+                this.TerminatorDigits, 
+                this.PromptAudioFile, 
+                this.BadInputAudioFile, 
+                channelVariableName, 
+                this.digitsRegex, 
                 this.DigitTimeoutMs);
         }
     }

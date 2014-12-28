@@ -2,11 +2,7 @@
 // <copyright file="Channel.cs" company="Dan Barua">
 //   (C) Dan Barua and contributors. Licensed under the Mozilla Public License.
 // </copyright>
-// <summary>
-//   Defines the Channel type.
-// </summary>
 // --------------------------------------------------------------------------------------------------------------------
-
 namespace NEventSocket.Channels
 {
     using System;
@@ -39,15 +35,13 @@ namespace NEventSocket.Channels
 
         private string bridgedLegUUID;
 
-        public Channel(OutboundSocket outboundSocket)
-            : this(outboundSocket.ChannelData, outboundSocket)
+        public Channel(OutboundSocket outboundSocket) : this(outboundSocket.ChannelData, outboundSocket)
         {
             outboundSocket.Linger().Wait();
             outboundSocket.SubscribeEvents().Wait();
         }
 
-        public Channel(EventMessage eventMessage, EventSocket eventSocket)
-            : this(eventMessage.UUID, eventMessage, eventSocket)
+        public Channel(EventMessage eventMessage, EventSocket eventSocket) : this(eventMessage.UUID, eventMessage, eventSocket)
         {
         }
 
@@ -57,21 +51,25 @@ namespace NEventSocket.Channels
             this.lastEvent = eventMessage;
             this.eventSocket = eventSocket;
 
-            this.disposables.Add(eventSocket.Events.Where(x => x.UUID == this.UUID && x.EventName == EventName.ChannelUnbridge).Subscribe(x
-                                                                                                                                     =>
-                {
-                    Log.Debug(() => "Channel {0} B-Leg {1} hungup {2}".Fmt(this.UUID, this.bridgedLegUUID, x.GetVariable("bridge_hangup_cause")));
-                    Log.Trace(() => "Channel {0} Unbridged from {1}".Fmt(this.UUID, this.bridgedLegUUID));
-                    this.bridgedLegUUID = null;
-                }));
+            this.disposables.Add(
+                eventSocket.Events.Where(x => x.UUID == this.UUID && x.EventName == EventName.ChannelUnbridge).Subscribe(
+                    x =>
+                        {
+                            Log.Debug(
+                                () =>
+                                "Channel {0} B-Leg {1} hungup {2}".Fmt(this.UUID, this.bridgedLegUUID, x.GetVariable("bridge_hangup_cause")));
+                            Log.Trace(() => "Channel {0} Unbridged from {1}".Fmt(this.UUID, this.bridgedLegUUID));
+                            this.bridgedLegUUID = null;
+                        }));
 
-            this.disposables.Add(eventSocket.Events.Where(x => x.UUID == this.UUID && x.EventName == EventName.ChannelBridge).Subscribe(x
-                                                                                                                                    =>
-                {
-                    Console.WriteLine(x.EventName);
-                    Log.Trace(() => "Channel {0} Bridged to {1}".Fmt(this.UUID, x.GetHeader(HeaderNames.OtherLegUniqueId)));
-                    this.bridgedLegUUID = x.GetHeader(HeaderNames.OtherLegUniqueId);
-            }));
+            this.disposables.Add(
+                eventSocket.Events.Where(x => x.UUID == this.UUID && x.EventName == EventName.ChannelBridge).Subscribe(
+                    x =>
+                        {
+                            Console.WriteLine(x.EventName);
+                            Log.Trace(() => "Channel {0} Bridged to {1}".Fmt(this.UUID, x.GetHeader(HeaderNames.OtherLegUniqueId)));
+                            this.bridgedLegUUID = x.GetHeader(HeaderNames.OtherLegUniqueId);
+                        }));
 
             this.disposables.Add(
                 eventSocket.Events.Where(x => x.UUID == this.UUID).Subscribe(
@@ -136,7 +134,7 @@ namespace NEventSocket.Channels
             {
                 return
                     this.eventSocket.Events.Where(x => x.UUID == this.UUID && x.EventName == EventName.Dtmf)
-                               .Select(x => x.Headers[HeaderNames.DtmfDigit]);
+                        .Select(x => x.Headers[HeaderNames.DtmfDigit]);
             }
         }
 
@@ -145,21 +143,21 @@ namespace NEventSocket.Channels
             get
             {
                 return
-                    this.eventSocket.Events
-                    .Where(x => 
-                            x.UUID == this.UUID &&
-                            x.EventName == EventName.Custom
-                            && x.GetHeader(HeaderNames.EventSubclass) == FeatureCodeEvent)
-                    .Do(x => Log.Trace(() => "Channel {0} Detected Feature Code {1}".Fmt(this.UUID, x.GetVariable("last_matching_digits"))))
-                    .Select(x => x.GetVariable("last_matching_digits"));
+                    this.eventSocket.Events.Where(
+                        x =>
+                        x.UUID == this.UUID && x.EventName == EventName.Custom && x.GetHeader(HeaderNames.EventSubclass) == FeatureCodeEvent)
+                        .Do(
+                            x =>
+                            Log.Trace(() => "Channel {0} Detected Feature Code {1}".Fmt(this.UUID, x.GetVariable("last_matching_digits"))))
+                        .Select(x => x.GetVariable("last_matching_digits"));
             }
-        } 
+        }
 
         public bool IsBridged
         {
             get
             {
-                return this.bridgedLegUUID != null; //this.lastEvent.Headers[HeaderNames.OtherLegUniqueId] != null;
+                return this.bridgedLegUUID != null; // this.lastEvent.Headers[HeaderNames.OtherLegUniqueId] != null;
             }
         }
 
@@ -173,9 +171,15 @@ namespace NEventSocket.Channels
 
         public async Task Bridge(IChannel other)
         {
-            if (this.IsBridged) throw new InvalidOperationException("Channel {0} is already bridged to {1}".Fmt(this.UUID, this.bridgedLegUUID));
+            if (this.IsBridged)
+            {
+                throw new InvalidOperationException("Channel {0} is already bridged to {1}".Fmt(this.UUID, this.bridgedLegUUID));
+            }
 
-            if (this.AnswerState != AnswerState.Answered && other.AnswerState != AnswerState.Answered) throw new InvalidOperationException("At least one channel must be Answered to bridge them");
+            if (this.AnswerState != AnswerState.Answered && other.AnswerState != AnswerState.Answered)
+            {
+                throw new InvalidOperationException("At least one channel must be Answered to bridge them");
+            }
 
             var result = await this.eventSocket.SendApi("uuid_bridge {0} {1}".Fmt(this.UUID, other.UUID));
             if (result.Success)
@@ -183,31 +187,33 @@ namespace NEventSocket.Channels
                 this.bridgedLegUUID = other.UUID;
 
                 this.eventSocket.Events.Where(x => x.UUID == this.bridgedLegUUID && x.EventName == EventName.ChannelHangup)
-                           .Take(1)
-                           .Subscribe(
-                               x =>
-                                   {
-                                       Log.Debug(() => "Channel {0} B-Leg {1} hungup {2}".Fmt(this.UUID, this.bridgedLegUUID, x.HangupCause));
-                                       this.bridgedLegUUID = null;
-                                   });
+                    .Take(1)
+                    .Subscribe(
+                        x =>
+                            {
+                                Log.Debug(() => "Channel {0} B-Leg {1} hungup {2}".Fmt(this.UUID, this.bridgedLegUUID, x.HangupCause));
+                                this.bridgedLegUUID = null;
+                            });
             }
         }
 
-        public async Task<BridgeResult> Bridge(
-            string destination, BridgeOptions options, Action<EventMessage> onProgress = null)
+        public async Task<BridgeResult> Bridge(string destination, BridgeOptions options, Action<EventMessage> onProgress = null)
         {
             Log.Debug(() => "Channel {0} is attempting a bridge to {1}".Fmt(this.UUID, destination));
-            if (string.IsNullOrEmpty(options.UUID)) options.UUID = Guid.NewGuid().ToString();
+            if (string.IsNullOrEmpty(options.UUID))
+            {
+                options.UUID = Guid.NewGuid().ToString();
+            }
 
             var subscriptions = new CompositeDisposable();
 
             if (onProgress != null)
             {
-                //only works on inbound sockets
+                // only works on inbound sockets
                 subscriptions.Add(
                     this.eventSocket.Events.Where(x => x.UUID == options.UUID && x.EventName == EventName.ChannelProgress)
-                               .Take(1)
-                               .Subscribe(onProgress));
+                        .Take(1)
+                        .Subscribe(onProgress));
             }
 
             var result = await this.eventSocket.Bridge(this.UUID, destination, options);
@@ -216,24 +222,23 @@ namespace NEventSocket.Channels
 
             Log.Debug(() => "Channel {0} bridge complete {1} {2}".Fmt(this.UUID, result.Success, result.ResponseText));
 
-            //if (result.Success)
-            //{
-            //    this.bridgedLegUUID = result.BridgeUUID;
+            // if (result.Success)
+            // {
+            // this.bridgedLegUUID = result.BridgeUUID;
 
-            //    eventSocket.Events.Where(x => x.UUID == this.UUID && x.EventName == EventName.ChannelUnbridge)
-            //               .Take(1)
-            //               .Subscribe(
-            //                   x =>
-            //                       {
-            //                           Log.DebugFormat(
-            //                               "Channel {0} B-Leg {1} hungup {2}",
-            //                               UUID,
-            //                               bridgedLegUUID,
-            //                               x.GetVariable("bridge_hangup_cause"));
-            //                           //this.bridgedLegUUID = null;
-            //                       });
-            //}
-
+            // eventSocket.Events.Where(x => x.UUID == this.UUID && x.EventName == EventName.ChannelUnbridge)
+            // .Take(1)
+            // .Subscribe(
+            // x =>
+            // {
+            // Log.DebugFormat(
+            // "Channel {0} B-Leg {1} hungup {2}",
+            // UUID,
+            // bridgedLegUUID,
+            // x.GetVariable("bridge_hangup_cause"));
+            // //this.bridgedLegUUID = null;
+            // });
+            // }
             return result;
         }
 
@@ -279,7 +284,10 @@ namespace NEventSocket.Channels
 
         public async Task PlayFile(string file, Leg leg = Leg.ALeg, string terminator = null)
         {
-            if (terminator != null) await this.SetChannelVariable("playback_terminators", terminator);
+            if (terminator != null)
+            {
+                await this.SetChannelVariable("playback_terminators", terminator);
+            }
 
             if (!this.IsBridged)
             {
@@ -287,13 +295,14 @@ namespace NEventSocket.Channels
                 return;
             }
 
-            //uuid displace only works on one leg
+            // uuid displace only works on one leg
             switch (leg)
             {
                 case Leg.Both:
-                    await Task.WhenAll(
-                        this.eventSocket.ExecuteApplication(this.UUID, "displace_session", "{0} m{1}".Fmt(file, "w")),
-                        this.eventSocket.ExecuteApplication(this.UUID, "displace_session", "{0} m{1}".Fmt(file, "r")));
+                    await
+                        Task.WhenAll(
+                            this.eventSocket.ExecuteApplication(this.UUID, "displace_session", "{0} m{1}".Fmt(file, "w")), 
+                            this.eventSocket.ExecuteApplication(this.UUID, "displace_session", "{0} m{1}".Fmt(file, "r")));
                     break;
                 case Leg.ALeg:
                     await this.eventSocket.ExecuteApplication(this.UUID, "displace_session", "{0} m{1}".Fmt(file, "w"));
@@ -324,7 +333,7 @@ namespace NEventSocket.Channels
                 Log.Warn(
                     () =>
                     "Channel {0} received a request to record to file {1} while currently recording to file {2}. Channel will stop recording and start recording to the new file."
-                    .Fmt(this.UUID, file, this.recordingPath));
+                        .Fmt(this.UUID, file, this.recordingPath));
                 await this.StopRecording();
             }
 
@@ -410,7 +419,7 @@ namespace NEventSocket.Channels
 
                 if (this.eventSocket is OutboundSocket)
                 {
-                    //todo: should we close the socket associated with the channel here?
+                    // todo: should we close the socket associated with the channel here?
                     this.eventSocket.Dispose();
                 }
 

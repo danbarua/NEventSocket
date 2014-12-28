@@ -3,7 +3,6 @@
 //   (C) Dan Barua and contributors. Licensed under the Mozilla Public License.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
-
 namespace NEventSocket.FreeSwitch
 {
     using System.Diagnostics;
@@ -19,7 +18,7 @@ namespace NEventSocket.FreeSwitch
 
         public static string Multiple(params string[] endpoints)
         {
-            //https://wiki.freeswitch.org/wiki/Freeswitch_IVR_Originate#Enterprise_originate
+            // https://wiki.freeswitch.org/wiki/Freeswitch_IVR_Originate#Enterprise_originate
             return endpoints.Aggregate(string.Empty, (a, s) => a += s + ":_:", s => s);
         }
 
