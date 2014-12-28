@@ -11,3 +11,4 @@ packages/*
 *.suo
 **/obj/**
 *.suo
+build/*
