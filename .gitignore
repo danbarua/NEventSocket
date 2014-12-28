@@ -12,3 +12,4 @@ packages/*
 **/obj/**
 *.suo
 build/*
+Gemfile.lock
