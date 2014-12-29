@@ -1,13 +1,14 @@
 # Mono/.NET are not officially supported. The following is a workaround.
 language: c
 
-# Make sure build dependencies are installed.
+before_install:
+  - sudo bash -c "echo deb http://badgerports.org precise main >> /etc/apt/sources.list"
+  - sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 0E1FAD0C
+  - sudo apt-get update -qq
+  - sudo apt-get install -qq mono-devel
+
 install:
- - sudo add-apt-repository -y ppa:directhex/monoxide
- - sudo apt-get update -qq
- - sudo apt-get install -qq mono-devel mono-gmcs cli-common-dev
- - mozroots --import --sync
-cache: apt
+  - mozroots --import --sync --quiet
 
 # Run the build script
 script:
