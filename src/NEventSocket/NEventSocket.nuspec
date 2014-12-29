@@ -2,23 +2,22 @@
 <package>
   <metadata>
     <id>NEventSocket</id>
-    <version>1.0.0</version>
+    <version>$version$</version>
     <title>NEventSocket</title>
     <authors>Dan Barua</authors>
     <owners>Dan Barua</owners>
     <licenseUrl>https://github.com/danbarua/NEventSocket/blob/master/LICENSE</licenseUrl>
     <projectUrl>https://github.com/danbarua/NEventSocket}</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>An EventSocket library for FreeSwitch in idiomatic .Net</description>
+    <description>An async reactive EventSocket driver for FreeSwitch</description>
     <releaseNotes />
-    <copyright>Copyright (C) Business Systems (UK) Ltd 2014</copyright>
-    <dependencies>
-      <dependency id='Rx-Core' version='2.2.5' />
-      <dependency id='Rx-Interfaces' version='2.2.5' />
-      <dependency id='Rx-Linq' version='2.2.5' />
-      <dependency id='Rx-Main' version='2.2.5' />
-      <dependency id='Rx-PlatformServices' version='2.2.5' />
-    </dependencies>
+    <dependencies />
+    <copyright>Copyright (C) Dan Barua 2014</copyright>
     <tags>FreeSwitch EventSocket ESL Reactive</tags>
   </metadata>
+    <files>
+        <file src="..\..\build\merged\NEventSocket.dll" target="lib\net45" />
+        <file src="..\..\build\merged\NEventSocket.pdb" target="lib\net45" />
+        <file src="bin\Release\NEventSocket.xml" target="lib\net45" />
+    </files>
 </package>
