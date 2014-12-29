@@ -7,7 +7,7 @@
     <authors>Dan Barua</authors>
     <owners>Dan Barua</owners>
     <licenseUrl>https://github.com/danbarua/NEventSocket/blob/master/LICENSE</licenseUrl>
-    <projectUrl>https://github.com/danbarua/NEventSocket}</projectUrl>
+    <projectUrl>https://github.com/danbarua/NEventSocket</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>An async reactive EventSocket driver for FreeSwitch</description>
     <releaseNotes />
