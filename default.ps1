@@ -59,7 +59,15 @@ task ILMerge -depends Compile {
 task CreateNuGetPackages -depends ILMerge {
   $versionString = Get-Version $assemblyInfoFilePath
   $version = New-Object Version $versionString
-  $packageVersion = $version.Major.ToString() + "." + $version.Minor.ToString() + "." + $version.Build.ToString() + "-build" + $buildNumber.ToString().PadLeft(5,'0')
+
+  if ((Test-Path ENV:\APPVEYOR_REPO_BRANCH) -and (ENV:\APPVEYOR_REPO_BRANCH -eq "master")){
+    $packageVersion = $version.Major.ToString() + "." + $version.Minor.ToString() + "." + $version.Build.ToString()
+  }
+  else{
+    $packageVersion = $version.Major.ToString() + "." + $version.Minor.ToString() + "." + $version.Build.ToString() + "-build" + $buildNumber.ToString().PadLeft(5,'0')
+  }
+  
+  
   $packageVersion
   gci $srcDir -Recurse -Include *.nuspec | % {
     exec { .$rootDir\.nuget\nuget.exe pack $_ -o $buildOutputDir -version $packageVersion }
