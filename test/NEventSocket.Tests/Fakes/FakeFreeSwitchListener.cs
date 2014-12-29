@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="FakeFreeSwitchListener.cs" company="Dan Barua">
-//   Copyright © Business Systems (UK) Ltd and contributors. All rights reserved.
+//   (C) Dan Barua and contributors. Licensed under the Mozilla Public License.
 // </copyright>
 // <summary>
 //   Defines the FakeFreeSwitchListener type.

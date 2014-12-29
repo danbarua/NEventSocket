@@ -93,7 +93,7 @@ namespace NEventSocket.Sockets
                                 Log.Debug(
                                     () => "ApiResponse received [{0}] for [{1}]".Fmt(result.BodyText.Replace("\n", string.Empty), command)), 
                                 ex => Log.ErrorException("Error waiting for Api Response to [{0}].".Fmt(command), ex))
-                            .Subscribe(x => tcs.TrySetResult(x));
+                            .Subscribe(x => tcs.TrySetResult(x), ex => tcs.TrySetException(ex));
 
                 SendAsync(Encoding.ASCII.GetBytes("api " + command + "\n\n"), cts.Token)
                     .ContinueOnFaultedOrCancelled(tcs, subscription.Dispose);
@@ -119,7 +119,7 @@ namespace NEventSocket.Sockets
                                 Log.Debug(
                                     () => "CommandReply received [{0}] for [{1}]".Fmt(result.ReplyText.Replace("\n", string.Empty), command)), 
                                 ex => Log.ErrorException("Error waiting for Command Reply to [{0}].".Fmt(command), ex))
-                            .Subscribe(x => tcs.TrySetResult(x));
+                            .Subscribe(x => tcs.TrySetResult(x), ex => tcs.TrySetException(ex));
 
                 SendAsync(Encoding.ASCII.GetBytes(command + "\n\n"), cts.Token).ContinueOnFaultedOrCancelled(tcs, subscription.Dispose);
 

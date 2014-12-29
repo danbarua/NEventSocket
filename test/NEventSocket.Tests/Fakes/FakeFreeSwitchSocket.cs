@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="FakeFreeSwitchSocket.cs" company="Dan Barua">
-//   Copyright © Business Systems (UK) Ltd and contributors. All rights reserved.
+//   (C) Dan Barua and contributors. Licensed under the Mozilla Public License.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
