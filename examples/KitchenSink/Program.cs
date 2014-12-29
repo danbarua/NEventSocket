@@ -4,6 +4,8 @@
     using System.Reactive.Linq;
     using System.Threading.Tasks;
 
+    using ColoredConsole;
+
     using NEventSocket.Channels;
     using NEventSocket.FreeSwitch;
     using NEventSocket.Logging;
@@ -17,7 +19,7 @@
             // set logger factory
             LogProvider.SetCurrentLogProvider(new ColouredConsoleLogProvider());
 
-            Console.WriteLine("Starting...");
+            ColorConsole.WriteLine("Starting...".Green());
 
             ApiTest();
 
@@ -26,23 +28,22 @@
             ChannelTest();
 
             TaskScheduler.UnobservedTaskException += (o, e) => Console.WriteLine("unobserved " + e.Exception);
-            
-            Console.WriteLine("Press [Enter] to exit.");
+
+            ColorConsole.WriteLine("Press [Enter] to exit.".Green());
             Console.ReadLine();
         }
 
-        private static async Task ApiTest()
+        private static async void ApiTest()
         {
             using (var client = await InboundSocket.Connect("localhost", 8021, "ClueCon"))
             {
-                Console.WriteLine("got here");
-                Console.WriteLine((await client.SendApi("status")).BodyText);
-                Console.WriteLine((await client.SendApi("blah")).BodyText);
-                Console.WriteLine((await client.SendApi("status")).BodyText);
+                ColorConsole.WriteLine((await client.SendApi("status")).BodyText.DarkBlue());
+                ColorConsole.WriteLine((await client.SendApi("blah")).BodyText.DarkBlue());
+                ColorConsole.WriteLine((await client.SendApi("status")).BodyText.DarkBlue());
             }
         }
 
-        private static async Task CallTracking()
+        private static async void CallTracking()
         {
             var client = await InboundSocket.Connect("10.10.10.36", 8021, "ClueCon");
 
@@ -52,22 +53,22 @@
                   .Subscribe(x =>
                       {
                           uuid = x.UUID;
-                          Console.WriteLine("Channel Answer Event {0}", x.UUID);
+                          ColorConsole.WriteLine("Channel Answer Event ".Blue(), x.UUID);
                       });
 
             client.Events.Where(x => x.EventName == EventName.ChannelHangup)
                   .Subscribe(x =>
                       {
                           uuid = null;
-                          Console.WriteLine("Channel Hangup Event {0}", x.UUID);
+                          ColorConsole.WriteLine("Channel Hangup Event ".Blue(), x.UUID);
                       });
 
-            Console.WriteLine("Press enter to hang up the current call");
+            ColorConsole.WriteLine("Press enter to hang up the current call".Green());
             Console.ReadLine();
 
             if (uuid != null)
             {
-                Console.WriteLine("Hanging up {0}", uuid);
+                ColorConsole.WriteLine("Hanging up ".Green(), uuid);
                 await client.Play(uuid, "ivr/8000/ivr-call_rejected.wav");
                 await client.Hangup(uuid, HangupCause.CallRejected);
             }
@@ -94,15 +95,12 @@
 
             if (!originate.Success)
             {
-                using (Colour.Use(ConsoleColor.DarkRed))
-                {
-                    Console.WriteLine("Originate Failed {0}", originate.HangupCause);
-                    client.Exit();
-                }
+                ColorConsole.WriteLine("Originate Failed ".Blue(), originate.HangupCause.ToString());
+                client.Exit();
             }
             else
             {
-                Console.WriteLine("{0} {1} {2}", originate.ChannelData.EventName, originate.ChannelData.AnswerState, originate.ChannelData.ChannelState);
+                ColorConsole.WriteLine("{0} {1} {2}".Fmt(originate.ChannelData.EventName, originate.ChannelData.AnswerState, originate.ChannelData.ChannelState).Blue());
                 var uuid = originate.ChannelData.UUID;
                 await client.SetChannelVariable(uuid, "dtmf_verbose", "true");
                 await client.StartDtmf(uuid);
@@ -112,27 +110,14 @@
                     EventName.ChannelHangup,
                     e =>
                         {
-                              using (Colour.Use(ConsoleColor.Red))
-                              {
-                                  Console.WriteLine("Hangup Detected on A-Leg {0} {1}",
-                                                    e.UUID,
-                                                    e.HangupCause);
-                              }
-
-
+                              ColorConsole.WriteLine("Hangup Detected on A-Leg ".Red(), e.UUID, e.HangupCause.ToString());
                               client.Exit();
                           });
 
                 client.On(
                     uuid,
                     EventName.Dtmf,
-                    e =>
-                        {
-                            using (Colour.Use(ConsoleColor.DarkGreen))
-                            {
-                                Console.WriteLine(e.Headers[HeaderNames.DtmfDigit]);
-                            } 
-                        });
+                    e => ColorConsole.WriteLine("DTMF Detected ".Blue(), e.Headers[HeaderNames.DtmfDigit]));
 
                 var playGetDigitsResult = await
                      client.PlayGetDigits(
@@ -150,8 +135,7 @@
                                  DigitTimeoutMs = 2000,
                              });
 
-                using (Colour.Use(ConsoleColor.Green))
-                    Console.WriteLine("Got digits: {0}", playGetDigitsResult.Digits);
+                ColorConsole.WriteLine("Got digits: ".Blue(), playGetDigitsResult.Digits);
 
                 if (playGetDigitsResult.Success)
                 {
@@ -173,10 +157,9 @@
             }
         }
 
-        private static async Task DtmfTest()
+        private static async void DtmfTest()
         {
             var client = await InboundSocket.Connect("10.10.10.36", 8021, "ClueCon");
-            Console.WriteLine("Authenticated!");
 
             var originate =
                 await
@@ -192,11 +175,8 @@
 
             if (!originate.Success)
             {
-                using (Colour.Use(ConsoleColor.DarkRed))
-                {
-                    Console.WriteLine("Originate Failed {0}", originate.HangupCause);
-                    client.Exit();
-                }
+                ColorConsole.WriteLine("Originate Failed ".Red(), originate.HangupCause.ToString());
+                client.Exit();
             }
             else
             {
@@ -213,12 +193,9 @@
                 client.OnHangup(uuid,
                           e =>
                           {
-                              using (Colour.Use(ConsoleColor.Red))
-                              {
-                                  Console.WriteLine("Hangup Detected on A-Leg {0} {1}",
+                              ColorConsole.WriteLine("Hangup Detected on A-Leg {0} {1}".Red(),
                                                     e.Headers[HeaderNames.CallerUniqueId],
                                                     e.Headers[HeaderNames.HangupCause]);
-                              }
 
                               client.Exit();
                           });
@@ -228,7 +205,7 @@
             }
         }
 
-        private static async Task InboundSocketTest()
+        private static async void InboundSocketTest()
         {
             var client = await InboundSocket.Connect();
             Console.WriteLine("Authenticated!");
@@ -249,44 +226,38 @@
 
             if (!originate.Success)
             {
-                using (Colour.Use(ConsoleColor.DarkRed))
-                {
-                    Console.WriteLine("Originate Failed {0}", originate.HangupCause);
-                    client.Exit();
-                }
+                ColorConsole.WriteLine("Originate Failed ".Red(), originate.HangupCause.ToString());
+                client.Exit();
             }
             else
             {
                 var uuid = originate.ChannelData.Headers[HeaderNames.CallerUniqueId];
 
-                Console.WriteLine("Originate success {0}", originate.ChannelData.Headers[HeaderNames.AnswerState]);
+                ColorConsole.WriteLine("Originate success ".Green(), originate.ChannelData.Headers[HeaderNames.AnswerState]);
 
                 var recordingPath = "/usr/local/freeswitch/recordings/{0}.wav".Fmt(uuid); //"c:/temp/recording_{0}.wav".Fmt(uuid);
 
                 client.OnHangup(uuid,
                           e =>
                               {
-                                  using (Colour.Use(ConsoleColor.Red))
-                                  {
-                                      Console.WriteLine("Hangup Detected on A-Leg {0} {1}",
+                                  ColorConsole.WriteLine("Hangup Detected on A-Leg ".Red(),
                                                         e.Headers[HeaderNames.CallerUniqueId],
+                                                        " ",
                                                         e.Headers[HeaderNames.HangupCause]);
-                                  }
 
                                   client.Exit();
                               });
 
                 var playResult = await client.Play(uuid, "ivr/8000/ivr-call_being_transferred.wav");
-                if (playResult.Success) Console.WriteLine("Played ok!");
 
                 var bridgeUUID = Guid.NewGuid().ToString();
 
-                var ringingHandler = client.Events.Where(x => x.UUID == bridgeUUID && x.EventName == EventName.ChannelProgress)
-                      .Take(1)
-                      .Subscribe(
-                          e =>
-                              {
-                                  using (Colour.Use(ConsoleColor.Blue)) Console.WriteLine("Progress {0} on {1}", e.AnswerState, e.UUID); });
+                var ringingHandler =
+                    client.Events
+                    .Where(x => x.UUID == bridgeUUID && x.EventName == EventName.ChannelProgress)
+                        .Take(1)
+                        .Subscribe(
+                            e => ColorConsole.WriteLine("Progress {0} on {1}".Fmt(e.AnswerState, e.UUID).Blue()));
 
                 var bridge =
                     await
@@ -312,34 +283,26 @@
                 {
                     ringingHandler.Dispose();
 
-                    using (Colour.Use(ConsoleColor.Red))
-                    {
-                        Console.WriteLine("Bridge failed {0}",  bridge.ResponseText);
-                    }
+                    ColorConsole.WriteLine("Bridge failed ".Red(), bridge.ResponseText);
+                    
 
                     await client.Play(uuid, "ivr/8000/ivr-call_rejected.wav");
                     await client.Hangup(uuid, HangupCause.CallRejected);
                 }
                 else
                 {
-                    using (Colour.Use(ConsoleColor.Green))
-                    {
-                        Console.WriteLine("Bridge succeeded from {0} to {1} - {2}", bridge.ChannelData.UUID, bridge.BridgeUUID, bridge.ResponseText);
-                    }
-
+                    ColorConsole.WriteLine("Bridge succeeded from {0} to {1} - {2}".Fmt(bridge.ChannelData.UUID, bridge.BridgeUUID, bridge.ResponseText).Green());
+                    
                     await client.StartDtmf(uuid);
 
                     //when b-leg hangs up, play a notification to a-leg
                     client.OnHangup(bridge.BridgeUUID,
                                       async e =>
                                           {
-                                              using (Colour.Use(ConsoleColor.Red))
-                                              {
-                                                  Console.WriteLine(
-                                                      "Hangup Detected on B-Leg {0} {1}", 
-                                                      e.Headers[HeaderNames.CallerUniqueId], 
-                                                      e.Headers[HeaderNames.HangupCause]);
-                                              }
+                                              ColorConsole.WriteLine("Hangup Detected on B-Leg ".Red(),
+                                                        e.Headers[HeaderNames.CallerUniqueId],
+                                                        " ",
+                                                        e.Headers[HeaderNames.HangupCause]);
 
                                               await client.Play(uuid, "ivr/8000/ivr-you_may_exit_by_hanging_up.wav");
                                               await client.Hangup(uuid, HangupCause.NormalClearing);
@@ -350,7 +313,7 @@
                     await client.SetChannelVariable(uuid, "RECORD_STEREO", "true");
 
                     var recordingResult = await client.SendApi("uuid_record {0} start {1}".Fmt(uuid, recordingPath));
-                    Console.WriteLine("Recording... " + recordingResult.Success);
+                    ColorConsole.WriteLine(("Recording... " + recordingResult.Success).Green());
 
                     if (recordingResult.Success)
                     {
@@ -361,7 +324,7 @@
                                     switch (dtmf)
                                     {
                                         case "1":
-                                            Console.WriteLine("Mask recording");
+                                            ColorConsole.WriteLine("Mask recording".Green());
                                             await client.SendApi("uuid_record {0} mask {1}".Fmt(uuid, recordingPath));
                                             await
                                                 client.ExecuteApplication(
@@ -370,7 +333,7 @@
                                                     applicationArguments: "{0} m".Fmt("ivr/8000/ivr-recording_paused.wav"));
                                             break;
                                         case "2":
-                                            Console.WriteLine("Unmask recording");
+                                            ColorConsole.WriteLine("Unmask recording".Green());
                                             await client.SendApi("uuid_record {0} unmask {1}".Fmt(uuid, recordingPath));
                                             await
                                                 client.ExecuteApplication(
@@ -379,7 +342,7 @@
                                                     applicationArguments: "{0} m".Fmt("ivr/8000/ivr-begin_recording.wav"));
                                             break;
                                         case "3":
-                                            Console.WriteLine("Stop recording");
+                                            ColorConsole.WriteLine("Stop recording".Green());
                                             await client.SendApi("uuid_record {0} stop {1}".Fmt(uuid, recordingPath));
                                             await
                                                 client.ExecuteApplication(
@@ -407,19 +370,15 @@
                         connection.Events.Where(x => x.EventName == EventName.ChannelHangup).Take(1).Subscribe(
                             e =>
                                 {
-                                    using (Colour.Use(ConsoleColor.Red))
-                                    {
-                                        Console.WriteLine(
-                                            "HANGUP DETECTED {0} {1}", 
-                                            e.Headers[HeaderNames.CallerUniqueId], 
-                                            e.Headers[HeaderNames.HangupCause]);
-                                    }
+                                    ColorConsole.WriteLine("Hangup Detected on A-Leg ".Red(),
+                                                        e.Headers[HeaderNames.CallerUniqueId],
+                                                        " ",
+                                                        e.Headers[HeaderNames.HangupCause]);
 
                                     connection.Exit();
                                 });
 
                         var uuid = connection.ChannelData.Headers[HeaderNames.UniqueId];
-                        Console.WriteLine(uuid);
 
                         await
                             connection.SubscribeEvents(
@@ -433,9 +392,7 @@
                             connection.Play(
                                 uuid, 
                                 "$${base_dir}/sounds/en/us/callie/misc/8000/misc-freeswitch_is_state_of_the_art.wav");
-                        Console.WriteLine("Playback : {0}", result.Success);
-
-
+                        
                         //await connection.ExecuteAppAsync(uuid, "conference", "test+1234");
                         //if (result.ChannelData.AnswerState != AnswerState.Hangup) await connection.Hangup(uuid, "NORMAL_CLEARING");
                     });
@@ -457,13 +414,10 @@
                     var aLeg = new Channel(connection);
                     aLeg.HangupCallBack = (e) =>
                         {
-                            using (Colour.Use(ConsoleColor.Red))
-                            {
-                                Console.WriteLine(
-                                    "HANGUP DETECTED {0} {1}",
-                                    e.Headers[HeaderNames.CallerUniqueId],
-                                    e.Headers[HeaderNames.HangupCause]);
-                            }
+                            ColorConsole.WriteLine("Hangup Detected on A-Leg ".Red(),
+                                                        e.Headers[HeaderNames.CallerUniqueId],
+                                                        " ",
+                                                        e.Headers[HeaderNames.HangupCause]);
 
                             aLeg.Dispose();
                         };
@@ -503,17 +457,14 @@
 
                     if (!aLeg.IsBridged)
                     {
-                        using (Colour.Use(ConsoleColor.DarkRed))
-                        {
-                            Console.WriteLine("Originate Failed - {0}", aLeg["bridge_hangup_cause"]);
-                        }
-
+                        ColorConsole.WriteLine("Originate Failed - ".Red(), aLeg["bridge_hangup_cause"]);
+                        
                         await aLeg.PlayFile("ivr/8000/ivr-call_rejected.wav");
                         await aLeg.Hangup(HangupCause.NormalTemporaryFailure);
                     }
                     else
                     {
-                        Console.WriteLine("BRIDGED!");
+                        ColorConsole.WriteLine("BRIDGED success".Green());
 
                         await aLeg.SetChannelVariable("RECORD_STEREO", "true");
                         var recordingPath = "/usr/local/freeswitch/recordings/{0}.wav".Fmt(aLeg.UUID);
@@ -521,70 +472,67 @@
                         aLeg.FeatureCodes.Subscribe(
                             async x =>
                                 {
-                                    using (Colour.Use(ConsoleColor.Yellow))
+                                    ColorConsole.WriteLine("Detected Feature Code: ".DarkYellow(), x);
+                                    switch (x)
                                     {
-                                        Console.WriteLine(x);
-                                        switch (x)
-                                        {
-                                            case "#4":
-                                                Console.WriteLine("Mask recording");
-                                                await aLeg.MaskRecording();
-                                                await
-                                                    Task.WhenAll(
-                                                        aLeg.PlayFile(
-                                                            "ivr/8000/ivr-recording_paused.wav", Leg.BLeg));
-                                                break;
-                                            case "#5":
-                                                Console.WriteLine("Unmask recording");
-                                                await aLeg.UnmaskRecording();
-                                                await
-                                                    aLeg.PlayFile("ivr/8000/ivr-begin_recording.wav", Leg.BLeg);
-                                                break;
-                                            case "#8":
-                                                Console.WriteLine("Stop recording");
-                                                await aLeg.StopRecording();
-                                                await
+                                        case "#4":
+                                            ColorConsole.WriteLine("Mask recording".Yellow());
+                                            await aLeg.MaskRecording();
+                                            await
+                                                Task.WhenAll(
                                                     aLeg.PlayFile(
-                                                        "ivr/8000/ivr-recording_stopped.wav", Leg.Both);
-                                                break;
-                                            case "#7":
-                                                Console.WriteLine("Start recording");
-                                                await aLeg.StartRecording(recordingPath);
-                                                await
-                                                    aLeg.PlayFile("ivr/8000/ivr-begin_recording.wav", Leg.Both);
-                                                break;
-                                            case "#9":
-                                                Console.WriteLine("Attended x-fer");
+                                                        "ivr/8000/ivr-recording_paused.wav", Leg.BLeg));
+                                            break;
+                                        case "#5":
+                                            ColorConsole.WriteLine("Unmask recording".Yellow());
+                                            await aLeg.UnmaskRecording();
+                                            await
+                                                aLeg.PlayFile("ivr/8000/ivr-begin_recording.wav", Leg.BLeg);
+                                            break;
+                                        case "#8":
+                                            ColorConsole.WriteLine("Stop recording".Yellow());
+                                            await aLeg.StopRecording();
+                                            await
+                                                aLeg.PlayFile(
+                                                    "ivr/8000/ivr-recording_stopped.wav", Leg.Both);
+                                            break;
+                                        case "#7":
+                                            ColorConsole.WriteLine("Start recording".Yellow());
+                                            await aLeg.StartRecording(recordingPath);
+                                            await
+                                                aLeg.PlayFile("ivr/8000/ivr-begin_recording.wav", Leg.Both);
+                                            break;
+                                        case "#9":
+                                            ColorConsole.WriteLine("Attended x-fer".Yellow());
                                                 
-                                                var digits = await connection.Read(bridgeOptions.UUID, new ReadOptions { MinDigits = 3, MaxDigits = 4, Prompt = "tone_stream://%(10000,0,350,440)", TimeoutMs = 30000, Terminators = "#" });
-                                                if (digits.Result == ReadResult.Status.Success && digits.Digits.Length == 4)
-                                                {
-                                                    //todo: set channel variable "recording_follow_attxfer" <-- test it out!
-                                                    await
-                                                        connection.SetChannelVariable(
-                                                            bridgeOptions.UUID, "origination_cancel_key", "#");
-                                                    await
-                                                        connection.SetChannelVariable(
-                                                            bridgeOptions.UUID, "transfer_ringback", "tone_stream://%(400,200,400,450);%(400,2000,400,450);loops=-1");
-                                                    await
-                                                        connection.ExecuteApplication(
-                                                            bridgeOptions.UUID, "att_xfer", "user/{0}".Fmt(digits.Digits));
+                                            var digits = await connection.Read(bridgeOptions.UUID, new ReadOptions { MinDigits = 3, MaxDigits = 4, Prompt = "tone_stream://%(10000,0,350,440)", TimeoutMs = 30000, Terminators = "#" });
+                                            if (digits.Result == ReadResult.Status.Success && digits.Digits.Length == 4)
+                                            {
+                                                //todo: set channel variable "recording_follow_attxfer" <-- test it out!
+                                                await
+                                                    connection.SetChannelVariable(
+                                                        bridgeOptions.UUID, "origination_cancel_key", "#");
+                                                await
+                                                    connection.SetChannelVariable(
+                                                        bridgeOptions.UUID, "transfer_ringback", "tone_stream://%(400,200,400,450);%(400,2000,400,450);loops=-1");
+                                                await
+                                                    connection.ExecuteApplication(
+                                                        bridgeOptions.UUID, "att_xfer", "user/{0}".Fmt(digits.Digits));
 
 
-                                                    //todo: see variable "att_xfer_result" == "success" or "failure"
-                                                    //todo: see variable "xfer_uuids"
-                                                    //todo: inspect hangup state of the b-leg CHANNEL_EXECUTE_COMPLETE event
-                                                    //and determine if the b-leg hung up or is still connected
-                                                    //if b-leg hung up, is there any way to get a reference to the c-leg?
-                                                    //if so, we need to replace the bridgedUUID with the c-leg
-                                                    //we currently get a UNBRIDGE event from the b-leg but not
-                                                    //a  bridge event for the c-leg
-                                                    //also: what happens when we transfer to a 3-way? the 'bridge' completes
-                                                    //but A, B and C are bridged together somehow.
-                                                }
+                                                //todo: see variable "att_xfer_result" == "success" or "failure"
+                                                //todo: see variable "xfer_uuids"
+                                                //todo: inspect hangup state of the b-leg CHANNEL_EXECUTE_COMPLETE event
+                                                //and determine if the b-leg hung up or is still connected
+                                                //if b-leg hung up, is there any way to get a reference to the c-leg?
+                                                //if so, we need to replace the bridgedUUID with the c-leg
+                                                //we currently get a UNBRIDGE event from the b-leg but not
+                                                //a  bridge event for the c-leg
+                                                //also: what happens when we transfer to a 3-way? the 'bridge' completes
+                                                //but A, B and C are bridged together somehow.
+                                            }
 
-                                                break;
-                                        }
+                                            break;
                                     }
                                 });
                     }
