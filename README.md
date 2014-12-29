@@ -19,7 +19,7 @@ using NEventSocket.FreeSwitch;
 
 using (var socket = await InboundSocket.Connect("localhost", 8021, "ClueCon"))
 {
-  var apiResponse = await cliesocketnt.SendApi("status");
+  var apiResponse = await socket.SendApi("status");
   Console.WriteLine(apiResponse.BodyText);
 
   socket.Events.Where(x => x.EventName == EventName.ChannelAnswer)
