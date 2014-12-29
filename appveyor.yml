@@ -1,0 +1,7 @@
+build_script: build.bat
+
+test: off
+
+artifacts:
+  - path: 'build\**\*.nupkg'
+  - path: 'build\**\*.zip'
