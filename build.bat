@@ -1,0 +1,2 @@
+@echo off
+powershell.exe -NoProfile -ExecutionPolicy unrestricted -Command "& {.\build.ps1; if ($LastExitCode -and $LastExitCode -ne 0) {write-host "ERROR CODE: $LastExitCode" -fore RED; exit $lastexitcode} }"
