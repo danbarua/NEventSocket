@@ -10,6 +10,7 @@ properties {
   $assemblyInfoFilePath = "$rootDir\SharedAssemblyInfo.cs"
   $ilmerge_path = "$rootDir\packages\ILMerge.2.14.1208\tools\ilmerge.exe"
   $xunit_path = "$rootDir\packages\xunit.runners.1.9.2\tools\xunit.console.clr4.x86.exe"
+  $is_appveyor_build = Test-Path Env:\APPVEYOR_BUILD_NUMBER
 }
 
 task default -depends Clean, UpdateVersion, RunTests, CreateNuGetPackages
@@ -32,7 +33,13 @@ task Compile {
 
 task RunTests -depends Compile {
   New-Item "$reportsDir\xUnit\$project\" -Type Directory -ErrorAction SilentlyContinue
-  exec { .$xunit_path "$rootDir\test\NEventSocket.Tests\bin\Release\NEventSocket.Tests.dll" /html "$reportsDir\xUnit\$project\index.html" }
+
+  if ($is_appveyor_build){
+    exec { xunit.console.clr4 "$rootDir\test\NEventSocket.Tests\bin\Release\NEventSocket.Tests.dll" /appveyor }
+  }
+  else{
+    exec { .$xunit_path "$rootDir\test\NEventSocket.Tests\bin\Release\NEventSocket.Tests.dll" /html "$reportsDir\xUnit\$project\index.html"}
+  }
 }
 
 task ILMerge -depends Compile {
