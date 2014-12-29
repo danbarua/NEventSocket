@@ -28,7 +28,12 @@ task UpdateVersion {
 }
 
 task Compile {
-  exec { msbuild /nologo /verbosity:quiet $solutionFilePath /p:Configuration=Release /p:platform="Any CPU"}
+  if ($is_appveyor_build){
+    exec { msbuild /nologo /verbosity:quiet $solutionFilePath /p:Configuration=Release /p:platform="Any CPU"  /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"}
+  }
+  else{
+    exec { msbuild /nologo /verbosity:quiet $solutionFilePath /p:Configuration=Release /p:platform="Any CPU"}
+  }
 }
 
 task RunTests -depends Compile {
