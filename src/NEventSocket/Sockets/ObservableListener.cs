@@ -81,7 +81,7 @@ namespace NEventSocket.Sockets
                 throw new ObjectDisposedException(this.ToString());
             }
 
-            this.tcpListener = TcpListener.Create(this.port);
+            this.tcpListener = new TcpListener(IPAddress.Any, port);
 
             this.tcpListener.Start();
 
