@@ -11,12 +11,12 @@ namespace NEventSocket.FreeSwitch
     using NEventSocket.Util;
 
     /// <summary>
-    /// ApiResponses contain the response in the body text
+    /// A message representing the response to an Api call.
     /// </summary>
     [Serializable]
     public class ApiResponse : BasicMessage
     {
-        public ApiResponse(BasicMessage basicMessage)
+        internal ApiResponse(BasicMessage basicMessage)
         {
             if (basicMessage.ContentType != ContentTypes.ApiResponse)
             {
@@ -27,6 +27,9 @@ namespace NEventSocket.FreeSwitch
             this.BodyText = basicMessage.BodyText;
         }
 
+        /// <summary>
+        /// Gets a boolean indicating whether the operation succeeded or not.
+        /// </summary>
         public bool Success
         {
             get
@@ -35,6 +38,9 @@ namespace NEventSocket.FreeSwitch
             }
         }
 
+        /// <summary>
+        /// Gets the error message for a failed api call.
+        /// </summary>
         public string ErrorMessage
         {
             get

@@ -15,10 +15,20 @@ namespace NEventSocket
     using NEventSocket.Sockets;
     using NEventSocket.Util;
 
+    /// <summary>
+    /// Represents a connection made outbound from FreeSwitch to the controlling application.
+    /// </summary>
+    /// <remarks>
+    /// See https://wiki.freeswitch.org/wiki/Event_Socket_Outbound
+    /// </remarks>
     public class OutboundSocket : EventSocket
     {
         private static readonly ILog Log = LogProvider.GetCurrentClassLogger();
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="OutboundSocket"/> class.
+        /// </summary>
+        /// <param name="tcpClient">The TCP client to wrap.</param>
         protected internal OutboundSocket(TcpClient tcpClient) : base(tcpClient)
         {
         }
@@ -29,6 +39,9 @@ namespace NEventSocket
         /// </summary>
         public EventMessage ChannelData { get; private set; }
 
+        /// <summary>
+        /// Sends the connect command to FreeSwitch, populating the <see cref="ChannelData"/> property on reply.
+        /// </summary>
         public Task<EventMessage> Connect()
         {
             return this.SendCommand("connect").ToObservable().Select(reply => new EventMessage(reply)).Do(

@@ -38,7 +38,6 @@ namespace NEventSocket.Channels
         public Channel(OutboundSocket outboundSocket) : this(outboundSocket.ChannelData, outboundSocket)
         {
             outboundSocket.Linger().Wait();
-            outboundSocket.SubscribeEvents().Wait();
         }
 
         public Channel(EventMessage eventMessage, EventSocket eventSocket) : this(eventMessage.UUID, eventMessage, eventSocket)
@@ -47,6 +46,8 @@ namespace NEventSocket.Channels
 
         protected Channel(string uuid, EventMessage eventMessage, EventSocket eventSocket)
         {
+            eventSocket.SubscribeEvents().Wait();
+
             this.UUID = uuid;
             this.lastEvent = eventMessage;
             this.eventSocket = eventSocket;
@@ -301,8 +302,8 @@ namespace NEventSocket.Channels
                 case Leg.Both:
                     await
                         Task.WhenAll(
-                            this.eventSocket.ExecuteApplication(this.UUID, "displace_session", "{0} m{1}".Fmt(file, "w")), 
-                            this.eventSocket.ExecuteApplication(this.UUID, "displace_session", "{0} m{1}".Fmt(file, "r")));
+                            this.eventSocket.ExecuteApplication(this.UUID, "displace_session", "{0} m{1}".Fmt(file, "w"), false, true),
+                            this.eventSocket.ExecuteApplication(this.UUID, "displace_session", "{0} m{1}".Fmt(file, "r"), false, true));
                     break;
                 case Leg.ALeg:
                     await this.eventSocket.ExecuteApplication(this.UUID, "displace_session", "{0} m{1}".Fmt(file, "w"));

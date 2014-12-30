@@ -9,47 +9,48 @@ namespace NEventSocket.FreeSwitch
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using System.Text.RegularExpressions;
 
     using NEventSocket.Util;
     using NEventSocket.Util.ObjectPooling;
 
     /// <summary>
-    /// Represents a Message recieved through the Event Socket.
+    /// All messages received through the EventSocket start off as a Basic Message.
+    /// Some messages are embedded inside other messages, eg Events with bodies containing BgApi results.
     /// </summary>
     [Serializable]
     public class BasicMessage
     {
-        protected static readonly Regex ContentLengthPattern = new Regex(
-            "^\\s*Content-Length\\s*:\\s*(\\d+)\\s*$", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Multiline);
-
-        protected static readonly Regex ReplyTextPattern = new Regex(
-            "^\\s*Reply-Text\\s*:\\s*([\\S ]+)\\s*$", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Multiline);
-
-        protected static readonly Regex CommandErrorPattern = new Regex(
-            "^\\s*Content-Length\\s*:\\s*(\\d+)\\s*$.*^$^.*(-ERR)", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Multiline);
-
-        public BasicMessage(IDictionary<string, string> headers)
+        internal BasicMessage(IDictionary<string, string> headers)
         {
             Headers = new Dictionary<string, string>(headers, StringComparer.OrdinalIgnoreCase);
         }
 
-        public BasicMessage(IDictionary<string, string> headers, string body)
+        internal BasicMessage(IDictionary<string, string> headers, string body)
         {
             Headers = new Dictionary<string, string>(headers, StringComparer.OrdinalIgnoreCase);
             BodyText = body;
         }
 
-        /// <summary>Initializes a new instance of the <see cref="BasicMessage"/> class.</summary>
+        /// <summary>
+        /// Default constructor allows child classes to instantiate.
+        /// </summary>
         protected BasicMessage()
         {
         }
 
+        /// <summary>
+        /// Gets the Headers of the Message.
+        /// </summary>
         public IDictionary<string, string> Headers { get; protected set; }
 
+        /// <summary>
+        /// Gets any body text, if any, contained in the Message.
+        /// </summary>
         public string BodyText { get; protected set; }
 
-        /// <summary>Gets the Content Type header.</summary>
+        /// <summary>
+        /// Gets the Content Type header.
+        /// </summary>
         public string ContentType
         {
             get
@@ -58,7 +59,9 @@ namespace NEventSocket.FreeSwitch
             }
         }
 
-        /// <summary>Gets the content length.</summary>
+        /// <summary>
+        /// Gets the content length if specified by the Content-Length header.
+        /// </summary>
         public int ContentLength
         {
             get

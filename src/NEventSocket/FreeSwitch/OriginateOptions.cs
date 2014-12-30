@@ -15,12 +15,16 @@ namespace NEventSocket.FreeSwitch
     /// Represents options that may be used with the Originate api command
     /// </summary>
     /// <remarks>
+    /// See https://freeswitch.org/confluence/display/FREESWITCH/mod_commands#mod_commands-originate
     /// See https://wiki.freeswitch.org/wiki/Channel_Variables#Originate_related_variables
     /// </remarks>
     public class OriginateOptions
     {
         private readonly IDictionary<string, string> parameters = new Dictionary<string, string>();
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="OriginateOptions"/> class.
+        /// </summary>
         public OriginateOptions()
         {
             this.ChannelVariables = new Dictionary<string, string>();
@@ -182,6 +186,10 @@ namespace NEventSocket.FreeSwitch
         /// </summary>
         public IDictionary<string, string> ChannelVariables { get; set; }
 
+        /// <summary>
+        /// Converts the <seealso cref="OriginateOptions"/> instance into an originate string.
+        /// </summary>
+        /// <returns>An originate string.</returns>
         public override string ToString()
         {
             var sb = StringBuilderPool.Allocate();

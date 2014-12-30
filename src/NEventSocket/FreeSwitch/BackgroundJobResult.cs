@@ -8,15 +8,21 @@ namespace NEventSocket.FreeSwitch
 {
     using System;
 
+    /// <summary>
+    /// Represents the result of a bgapi call.
+    /// </summary>
     [Serializable]
     public class BackgroundJobResult : BasicMessage
     {
-        public BackgroundJobResult(EventMessage basicMessage)
+        internal BackgroundJobResult(EventMessage basicMessage)
         {
             this.Headers = basicMessage.Headers;
             this.BodyText = basicMessage.BodyText;
         }
 
+        /// <summary>
+        /// Gets the Unique Id of the Job
+        /// </summary>
         public string JobUUID
         {
             get
@@ -25,6 +31,9 @@ namespace NEventSocket.FreeSwitch
             }
         }
 
+        /// <summary>
+        /// Gets a boolean indicating whether the job succeeded or not.
+        /// </summary>
         public bool Success
         {
             get
@@ -33,6 +42,9 @@ namespace NEventSocket.FreeSwitch
             }
         }
 
+        /// <summary>
+        /// Gets the error message associated with a failed bgapi call.
+        /// </summary>
         public string ErrorMessage
         {
             get

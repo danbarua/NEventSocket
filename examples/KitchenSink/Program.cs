@@ -84,7 +84,7 @@
             var originate =
                 await
                 client.Originate(
-                    Endpoint.User("1000"),
+                    "user/1000",
                     new OriginateOptions
                         {
                             CallerIdNumber = "123456789", 
@@ -105,19 +105,16 @@
                 await client.SetChannelVariable(uuid, "dtmf_verbose", "true");
                 await client.StartDtmf(uuid);
 
-                client.On(
-                    uuid,
-                    EventName.ChannelHangup,
+                client.Events.Where(x => x.UUID == uuid && x.EventName == EventName.ChannelHangup)
+                    .Subscribe(
                     e =>
                         {
                               ColorConsole.WriteLine("Hangup Detected on A-Leg ".Red(), e.UUID, e.HangupCause.ToString());
                               client.Exit();
                           });
 
-                client.On(
-                    uuid,
-                    EventName.Dtmf,
-                    e => ColorConsole.WriteLine("DTMF Detected ".Blue(), e.Headers[HeaderNames.DtmfDigit]));
+                client.Events.Where(x => x.UUID == uuid && x.EventName == EventName.Dtmf)
+                    .Subscribe(e => ColorConsole.WriteLine("DTMF Detected ".Blue(), e.Headers[HeaderNames.DtmfDigit]));
 
                 var playGetDigitsResult = await
                      client.PlayGetDigits(
@@ -164,7 +161,7 @@
             var originate =
                 await
                 client.Originate(
-                    Endpoint.User("1005"), 
+                    "user/1005",
                     new OriginateOptions
                         {
                             CallerIdNumber = "123456789", 
@@ -215,7 +212,7 @@
             var originate =
                 await
                 client.Originate(
-                    Endpoint.User("1001"), 
+                    "user/1001", 
                     new OriginateOptions
                         {
                             CallerIdNumber = "123456789", 
@@ -235,7 +232,7 @@
 
                 ColorConsole.WriteLine("Originate success ".Green(), originate.ChannelData.Headers[HeaderNames.AnswerState]);
 
-                var recordingPath = "/usr/local/freeswitch/recordings/{0}.wav".Fmt(uuid); //"c:/temp/recording_{0}.wav".Fmt(uuid);
+                var recordingPath = "{0}.wav".Fmt(uuid); //"c:/temp/recording_{0}.wav".Fmt(uuid); //"$${recordings_dir}/" + "{0}.wav".Fmt(uuid); //"c:/temp/recording_{0}.wav".Fmt(uuid);
 
                 client.OnHangup(uuid,
                           e =>
@@ -263,7 +260,7 @@
                     await
                     client.Bridge(
                         uuid, 
-                        Endpoint.User("1003"), 
+                        "user/1003", 
                         new BridgeOptions()
                             {
                                 UUID = bridgeUUID,
@@ -366,7 +363,7 @@
                     {
                         await connection.Connect();
                         Console.WriteLine("New Socket connected");
-
+                        
                         connection.Events.Where(x => x.EventName == EventName.ChannelHangup).Take(1).Subscribe(
                             e =>
                                 {
@@ -385,7 +382,7 @@
                                 EventName.Dtmf);
 
                         await connection.Linger();
-                        await connection.ExecuteApplication(uuid, "answer");
+                        await connection.ExecuteApplication(uuid, "answer", null, true, false);
 
                         var result =
                             await
@@ -407,11 +404,10 @@
             listener.Connections.Subscribe(
                 async connection =>
                 {
-                    await connection.Connect();
-                    Console.WriteLine("New Socket connected");
-                    Console.WriteLine(connection.ChannelData);
 
-                    var aLeg = new Channel(connection);
+                    var aLeg = await connection.GetChannel();
+                    Console.WriteLine("New Socket connected");
+
                     aLeg.HangupCallBack = (e) =>
                         {
                             ColorConsole.WriteLine("Hangup Detected on A-Leg ".Red(),
@@ -453,7 +449,7 @@
                         "bridge_pre_execute_bleg_data",
                         @"feature_codes,~^#\d+,exec:event,Event-Name=CUSTOM\,Event-Subclass=NEventSocket::FeatureCode,self,both"); //self,peer,both
                     
-                    await aLeg.Bridge(Endpoint.User("1003"), bridgeOptions);
+                    await aLeg.Bridge("user/1003", bridgeOptions);
 
                     if (!aLeg.IsBridged)
                     {
@@ -467,7 +463,7 @@
                         ColorConsole.WriteLine("BRIDGED success".Green());
 
                         await aLeg.SetChannelVariable("RECORD_STEREO", "true");
-                        var recordingPath = "/usr/local/freeswitch/recordings/{0}.wav".Fmt(aLeg.UUID);
+                        var recordingPath = "{0}.wav".Fmt(aLeg.UUID);
                         
                         aLeg.FeatureCodes.Subscribe(
                             async x =>
@@ -506,7 +502,7 @@
                                             ColorConsole.WriteLine("Attended x-fer".Yellow());
                                                 
                                             var digits = await connection.Read(bridgeOptions.UUID, new ReadOptions { MinDigits = 3, MaxDigits = 4, Prompt = "tone_stream://%(10000,0,350,440)", TimeoutMs = 30000, Terminators = "#" });
-                                            if (digits.Result == ReadResult.Status.Success && digits.Digits.Length == 4)
+                                            if (digits.Result == ReadResultStatus.Success && digits.Digits.Length == 4)
                                             {
                                                 //todo: set channel variable "recording_follow_attxfer" <-- test it out!
                                                 await

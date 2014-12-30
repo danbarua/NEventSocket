@@ -5,12 +5,22 @@
 // --------------------------------------------------------------------------------------------------------------------
 namespace NEventSocket.FreeSwitch
 {
+    /// <summary>
+    /// Encapsulates a ChannelExecuteComplete event message
+    /// </summary>
     public abstract class ApplicationResult
     {
+        /// <summary>
+        /// Default constructor
+        /// </summary>
         protected ApplicationResult()
         {
         }
 
+        /// <summary>
+        /// Instantiates an <seealso cref="ApplicationResult"/> from a ChannelExecuteComplete <seealso cref="EventMessage"/>.
+        /// </summary>
+        /// <param name="eventMessage">The <seealso cref="EventMessage"/> to wrap.</param>
         protected ApplicationResult(EventMessage eventMessage)
         {
             this.ChannelData = eventMessage;

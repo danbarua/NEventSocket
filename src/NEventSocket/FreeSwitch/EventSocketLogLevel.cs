@@ -7,6 +7,7 @@
 namespace NEventSocket.FreeSwitch
 {
     // ReSharper disable InconsistentNaming
+#pragma warning disable 1591
     public enum EventSocketLogLevel
     {
         EMERG = 0, 
@@ -23,8 +24,8 @@ namespace NEventSocket.FreeSwitch
 
         INFO = 6, 
 
-        DEBUG = 7, 
+        DEBUG = 7,
     }
-
+#pragma warning restore 1591
     // ReSharper restore InconsistentNaming
 }

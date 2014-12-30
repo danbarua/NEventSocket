@@ -18,14 +18,25 @@ namespace NEventSocket
     using NEventSocket.Sockets;
     using NEventSocket.Util;
 
+    /// <summary>
+    /// Wraps an EventSocket connecting inbound to FreeSwitch
+    /// </summary>
     public class InboundSocket : EventSocket
     {
         private static readonly ILog Log = LogProvider.GetCurrentClassLogger();
 
-        protected InboundSocket(string host, int port, TimeSpan? timeout = null) : base(new TcpClient(host, port), timeout)
+        private InboundSocket(string host, int port, TimeSpan? timeout = null) : base(new TcpClient(host, port), timeout)
         {
         }
 
+        /// <summary>
+        /// Connects to FreeSwitch and authenticates
+        /// </summary>
+        /// <param name="host">(Default: localhost) The hostname or ip to connect to.</param>
+        /// <param name="port">(Default: 8021) The Tcp port to connect to.</param>
+        /// <param name="password">(Default: ClueCon) The password to authenticate with.</param>
+        /// <param name="timeout">(Optional) The auth request timeout.</param>
+        /// <returns>A task of <see cref="InboundSocket"/>.</returns>
         public static async Task<InboundSocket> Connect(
             string host = "localhost", int port = 8021, string password = "ClueCon", TimeSpan? timeout = null)
         {
@@ -55,6 +66,16 @@ namespace NEventSocket
             return socket;
         }
 
+        /// <summary>
+        /// Originate a new call.
+        /// </summary>
+        /// <remarks>
+        /// See https://freeswitch.org/confluence/display/FREESWITCH/mod_commands#mod_commands-originate
+        /// </remarks>
+        /// <param name="endpoint">The destination to call.</param>
+        /// <param name="options">(Optional) <seealso cref="OriginateOptions"/> to configure the call.</param>
+        /// <param name="application">(Default: park) The DialPlan application to execute on answer</param>
+        /// <returns>A Task of <seealso cref="OriginateResult"/>.</returns>
         public Task<OriginateResult> Originate(string endpoint, OriginateOptions options = null, string application = "park")
         {
             if (options == null)
@@ -84,11 +105,6 @@ namespace NEventSocket
                     .LastAsync(x => ((x is BackgroundJobResult) && !((BackgroundJobResult)x).Success) || (x is EventMessage))
                     .Select(OriginateResult.FromBackgroundJobResultOrChannelEvent)
                     .ToTask();
-        }
-
-        public IDisposable On(string uuid, EventName eventName, Action<EventMessage> handler)
-        {
-            return this.Events.Where(x => x.UUID == uuid && x.EventName == eventName).Subscribe(handler);
         }
     }
 }

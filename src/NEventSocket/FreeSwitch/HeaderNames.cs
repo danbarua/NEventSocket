@@ -6,8 +6,12 @@
 
 namespace NEventSocket.FreeSwitch
 {
+    /// <summary>
+    /// Provides well-known message header names
+    /// </summary>
     public static class HeaderNames
     {
+#pragma warning disable 1591
         public const string ContentLength = "Content-Length";
 
         public const string ContentType = "Content-Type";
@@ -48,5 +52,6 @@ namespace NEventSocket.FreeSwitch
         public const string ReplyText = "Reply-Text";
 
         public const string DtmfDigit = "DTMF-Digit";
+#pragma warning restore 1591
     }
 }

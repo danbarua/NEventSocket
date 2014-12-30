@@ -21,6 +21,9 @@ namespace NEventSocket.FreeSwitch
     {
         private readonly IDictionary<string, string> parameters = new Dictionary<string, string>();
 
+        /// <summary>
+        /// Initializes a new instance of a <seealso cref="BridgeOptions"/>.
+        /// </summary>
         public BridgeOptions()
         {
             this.ChannelVariables = new Dictionary<string, string>();
@@ -248,6 +251,10 @@ namespace NEventSocket.FreeSwitch
         /// </summary>
         public IDictionary<string, string> ChannelVariables { get; private set; }
 
+        /// <summary>
+        /// Converts the <seealso cref="BridgeOptions"/> instance into a command string.
+        /// </summary>
+        /// <returns>An originate string.</returns>
         [DebuggerStepThrough]
         public override string ToString()
         {

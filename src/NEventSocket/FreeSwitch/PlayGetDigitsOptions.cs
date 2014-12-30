@@ -6,7 +6,6 @@
 
 namespace NEventSocket.FreeSwitch
 {
-    using NEventSocket.Util;
     using NEventSocket.Util.ObjectPooling;
 
     /// <summary>
@@ -214,6 +213,10 @@ namespace NEventSocket.FreeSwitch
             }
         }
 
+        /// <summary>
+        /// Converts the <seealso cref="PlayGetDigitsOptions"/> instance to an application argument string.
+        /// </summary>
+        /// <returns>An application argument to pass to the play_and_get_digits application.</returns>
         public override string ToString()
         {
             return string.Format(

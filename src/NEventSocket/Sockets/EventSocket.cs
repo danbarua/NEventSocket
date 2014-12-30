@@ -22,6 +22,9 @@ namespace NEventSocket.Sockets
     using NEventSocket.Util;
     using NEventSocket.Util.ObjectPooling;
 
+    /// <summary>
+    /// Base class providing common functionality shared between an <seealso cref="InboundSocket"/> and an <seealso cref="OutboundSocket"/>.
+    /// </summary>
     public abstract class EventSocket : ObservableSocket
     {
         private readonly ILog Log;
@@ -45,6 +48,11 @@ namespace NEventSocket.Sockets
 
         private readonly object gate = new object();
 
+        /// <summary>
+        /// Instantiates an <see cref="EventSocket"/> instance wrapping the provided <seealso cref="TcpClient"/>
+        /// </summary>
+        /// <param name="tcpClient">A TcpClient.</param>
+        /// <param name="responseTimeOut">(Optional) The response timeout.</param>
         protected EventSocket(TcpClient tcpClient, TimeSpan? responseTimeOut = null) : base(tcpClient)
         {
             Log = LogProvider.GetLogger(this.GetType());
@@ -62,12 +70,15 @@ namespace NEventSocket.Sockets
             Log.Trace(() => "EventSocket initialized");
         }
 
+        /// <summary>
+        /// Gets or sets the TimeOut after which the socket will throw a <seealso cref="TimeoutException"/>.
+        /// </summary>
+        [Obsolete("This is due to be removed.")]
         public TimeSpan ResponseTimeOut { get; set; }
 
-        /// <summary> Gets an observable stream of BasicMessages </summary>
-        public IObservable<BasicMessage> Messages { get; private set; }
-
-        /// <summary>Observable of all Events received on this connection</summary>
+        /// <summary>
+        /// Gets an observable sequence of <seealso cref="EventMessage"/>.
+        /// </summary>
         public IObservable<EventMessage> Events
         {
             get
@@ -76,6 +87,19 @@ namespace NEventSocket.Sockets
             }
         }
 
+        /// <summary>
+        /// Gets an observable sequence of <seealso cref="BasicMessage"/>.
+        /// </summary>
+        public IObservable<BasicMessage> Messages { get; private set; }
+
+        /// <summary>
+        /// Send an api command (blocking mode)
+        /// </summary>
+        /// <remarks>
+        /// See https://freeswitch.org/confluence/display/FREESWITCH/mod_event_socket#mod_event_socket-api
+        /// </remarks>
+        /// <param name="command">The API command to send (see https://wiki.freeswitch.org/wiki/Mod_commands) </param>
+        /// <returns>A Task of <seealso cref="ApiResponse"/>.</returns>
         public Task<ApiResponse> SendApi(string command)
         {
             Log.Trace(() => "Sending [api {0}]".Fmt(command));
@@ -102,6 +126,14 @@ namespace NEventSocket.Sockets
             }
         }
 
+        /// <summary>
+        /// Send an event socket command
+        /// </summary>
+        /// <remarks>
+        /// See https://freeswitch.org/confluence/display/FREESWITCH/mod_event_socket#mod_event_socket-api
+        /// </remarks>
+        /// <param name="command">The command to send.</param>
+        /// <returns>A Task of <seealso cref="CommandReply"/>.</returns>
         public Task<CommandReply> SendCommand(string command)
         {
             Log.Trace(() => "Sending [{0}]".Fmt(command));
@@ -127,8 +159,24 @@ namespace NEventSocket.Sockets
             }
         }
 
+        /// <summary>
+        /// Asynchronously executes a dialplan application on the given channel.
+        /// </summary>
+        /// <remarks>
+        /// See https://freeswitch.org/confluence/display/FREESWITCH/mod_dptools
+        /// </remarks>
+        /// <param name="uuid">The channel UUID.</param>
+        /// <param name="application">The dialplan application to execute.</param>
+        /// <param name="applicationArguments">(Optional) arguments to pass to the application.</param>
+        /// <param name="eventLock">(Default: false) Whether to block the socket until the application completes before processing further.
+        ///  (see https://wiki.freeswitch.org/wiki/Event_Socket_Outbound#Q:_Ordering_and_async_keyword )</param>
+        /// <param name="async">(Default: false) Whether to return control from the application immediately. 
+        /// (see https://wiki.freeswitch.org/wiki/Event_Socket_Outbound#Q:_Should_I_use_sync_mode_or_async_mode.3F)
+        /// </param>
+        /// <param name="loops">(Optional) How many times to repeat the application.</param>
+        /// <returns>A Task of <seealso cref="EventMessage"/> that wraps the ChannelExecuteComplete event if the application completes successfully.</returns>
         public Task<EventMessage> ExecuteApplication(
-            string uuid, string application, string applicationArguments = null, int loops = 1, bool eventLock = false, bool async = false)
+            string uuid, string application, string applicationArguments = null, bool eventLock = false, bool async = false, int loops = 1)
         {
             if (uuid == null)
             {
@@ -191,6 +239,16 @@ namespace NEventSocket.Sockets
                     }).ToTask();
         }
 
+        /// <summary>
+        /// Send an api command (non-blocking mode) this will let you execute a job in the background and the result will be sent as an event with an indicated uuid to match the reply to the command)
+        /// </summary>
+        /// <remarks>
+        /// See https://freeswitch.org/confluence/display/FREESWITCH/mod_event_socket#mod_event_socket-bgapi
+        /// </remarks>
+        /// <param name="command">The command to execute.</param>
+        /// <param name="arg">(Optional) command argument.</param>
+        /// <param name="jobUUID">(Optional) job unique identifier.</param>
+        /// <returns>A Task of <seealso cref="BackgroundJobResult"/>.</returns>
         public Task<BackgroundJobResult> BackgroundJob(string command, string arg = null, Guid? jobUUID = null)
         {
             if (jobUUID == null)
@@ -213,6 +271,16 @@ namespace NEventSocket.Sockets
             return query.ToTask(cts.Token);
         }
 
+        /// <summary>
+        /// Bridge a new channel to the existing one. Generally used to route an incoming call to one or more endpoints.
+        /// </summary>
+        /// <remarks>
+        /// See https://freeswitch.org/confluence/display/FREESWITCH/bridge
+        /// </remarks>
+        /// <param name="uuid">The UUID of the channel to bridge (the A-Leg).</param>
+        /// <param name="endpoint">The destination to dial.</param>
+        /// <param name="options">(Optional) Any <seealso cref="BridgeOptions"/> to configure the bridge.</param>
+        /// <returns>A Task of <seealso cref="BridgeResult"/>.</returns>
         public async Task<BridgeResult> Bridge(string uuid, string endpoint, BridgeOptions options = null)
         {
             if (options == null)
@@ -262,6 +330,11 @@ namespace NEventSocket.Sockets
                     .ToTask();
         }
 
+        /// <summary>
+        /// Subscribes this EventSocket to one or more events.
+        /// </summary>
+        /// <param name="events">The <seealso cref="EventName"/>s to subscribe to.</param>
+        /// <returns>A Task.</returns>
         public async Task SubscribeEvents(params EventName[] events)
         {
             if (!this.events.SequenceEqual(events))
@@ -274,6 +347,11 @@ namespace NEventSocket.Sockets
             }
         }
 
+        /// <summary>
+        /// Subscribes this EventSocket to one or more custom events.
+        /// </summary>
+        /// <param name="events">The custom event names to subscribe to.</param>
+        /// <returns>A Task.</returns>
         public async Task SubscribeCustomEvents(params string[] events)
         {
             if (!this.customEvents.SequenceEqual(events))
@@ -283,6 +361,11 @@ namespace NEventSocket.Sockets
             }
         }
 
+        /// <summary>
+        /// Register a callback to be invoked when the given Channel UUID hangs up.
+        /// </summary>
+        /// <param name="uuid">The Channel UUID.</param>
+        /// <param name="action">A Callback to be invoked on hangup.</param>
         public void OnHangup(string uuid, Action<EventMessage> action)
         {
             Events.Where(x => x.UUID == uuid && x.EventName == EventName.ChannelHangup).Take(1).Subscribe(action);

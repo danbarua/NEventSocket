@@ -6,6 +6,7 @@
 
 namespace NEventSocket.FreeSwitch
 {
+#pragma warning disable 1591
     public enum FreeSwitchLogLevel
     {
         CONSOLE = 0, 
@@ -24,4 +25,5 @@ namespace NEventSocket.FreeSwitch
 
         DEBUG = 7
     }
+#pragma warning restore 1591
 }

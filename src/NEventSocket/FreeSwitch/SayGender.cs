@@ -6,12 +6,17 @@
 
 namespace NEventSocket.FreeSwitch
 {
+    /// <summary>
+    /// The Gender to use with the Say dialplan application.
+    /// </summary>
     public enum SayGender
     {
+#pragma warning disable 1591
         Feminine, 
 
-        Masculine, 
+        Masculine,
 
         Neuter
+#pragma warning restore 1591
     }
 }

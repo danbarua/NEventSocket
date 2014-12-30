@@ -7,6 +7,9 @@ namespace NEventSocket.FreeSwitch
 {
     using NEventSocket.Util;
 
+    /// <summary>
+    /// Represents options to pass to the Say dialplan application.
+    /// </summary>
     public class SayOptions
     {
         private string moduleName = "en";
@@ -61,8 +64,15 @@ namespace NEventSocket.FreeSwitch
             }
         }
 
+        /// <summary>
+        /// Gets or sets the text to say
+        /// </summary>
         public string Text { get; set; }
 
+        /// <summary>
+        /// Converts the <seealso cref="SayOptions"/> instance into an application argument string.
+        /// </summary>
+        /// <returns>An application argument string.</returns>
         public override string ToString()
         {
             return string.Format(

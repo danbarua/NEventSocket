@@ -34,6 +34,9 @@ namespace NEventSocket.FreeSwitch
             this.ResponseText = backgroundJobResult.ErrorMessage;
         }
 
+        /// <summary>
+        /// Gets the <seealso cref="HangupCause"/> if the originate failed.
+        /// </summary>
         public HangupCause? HangupCause { get; private set; }
 
         /// <summary>
@@ -51,6 +54,12 @@ namespace NEventSocket.FreeSwitch
         /// </summary>
         public EventMessage ChannelData { get; protected set; }
 
+        /// <summary>
+        /// Creates an <see cref="OriginateResult"/> from either a BackgroundJobResult or an EventMessage
+        /// </summary>
+        /// <param name="message">The message.</param>
+        /// <returns>An <see cref="OriginateResult"/>.</returns>
+        /// <exception cref="ArgumentException">If the wrong message type is passed.</exception>
         public static OriginateResult FromBackgroundJobResultOrChannelEvent(BasicMessage message)
         {
             var channelEvent = message as EventMessage;

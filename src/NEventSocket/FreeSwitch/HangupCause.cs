@@ -6,6 +6,7 @@
 
 namespace NEventSocket.FreeSwitch
 {
+#pragma warning disable 1591
     public enum HangupCause
     {
         None = 0, 
@@ -138,4 +139,5 @@ namespace NEventSocket.FreeSwitch
 
         Unknown = 9999
     }
+#pragma warning restore 1591
 }

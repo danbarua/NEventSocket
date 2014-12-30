@@ -6,12 +6,24 @@
 
 namespace NEventSocket.FreeSwitch
 {
+    /// <summary>
+    /// Represents the AnswerState of a Channel
+    /// </summary>
     public enum AnswerState
     {
+        /// <summary>
+        /// The Channel is Answered
+        /// </summary>
         Answered, 
 
+        /// <summary>
+        /// The Channel has Hung Up
+        /// </summary>
         Hangup, 
 
+        /// <summary>
+        /// The Channel is Ringing
+        /// </summary>
         Ringing
     }
 }

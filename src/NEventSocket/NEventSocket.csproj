@@ -65,6 +65,8 @@
     <Compile Include="..\..\SharedAssemblyInfo.cs">
       <Link>Properties\SharedAssemblyInfo.cs</Link>
     </Compile>
+    <Compile Include="CommandExtensions.cs" />
+    <Compile Include="ApplicationExtensions.cs" />
     <Compile Include="FreeSwitch\BridgeResult.cs" />
     <Compile Include="FreeSwitch\Leg.cs" />
     <Compile Include="FreeSwitch\PlayGetDigitsOptions.cs" />
@@ -73,18 +75,17 @@
     <Compile Include="FreeSwitch\PlayResult.cs" />
     <Compile Include="FreeSwitch\ReadOptions.cs" />
     <Compile Include="FreeSwitch\ReadResult.cs" />
+    <Compile Include="FreeSwitch\ReadResultStatus.cs" />
     <Compile Include="FreeSwitch\SayGender.cs" />
     <Compile Include="FreeSwitch\SayMethod.cs" />
     <Compile Include="FreeSwitch\SayOptions.cs" />
     <Compile Include="FreeSwitch\SayType.cs" />
     <Compile Include="Channels\Channel.cs" />
-    <Compile Include="FreeSwitch\FreeSwitchException.cs" />
     <Compile Include="FreeSwitch\AnswerState.cs" />
     <Compile Include="FreeSwitch\BridgeOptions.cs" />
     <Compile Include="FreeSwitch\OriginateOptions.cs" />
     <Compile Include="FreeSwitch\OriginateResult.cs" />
     <Compile Include="FreeSwitch\ApplicationResult.cs" />
-    <Compile Include="FreeSwitch\Endpoint.cs" />
     <Compile Include="Channels\IChannel.cs" />
     <Compile Include="FreeSwitch\HangupCause.cs" />
     <Compile Include="InboundSocketExtensions.cs" />
@@ -96,7 +97,7 @@
     <Compile Include="InboundSocket.cs" />
     <Compile Include="Sockets\ObservableSocket.cs" />
     <Compile Include="OutboundSocket.cs" />
-    <Compile Include="EventSocketExensions.cs" />
+    <Compile Include="ApiExtensions.cs" />
     <Compile Include="FreeSwitch\HeaderNames.cs" />
     <Compile Include="FreeSwitch\ApiResponse.cs">
       <SubType>Code</SubType>

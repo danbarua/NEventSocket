@@ -17,6 +17,10 @@ namespace NEventSocket.Sockets
     using NEventSocket.Logging;
     using NEventSocket.Util;
 
+    /// <summary>
+    /// A Reactive wrapper around a TcpListener
+    /// </summary>
+    /// <typeparam name="T">The type of <seealso cref="ObservableSocket"/> that this listener will provide.</typeparam>
     public abstract class ObservableListener<T> : IDisposable where T : ObservableSocket
     {
         private readonly ILog Log;
@@ -29,7 +33,7 @@ namespace NEventSocket.Sockets
 
         private readonly int port;
 
-        private readonly Func<TcpClient, T> observableSocketCreator;
+        private readonly Func<TcpClient, T> observableSocketFactory;
 
         private bool disposed;
 
@@ -37,23 +41,28 @@ namespace NEventSocket.Sockets
 
         private TcpListener tcpListener;
 
-        /// <summary>Starts the Listener on the given port</summary>
+        /// <summary>
+        /// Starts the Listener on the given port
+        /// </summary>
         /// <param name="port">The Tcp Port on which to listen for incoming connections.</param>
-        /// <param name="observableSocketCreator">The observable Socket Factory.</param>
-        protected ObservableListener(int port, Func<TcpClient, T> observableSocketCreator)
+        /// <param name="observableSocketFactory">A function returning an object that inherits from <seealso cref="ObservableSocket" />.</param>
+        protected ObservableListener(int port, Func<TcpClient, T> observableSocketFactory)
         {
             this.Log = LogProvider.GetLogger(this.GetType());
             this.port = port;
-            this.observableSocketCreator = observableSocketCreator;
+            this.observableSocketFactory = observableSocketFactory;
         }
 
+        /// <summary>
+        /// Finalizes an instance of the <see cref="ObservableListener{T}"/> class.
+        /// </summary>
         ~ObservableListener()
         {
             this.Dispose(false);
         }
 
         /// <summary>
-        /// Observable sequence of all outbound connections from FreeSwitch.
+        /// Gets an observable sequence of all outbound connections from FreeSwitch.
         /// </summary>
         public IObservable<T> Connections
         {
@@ -63,6 +72,9 @@ namespace NEventSocket.Sockets
             }
         }
 
+        /// <summary>
+        /// Gets the Tcp Port that the Listener is waiting for connections on.
+        /// </summary>
         public int Port
         {
             get
@@ -92,7 +104,7 @@ namespace NEventSocket.Sockets
                           .Repeat()
                           .TakeUntil(this.listenerTermination)
                           .Do(connection => Log.Trace(() => "New Connection from {0}".Fmt(connection.Client.RemoteEndPoint)))
-                          .Select(tcpClient => observableSocketCreator(tcpClient))
+                          .Select(tcpClient => observableSocketFactory(tcpClient))
                           .Subscribe(
                               connection =>
                                   {
@@ -104,12 +116,19 @@ namespace NEventSocket.Sockets
                               ex => Log.ErrorFormat("Error handling inbound connection", ex));
         }
 
+        /// <summary>
+        /// Stops and closes down the Listener.
+        /// </summary>
         public void Dispose()
         {
             this.Dispose(true);
             GC.SuppressFinalize(this);
         }
 
+        /// <summary>
+        /// Releases unmanaged and - optionally - managed resources.
+        /// </summary>
+        /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
         protected virtual void Dispose(bool disposing)
         {
             if (!this.disposed)

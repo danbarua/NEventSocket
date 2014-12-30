@@ -37,7 +37,7 @@ namespace NEventSocket.Tests.Util
         public void can_convert_uppercaseunderscore_to_camelcase()
         {
             const string Input = "THIS_IS_A_STRING_IN_UPPER_CASE";
-            Assert.Equal("ThisIsAStringInUpperCase", Input.ToCamelCase());
+            Assert.Equal("ThisIsAStringInUpperCase", Input.ToPascalCase());
         }
 
         [Fact]

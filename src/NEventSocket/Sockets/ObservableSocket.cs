@@ -23,11 +23,12 @@ namespace NEventSocket.Sockets
     using NEventSocket.Util;
     using NEventSocket.Util.ObjectPooling;
 
+    /// <summary>
+    /// Wraps a <seealso cref="TcpClient"/> exposing incoming strings as an Observable sequence.
+    /// </summary>
     public abstract class ObservableSocket : IDisposable
     {
         protected bool disposed;
-
-        protected TcpClient tcpClient;
 
         private readonly ILog Log;
 
@@ -35,12 +36,18 @@ namespace NEventSocket.Sockets
 
         private readonly IObservable<byte[]> receiver;
 
+        private TcpClient tcpClient;
+
         private Subject<Unit> receiverTermination = new Subject<Unit>();
 
         private IDisposable readSubscription;
 
         private BlockingCollection<byte[]> received = new BlockingCollection<byte[]>(16);
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ObservableSocket"/> class.
+        /// </summary>
+        /// <param name="tcpClient">The TCP client to wrap.</param>
         protected ObservableSocket(TcpClient tcpClient)
         {
             Log = LogProvider.GetLogger(this.GetType());
@@ -72,13 +79,25 @@ namespace NEventSocket.Sockets
                             });
         }
 
+        /// <summary>
+        /// Finalizes an instance of the <see cref="ObservableSocket"/> class.
+        /// </summary>
         ~ObservableSocket()
         {
             Dispose(false);
         }
 
+        /// <summary>
+        /// Occurs when the <see cref="ObservableSocket"/> is disposed.
+        /// </summary>
         public event EventHandler Disposed = (sender, args) => { };
 
+        /// <summary>
+        /// Gets a value indicating whether this instance is connected.
+        /// </summary>
+        /// <value>
+        /// <c>true</c> if this instance is connected; otherwise, <c>false</c>.
+        /// </value>
         public bool IsConnected
         {
             get
@@ -87,6 +106,9 @@ namespace NEventSocket.Sockets
             }
         }
 
+        /// <summary>
+        /// Gets an Observable sequence of byte array chunks as read from the socket stream.
+        /// </summary>
         protected IObservable<byte[]> Receiver
         {
             get
@@ -134,7 +156,7 @@ namespace NEventSocket.Sockets
                 var stream = GetStream();
                 await stream.WriteAsync(bytes, 0, bytes.Length, cancellationToken);
             }
-            catch (TaskCanceledException ex)
+            catch (TaskCanceledException)
             {
                 Log.Warn(() => "Write operation was cancelled.");
                 this.Dispose();
@@ -174,17 +196,27 @@ namespace NEventSocket.Sockets
             }
         }
 
+        /// <summary>
+        /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+        /// </summary>
         public void Dispose()
         {
             Dispose(true);
             GC.SuppressFinalize(this);
         }
 
+        /// <summary>
+        /// Gets the underlying network stream.
+        /// </summary>
         protected virtual Stream GetStream()
         {
             return tcpClient.GetStream();
         }
 
+        /// <summary>
+        /// Releases unmanaged and - optionally - managed resources.
+        /// </summary>
+        /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
         protected virtual void Dispose(bool disposing)
         {
             if (!disposed)

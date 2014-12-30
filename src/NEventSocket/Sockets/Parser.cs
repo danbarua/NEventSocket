@@ -15,7 +15,7 @@ namespace NEventSocket.Sockets
     using NEventSocket.Util.ObjectPooling;
 
     /// <summary>
-    /// A simple state-machine for parsing incoming EventSocket messages.
+    /// A parser for converting a stream of strings or chars into a stream of <seealso cref="BasicMessage"/>s from FreeSwitch.
     /// </summary>
     public class Parser
     {
@@ -98,6 +98,9 @@ namespace NEventSocket.Sockets
             return this;
         }
 
+        /// <summary>
+        /// Appends the provided string to the internal buffer.
+        /// </summary>
         public Parser Append(string next)
         {
             var parser = this;
@@ -110,6 +113,14 @@ namespace NEventSocket.Sockets
             return parser;
         }
 
+        /// <summary>
+        /// Extracts a <seealso cref="BasicMessage"/> from the internal buffer.
+        /// </summary>
+        /// <returns>A new <seealso cref="BasicMessage"/> instance.</returns>
+        /// <exception cref="InvalidOperationException">
+        /// When the parser has not received a complete message.
+        /// Can be indicative of multiple threads attempting to read from the network stream.
+        /// </exception>
         public BasicMessage ExtractMessage()
         {
             if (!this.Completed)

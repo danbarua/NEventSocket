@@ -1,22 +1,25 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="SayMethod.cs" company="Dan Barua">
+// <copyright file="ReadResultStatus.cs" company="Dan Barua">
 //   (C) Dan Barua and contributors. Licensed under the Mozilla Public License.
 // </copyright>
+// <summary>
+//   Represents the Status of a Read Result
+// </summary>
 // --------------------------------------------------------------------------------------------------------------------
 
 namespace NEventSocket.FreeSwitch
 {
     /// <summary>
-    /// The Method to use with the Say dialplan application
+    /// Represents the Status of a Read Result
     /// </summary>
-    public enum SayMethod
+    public enum ReadResultStatus
     {
 #pragma warning disable 1591
-        Pronounced, 
+        Success,
 
-        Iterated,
+        Timeout,
 
-        Counted
+        Failure
 #pragma warning restore 1591
     }
 }

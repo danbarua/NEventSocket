@@ -30,6 +30,8 @@
 [module: System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.ReadabilityRules", "*", Justification = "Third Party Library Code")]
 [module: System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.NamingRules", "*", Justification = "Third Party Library Code")]
 [module: System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.SpacingRules", "*", Justification = "Third Party Library Code")]
+
+#pragma warning disable 1591
 namespace NEventSocket.Logging
 {
     using NEventSocket.Logging.LogProviders;
@@ -1476,3 +1478,4 @@ namespace NEventSocket.Logging.LogProviders
         }
     }
 }
+#pragma warning restore 1591

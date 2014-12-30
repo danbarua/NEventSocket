@@ -6,8 +6,12 @@
 
 namespace NEventSocket.FreeSwitch
 {
+    /// <summary>
+    /// Provides well-known event names
+    /// </summary>
     public enum EventName
     {
+#pragma warning disable 1591
         Custom, 
 
         Clone, 
@@ -176,8 +180,9 @@ namespace NEventSocket.FreeSwitch
 
         CallSetupReq, 
 
-        CallSetupResult, 
+        CallSetupResult,
 
-        All, 
+        All,
+#pragma warning restore 1591
     }
 }

@@ -22,7 +22,7 @@ namespace NEventSocket.FreeSwitch
     {
         private static readonly ILog Log = LogProvider.GetCurrentClassLogger();
 
-        public EventMessage(BasicMessage basicMessage)
+        internal EventMessage(BasicMessage basicMessage)
         {
             if (basicMessage.ContentType != ContentTypes.EventPlain)
             {
@@ -82,6 +82,9 @@ namespace NEventSocket.FreeSwitch
             }
         }
 
+        /// <summary>
+        /// Default constructor
+        /// </summary>
         protected EventMessage()
         {
         }
@@ -165,6 +168,9 @@ namespace NEventSocket.FreeSwitch
             return this.GetHeader("variable_" + variable);
         }
 
+        /// <summary>
+        /// Provides a string representation of the <see cref="EventMessage"/> instance for debugging.
+        /// </summary>
         public override string ToString()
         {
             var sb = StringBuilderPool.Allocate();

@@ -11,12 +11,12 @@ namespace NEventSocket.FreeSwitch
     using NEventSocket.Util;
 
     /// <summary>
-    /// CommandResponses contain the status in the Reply-Text header.
+    /// Represents the result of an ESL command
     /// </summary>
     [Serializable]
     public class CommandReply : BasicMessage
     {
-        public CommandReply(BasicMessage basicMessage)
+        internal CommandReply(BasicMessage basicMessage)
         {
             if (basicMessage.ContentType != ContentTypes.CommandReply)
             {
@@ -27,6 +27,9 @@ namespace NEventSocket.FreeSwitch
             BodyText = basicMessage.BodyText;
         }
 
+        /// <summary>
+        /// Gets a boolean indicating whether the command succeeded.
+        /// </summary>
         public bool Success
         {
             get
@@ -35,6 +38,9 @@ namespace NEventSocket.FreeSwitch
             }
         }
 
+        /// <summary>
+        /// Gets the reply text
+        /// </summary>
         public string ReplyText
         {
             get
@@ -43,6 +49,9 @@ namespace NEventSocket.FreeSwitch
             }
         }
 
+        /// <summary>
+        /// Gets an error message associated with a failed command
+        /// </summary>
         public string ErrorMessage
         {
             get

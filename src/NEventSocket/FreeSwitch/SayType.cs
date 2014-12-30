@@ -6,8 +6,12 @@
 
 namespace NEventSocket.FreeSwitch
 {
+    /// <summary>
+    /// The module to use with the Say dialplan application
+    /// </summary>
     public enum SayType
     {
+#pragma warning disable 1591
         Number, 
 
         Items, 
@@ -42,8 +46,9 @@ namespace NEventSocket.FreeSwitch
 
         NameSpelled, 
 
-        NamePhonetic, 
+        NamePhonetic,
 
         ShortDateTime
+#pragma warning restore 1591
     }
 }

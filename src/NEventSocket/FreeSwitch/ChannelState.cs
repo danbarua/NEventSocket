@@ -6,8 +6,12 @@
 
 namespace NEventSocket.FreeSwitch
 {
+    /// <summary>
+    /// Represents the state of a Channel
+    /// </summary>
     public enum ChannelState
     {
+#pragma warning disable 1591
         New, 
 
         Init, 
@@ -30,8 +34,9 @@ namespace NEventSocket.FreeSwitch
 
         Hangup, 
 
-        Done, 
+        Done,
 
-        Destroy, 
+        Destroy,
+#pragma warning restore 1591
     }
 }

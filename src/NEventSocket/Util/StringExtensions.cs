@@ -12,6 +12,9 @@ namespace NEventSocket.Util
 
     using NEventSocket.Util.ObjectPooling;
 
+    /// <summary>
+    /// Provides helper extension methods for strings
+    /// </summary>
     public static class StringExtensions
     {
         /// <summary>
@@ -37,20 +40,25 @@ namespace NEventSocket.Util
             return input.ToString().ToLowerInvariant();
         }
 
+        /// <summary>
+        /// Converts a PascalCaseString to UPPER_WITH_UNDERSCORES
+        /// </summary>
+        /// <param name="pascalCaseString">The pascal case string.</param>
+        /// <returns>A FreeSwitch enum string</returns>
         [DebuggerStepThrough]
-        public static string ToUpperWithUnderscores(this string camelCaseString)
+        public static string ToUpperWithUnderscores(this string pascalCaseString)
         {
-            if (string.IsNullOrEmpty(camelCaseString))
+            if (string.IsNullOrEmpty(pascalCaseString))
             {
-                return camelCaseString;
+                return pascalCaseString;
             }
 
             var sb = StringBuilderPool.Allocate();
-            sb.EnsureCapacity(camelCaseString.Length);
+            sb.EnsureCapacity(pascalCaseString.Length);
 
-            for (var i = 0; i < camelCaseString.Length; i++)
+            for (var i = 0; i < pascalCaseString.Length; i++)
             {
-                var c = camelCaseString[i];
+                var c = pascalCaseString[i];
                 if (char.IsUpper(c))
                 {
                     if (i != 0)
@@ -69,8 +77,13 @@ namespace NEventSocket.Util
             return StringBuilderPool.ReturnAndFree(sb);
         }
 
+        /// <summary>
+        /// Converts a UPPER_WITH_UNDERSCORES string to a PascalCaseString
+        /// </summary>
+        /// <param name="underscoreString">The underscore string.</param>
+        /// <returns>A Pascal Case string</returns>
         [DebuggerStepThrough]
-        public static string ToCamelCase(this string underscoreString)
+        public static string ToPascalCase(this string underscoreString)
         {
             if (string.IsNullOrEmpty(underscoreString))
             {
@@ -106,12 +119,12 @@ namespace NEventSocket.Util
         }
 
         /// <summary>
-        /// Parses a string of delimited key-value pairs into an <see cref="IDictionary{string,string}"/>.
+        /// Parses a string of delimited key-value pairs into a dictionary.
         /// </summary>
         /// <param name="inputString">The input string.</param>
         /// <param name="keyValuePairDelimiter">The delimiter which separates key-value pairs, e.g. a newline.</param>
         /// <param name="keyValueDelimiter">The delimiter which separates keys and values, e.g. a colon.</param>
-        /// <returns>A <see cref="System.Collections.Generic.IDictionary{string, string}"/> containing the key-value pairs.</returns>
+        /// <returns>A dictionary containing the key-value pairs.</returns>
         /// <exception cref="FormatException">Thrown when an invalid key-value pair is encountered.</exception>
         [DebuggerStepThrough]
         public static IDictionary<string, string> ParseKeyValuePairs(
@@ -150,14 +163,14 @@ namespace NEventSocket.Util
         }
 
         /// <summary>
-        /// Parses a FreeSwitch UPPER_CASE_UNDERSCORE header value into a C# CamelCase NullableEnumType.
+        /// Parses a FreeSwitch UPPER_CASE_UNDERSCORE header value into a C# PascalCase NullableEnumType.
         /// </summary>
         [DebuggerStepThrough]
         public static TEnum? HeaderToEnumOrNull<TEnum>(this string inputString) where TEnum : struct
         {
             TEnum result;
 
-            if (Enum.TryParse(inputString.ToCamelCase(), out result))
+            if (Enum.TryParse(inputString.ToPascalCase(), out result))
             {
                 return result;
             }
@@ -166,14 +179,14 @@ namespace NEventSocket.Util
         }
 
         /// <summary>
-        /// Parses a FreeSwitch UPPER_CASE_UNDERSCORE header value into a C# CamelCase Enum, throwing exceptions if unable to do so.
+        /// Parses a FreeSwitch UPPER_CASE_UNDERSCORE header value into a C# PascalCase Enum, throwing exceptions if unable to do so.
         /// </summary>
         /// <exception cref="ArgumentException"><typeparamref name="TEnum"/> is not an <seealso cref="System.Enum"/>.</exception>
         /// <exception cref="OverflowException"><paramref name="inputString"/> is outside the range of the underlying type of <typeparamref name="TEnum"/>.</exception>
         [DebuggerStepThrough]
         public static TEnum HeaderToEnum<TEnum>(this string inputString) where TEnum : struct
         {
-            return (TEnum)Enum.Parse(typeof(TEnum), inputString.ToCamelCase());
+            return (TEnum)Enum.Parse(typeof(TEnum), inputString.ToPascalCase());
         }
 
         /// <summary>

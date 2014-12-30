@@ -6,10 +6,16 @@
 
 namespace NEventSocket.FreeSwitch
 {
+    /// <summary>
+    /// Options for customizing the behaviour of the Play dialplan application
+    /// </summary>
     public class PlayOptions
     {
         private int loops = 1;
 
+        /// <summary>
+        /// Gets or sets the number of repetitions to play (default 1).
+        /// </summary>
         public int Loops
         {
             get
@@ -23,6 +29,9 @@ namespace NEventSocket.FreeSwitch
             }
         }
 
+        /// <summary>
+        /// Gets or sets which <seealso cref="Leg"/> of a call to play on.
+        /// </summary>
         public Leg Leg { get; set; }
     }
 }

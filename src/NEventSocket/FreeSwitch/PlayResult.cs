@@ -8,9 +8,12 @@ namespace NEventSocket.FreeSwitch
 {
     using System.IO;
 
+    /// <summary>
+    /// Represents the result of the Play dialplan application
+    /// </summary>
     public class PlayResult : ApplicationResult
     {
-        public PlayResult(EventMessage eventMessage) : base(eventMessage)
+        internal PlayResult(EventMessage eventMessage) : base(eventMessage)
         {
             if (eventMessage.Headers[HeaderNames.ApplicationResponse] == "FILE NOT FOUND")
             {

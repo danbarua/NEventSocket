@@ -6,9 +6,12 @@
 
 namespace NEventSocket.FreeSwitch
 {
+    /// <summary>
+    /// Represents the result of a Bridge attempt.
+    /// </summary>
     public class BridgeResult : ApplicationResult
     {
-        public BridgeResult(EventMessage eventMessage) : base(eventMessage)
+        internal BridgeResult(EventMessage eventMessage) : base(eventMessage)
         {
             this.Success = eventMessage.Headers.ContainsKey(HeaderNames.OtherLegUniqueId);
             this.ResponseText = eventMessage.GetVariable("DIALSTATUS");
@@ -19,6 +22,9 @@ namespace NEventSocket.FreeSwitch
             }
         }
 
-        public string BridgeUUID { get; set; }
+        /// <summary>
+        /// Gets the UUID of the B-Leg Channel.
+        /// </summary>
+        public string BridgeUUID { get; private set; }
     }
 }

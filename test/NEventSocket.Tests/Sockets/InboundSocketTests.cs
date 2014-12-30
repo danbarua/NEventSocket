@@ -65,7 +65,7 @@
         }
 
         [Fact(Timeout = 5000)]
-        public async Task an_invalid_password_should_throw_a_SecurityException()
+        public void an_invalid_password_should_throw_a_SecurityException()
         {
             using (var listener = new FakeFreeSwitchListener(0))
             {
@@ -87,6 +87,7 @@
                     });
 
                 var aggregateException = Record.Exception(() => InboundSocket.Connect("127.0.0.1", listener.Port, "WrongPassword").Wait());
+                Assert.True(authRequestReceived);
                 Assert.IsType<SecurityException>(aggregateException.InnerException);
             }
         }
@@ -104,7 +105,7 @@
         }
 
         [Fact(Timeout = 5000, Skip = "Removing timeouts")]
-        public async Task when_no_response_to_auth_received_it_should_throw_TimeoutException()
+        public void when_no_response_to_auth_received_it_should_throw_TimeoutException()
         {
             using (var listener = new FakeFreeSwitchListener(0))
             {
