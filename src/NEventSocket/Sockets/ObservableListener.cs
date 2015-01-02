@@ -11,6 +11,7 @@ namespace NEventSocket.Sockets
     using System.Net;
     using System.Net.Sockets;
     using System.Reactive;
+    using System.Reactive.Disposables;
     using System.Reactive.Linq;
     using System.Reactive.Subjects;
 
@@ -30,6 +31,8 @@ namespace NEventSocket.Sockets
         private readonly List<T> connections = new List<T>();
 
         private readonly Subject<T> observable = new Subject<T>();
+
+        private readonly CompositeDisposable disposables = new CompositeDisposable();
 
         private readonly int port;
 
@@ -68,7 +71,7 @@ namespace NEventSocket.Sockets
         {
             get
             {
-                return this.observable;
+                return observable;
             }
         }
 
@@ -79,7 +82,7 @@ namespace NEventSocket.Sockets
         {
             get
             {
-                return ((IPEndPoint)this.tcpListener.LocalEndpoint).Port;
+                return ((IPEndPoint)tcpListener.LocalEndpoint).Port;
             }
         }
 
@@ -88,30 +91,37 @@ namespace NEventSocket.Sockets
         /// </summary>
         public void Start()
         {
-            if (this.disposed)
+            if (disposed)
             {
                 throw new ObjectDisposedException(this.ToString());
             }
 
-            this.tcpListener = new TcpListener(IPAddress.Any, port);
+            tcpListener = new TcpListener(IPAddress.Any, port);
 
-            this.tcpListener.Start();
+            tcpListener.Start();
 
             Log.Trace(() => "Listener Started on Port {0}".Fmt(this.Port));
 
             this.subscription =
-                Observable.FromAsync(this.tcpListener.AcceptTcpClientAsync)
+                Observable.FromAsync(tcpListener.AcceptTcpClientAsync)
                           .Repeat()
-                          .TakeUntil(this.listenerTermination)
+                          .TakeUntil(listenerTermination)
                           .Do(connection => Log.Trace(() => "New Connection from {0}".Fmt(connection.Client.RemoteEndPoint)))
                           .Select(tcpClient => observableSocketFactory(tcpClient))
                           .Subscribe(
                               connection =>
                                   {
-                                      this.connections.Add(connection);
-                                      this.observable.OnNext(connection);
+                                      connections.Add(connection);
+                                      observable.OnNext(connection);
 
-                                      connection.Disposed += ConnectionOnDisposed;
+                                      disposables.Add(
+                                          Observable.FromEventPattern(h => connection.Disposed += h, h => connection.Disposed -= h)
+                                                    .FirstAsync()
+                                                    .Subscribe(_ =>
+                                                        {
+                                                            Log.Trace(() => "Connection Disposed");
+                                                            connections.Remove(connection);
+                                                        }));
                                   }, 
                               ex => Log.ErrorFormat("Error handling inbound connection", ex));
         }
@@ -121,7 +131,7 @@ namespace NEventSocket.Sockets
         /// </summary>
         public void Dispose()
         {
-            this.Dispose(true);
+            Dispose(true);
             GC.SuppressFinalize(this);
         }
 
@@ -131,46 +141,36 @@ namespace NEventSocket.Sockets
         /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
         protected virtual void Dispose(bool disposing)
         {
-            if (!this.disposed)
+            if (!disposed)
             {
                 Log.Trace(() => "Disposing (disposing:{0})".Fmt(disposing));
 
                 if (disposing)
                 {
-                    this.listenerTermination.OnNext(Unit.Default);
-                    this.listenerTermination.Dispose();
+                    listenerTermination.OnNext(Unit.Default);
+                    listenerTermination.Dispose();
 
-                    this.observable.OnCompleted();
-                    this.observable.Dispose();
-
-                    if (this.subscription != null)
+                    if (subscription != null)
                     {
-                        this.subscription.Dispose();
-                        this.subscription = null;
+                        subscription.Dispose();
+                        subscription = null;
                     }
 
-                    this.connections.ToList().ForEach(connection => connection.Dispose());
+                    disposables.Dispose();
+                    connections.ToList().ForEach(connection => connection.Dispose());
 
-                    if (this.tcpListener != null)
+                    observable.OnCompleted();
+                    observable.Dispose();
+
+                    if (tcpListener != null)
                     {
-                        this.tcpListener.Stop();
-                        this.tcpListener = null;
+                        tcpListener.Stop();
+                        tcpListener = null;
                     }
                 }
 
                 Log.Trace(() => "Disposed");
-                this.disposed = true;
-            }
-        }
-
-        private void ConnectionOnDisposed(object sender, EventArgs eventArgs)
-        {
-            var connection = sender as T;
-            if (connection != null)
-            {
-                Log.Trace(() => "Connection Disposed");
-                connection.Disposed -= this.ConnectionOnDisposed;
-                this.connections.Remove(connection);
+                disposed = true;
             }
         }
     }
