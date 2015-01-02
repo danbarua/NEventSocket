@@ -5,6 +5,10 @@
 // --------------------------------------------------------------------------------------------------------------------
 namespace NEventSocket
 {
+    using System;
+    using System.Reactive.Linq;
+
+    using NEventSocket.Channels;
     using NEventSocket.Sockets;
 
     /// <summary>
@@ -19,6 +23,17 @@ namespace NEventSocket
         /// <param name="port">The Tcp port to listen on.</param>
         public OutboundListener(int port) : base(port, tcpClient => new OutboundSocket(tcpClient))
         {
+        }
+
+        /// <summary>
+        /// Gets an observable sequence of incoming calls wrapped as <seealso cref="IChannel"/> abstractions.
+        /// </summary>
+        public IObservable<IChannel> Channels
+        {
+            get
+            {
+                return Connections.Select(c => c.GetChannel().Result);
+            }
         }
     }
 }

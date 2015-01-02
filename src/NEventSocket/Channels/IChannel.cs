@@ -29,7 +29,7 @@ namespace NEventSocket.Channels
 
         string this[string variableName] { get; }
 
-        IObservable<string> FeatureCodes(Leg leg);
+        IObservable<string> FeatureCodes(Leg leg, string prefix = "#");
 
         Task Bridge(IChannel other);
 

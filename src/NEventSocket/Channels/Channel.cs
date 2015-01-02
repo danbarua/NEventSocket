@@ -146,7 +146,7 @@ namespace NEventSocket.Channels
             }
         }
 
-        public IObservable<string> FeatureCodes(Leg leg)
+        public IObservable<string> FeatureCodes(Leg leg = Leg.ALeg, string prefix = "#")
         {
             var dtmfEvents = leg == Leg.ALeg
                              ? eventSocket.Events.Where(x => x.EventName == EventName.Dtmf && x.UUID == this.UUID)
@@ -154,7 +154,7 @@ namespace NEventSocket.Channels
 
             return dtmfEvents.Select(x => x.Headers[HeaderNames.DtmfDigit])
                             .Buffer(TimeSpan.FromSeconds(2), 2)
-                            .Where(x => x.Count == 2 && x[0] == "#")
+                            .Where(x => x.Count == 2 && x[0] == prefix)
                             .Select(x => string.Concat(x))
                             .Do(x => Log.Debug(() => "Channel {0} detected Feature Code {1}".Fmt(UUID, x)));
         }
