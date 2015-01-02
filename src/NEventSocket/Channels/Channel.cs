@@ -73,16 +73,23 @@ namespace NEventSocket.Channels
                         }));
 
             this.disposables.Add(
-                eventSocket.Events.Where(x => x.UUID == this.UUID).Subscribe(
-                    e =>
-                        {
-                            this.lastEvent = e;
+                eventSocket.Events
+                            .Where(x => x.UUID == this.UUID)
+                            .Subscribe(
+                                e =>
+                                    {
+                                        this.lastEvent = e;
 
-                            if (e.EventName == EventName.ChannelHangup)
-                            {
-                                this.HangupCallBack(e);
-                            }
-                        }));
+                                        if (e.EventName == EventName.ChannelHangup)
+                                        {
+                                            this.HangupCallBack(e);
+
+                                            if (this.eventSocket is OutboundSocket)
+                                            {
+                                                eventSocket.Exit();
+                                            }
+                                        }
+                                    }));
         }
 
         ~Channel()
@@ -154,6 +161,13 @@ namespace NEventSocket.Channels
             }
         }
 
+        public bool IsAnswered
+        {
+            get
+            {
+                return this.AnswerState == AnswerState.Answered;
+            }
+        }
         public bool IsBridged
         {
             get
@@ -198,12 +212,26 @@ namespace NEventSocket.Channels
             }
         }
 
-        public async Task<BridgeResult> Bridge(string destination, BridgeOptions options, Action<EventMessage> onProgress = null)
+        public async Task Bridge(string destination, BridgeOptions options, Action<EventMessage> onProgress = null)
         {
+            if (!IsAnswered)
+            {
+                return;
+            }
+
             Log.Debug(() => "Channel {0} is attempting a bridge to {1}".Fmt(this.UUID, destination));
+
             if (string.IsNullOrEmpty(options.UUID))
             {
                 options.UUID = Guid.NewGuid().ToString();
+            }
+
+            if (featureCodesEnabledLeg == Leg.BLeg)
+            {
+                options.ChannelVariables.Add("bridge_pre_execute_bleg_app", "bind_digit_action");
+                options.ChannelVariables.Add(
+                    "bridge_pre_execute_bleg_data",
+                    @"feature_codes,~^#\d+,exec:event,Event-Name=CUSTOM\,Event-Subclass=NEventSocket::FeatureCode,self,both"); //self,peer,both
             }
 
             var subscriptions = new CompositeDisposable();
@@ -218,7 +246,7 @@ namespace NEventSocket.Channels
             }
 
             var result = await this.eventSocket.Bridge(this.UUID, destination, options);
-
+            Log.Debug(() => "Channel {0} bridge complete {1} {2}".Fmt(this.UUID, result.Success, result.ResponseText));
             subscriptions.Dispose();
 
             Log.Debug(() => "Channel {0} bridge complete {1} {2}".Fmt(this.UUID, result.Success, result.ResponseText));
@@ -255,36 +283,41 @@ namespace NEventSocket.Channels
 
         public Task Hold()
         {
-            return this.eventSocket.SendApi("uuid_hold toggle " + this.UUID);
+            return RunIfAnswered(() => eventSocket.SendApi("uuid_hold toggle " + this.UUID));
         }
 
         public Task Park()
         {
-            return this.eventSocket.ExecuteApplication(this.UUID, "park");
+            return RunIfAnswered(() => eventSocket.ExecuteApplication(this.UUID, "park"));
         }
 
         public Task RingReady()
         {
-            return this.eventSocket.ExecuteApplication(this.UUID, "ring_ready");
+            return eventSocket.ExecuteApplication(this.UUID, "ring_ready");
         }
 
         public Task Answer()
         {
-            return this.eventSocket.ExecuteApplication(this.UUID, "answer");
+            return eventSocket.ExecuteApplication(this.UUID, "answer");
         }
 
         public Task Hangup(HangupCause hangupCause = FreeSwitch.HangupCause.NormalClearing)
         {
-            return this.eventSocket.SendApi("uuid_kill {0} {1}".Fmt(this.UUID, hangupCause.ToString().ToUpperWithUnderscores()));
+            return RunIfAnswered(() => eventSocket.SendApi("uuid_kill {0} {1}".Fmt(this.UUID, hangupCause.ToString().ToUpperWithUnderscores())));
         }
 
         public Task Sleep(int milliseconds)
         {
-            return this.eventSocket.ExecuteApplication(this.UUID, "sleep", milliseconds.ToString());
+            return eventSocket.ExecuteApplication(this.UUID, "sleep", milliseconds.ToString());
         }
 
         public async Task PlayFile(string file, Leg leg = Leg.ALeg, string terminator = null)
         {
+            if (!IsAnswered)
+            {
+                return;
+            }
+
             if (terminator != null)
             {
                 await this.SetChannelVariable("playback_terminators", terminator);
@@ -302,14 +335,14 @@ namespace NEventSocket.Channels
                 case Leg.Both:
                     await
                         Task.WhenAll(
-                            this.eventSocket.ExecuteApplication(this.UUID, "displace_session", "{0} m{1}".Fmt(file, "w"), false, true),
-                            this.eventSocket.ExecuteApplication(this.UUID, "displace_session", "{0} m{1}".Fmt(file, "r"), false, true));
+                            eventSocket.ExecuteApplication(this.UUID, "displace_session", "{0} m{1}".Fmt(file, "w"), false, true),
+                            eventSocket.ExecuteApplication(this.UUID, "displace_session", "{0} m{1}".Fmt(file, "r"), false, true));
                     break;
                 case Leg.ALeg:
-                    await this.eventSocket.ExecuteApplication(this.UUID, "displace_session", "{0} m{1}".Fmt(file, "w"));
+                    await eventSocket.ExecuteApplication(this.UUID, "displace_session", "{0} m{1}".Fmt(file, "w"));
                     break;
                 case Leg.BLeg:
-                    await this.eventSocket.ExecuteApplication(this.UUID, "displace_session", "{0} m{1}".Fmt(file, "r"));
+                    await eventSocket.ExecuteApplication(this.UUID, "displace_session", "{0} m{1}".Fmt(file, "r"));
                     break;
                 default:
                     throw new NotSupportedException("Leg {0} is not supported".Fmt(leg));
@@ -318,46 +351,66 @@ namespace NEventSocket.Channels
 
         public async Task<string> PlayGetDigits(PlayGetDigitsOptions options)
         {
-            var result = await this.eventSocket.PlayGetDigits(this.UUID, options);
+            if (!IsAnswered)
+            {
+                return string.Empty;
+            }
+
+            var result = await eventSocket.PlayGetDigits(this.UUID, options);
             return result.Digits;
         }
 
         public Task Say(SayOptions options)
         {
-            return this.eventSocket.Say(this.UUID, options);
+            return RunIfAnswered(() => eventSocket.Say(this.UUID, options));
         }
 
         public async Task StartRecording(string file, int? maxSeconds = null)
         {
+            if (!IsAnswered)
+            {
+                return;
+            }
+
             if (this.recordingPath != null)
             {
                 Log.Warn(
                     () =>
                     "Channel {0} received a request to record to file {1} while currently recording to file {2}. Channel will stop recording and start recording to the new file."
                         .Fmt(this.UUID, file, this.recordingPath));
-                await this.StopRecording();
+                await StopRecording();
             }
 
             this.recordingPath = file;
-            await this.eventSocket.SendApi("uuid_record {0} start {1} {2}".Fmt(this.UUID, this.recordingPath, maxSeconds));
+            await eventSocket.SendApi("uuid_record {0} start {1} {2}".Fmt(this.UUID, this.recordingPath, maxSeconds));
             Log.Debug(() => "Channel {0} is recording to {1}".Fmt(this.UUID, this.recordingPath));
         }
 
         public async Task MaskRecording()
         {
+            if (!IsAnswered)
+            {
+                return;
+            }
+
             if (string.IsNullOrEmpty(this.recordingPath))
             {
                 Log.Warn(() => "Channel {0} is not recording".Fmt(this.UUID));
             }
             else
             {
-                await this.eventSocket.SendApi("uuid_record {0} mask {1}".Fmt(this.UUID, this.recordingPath));
+                await eventSocket.SendApi("uuid_record {0} mask {1}".Fmt(this.UUID, this.recordingPath));
                 Log.Debug(() => "Channel {0} has masked recording to {1}".Fmt(this.UUID, this.recordingPath));
             }
         }
 
         public async Task UnmaskRecording()
         {
+            if (!IsAnswered)
+            {
+                return;
+            }
+
             if (string.IsNullOrEmpty(this.recordingPath))
             {
                 Log.Warn(() => "Channel {0} is not recording".Fmt(this.UUID));
@@ -371,6 +424,11 @@ namespace NEventSocket.Channels
 
         public async Task StopRecording()
         {
+            if (!IsAnswered)
+            {
+                return;
+            }
+
             if (string.IsNullOrEmpty(this.recordingPath))
             {
                 Log.Warn(() => "Channel {0} is not recording".Fmt(this.UUID));
@@ -385,17 +443,27 @@ namespace NEventSocket.Channels
 
         public async Task StartDetectingInbandDtmf()
         {
+            if (!IsAnswered)
+            {
+                return;
+            }
+
             await this.eventSocket.SubscribeEvents(EventName.Dtmf);
             await this.eventSocket.StartDtmf(this.UUID);
         }
 
         public Task StopDetectingInbandDtmf()
         {
-            return this.eventSocket.Stoptmf(this.UUID);
+            return this.RunIfAnswered(() => eventSocket.Stoptmf(this.UUID));
         }
 
         public Task SetChannelVariable(string name, string value)
         {
+            if (!IsAnswered)
+            {
+                return TaskHelper.Completed;
+            }
+
             Log.Debug(() => "Channel {0} setting variable '{1}' to '{2}'".Fmt(this.UUID, name, value));
             return this.eventSocket.SendApi("uuid_setvar {0} {1} {2}".Fmt(this.UUID, name, value));
         }
@@ -426,6 +494,20 @@ namespace NEventSocket.Channels
 
                 this.disposed = true;
             }
+        }
+
+        /// <summary>
+        /// Runs the given async function if the Channel is still connected, otherwise a completed Task.
+        /// </summary>
+        /// <param name="toRun">An Async function.</param>
+        private Task RunIfAnswered(Func<Task> toRun)
+        {
+            if (!IsAnswered)
+            {
+                return TaskHelper.Completed;
+            }
+
+            return toRun();
         }
     }
 }
