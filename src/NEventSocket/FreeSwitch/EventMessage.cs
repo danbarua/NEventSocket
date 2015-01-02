@@ -129,11 +129,11 @@ namespace NEventSocket.FreeSwitch
         /// <summary>
         /// Gets the <see cref="AnswerState"/> of the Channel.
         /// </summary>
-        public AnswerState AnswerState
+        public AnswerState? AnswerState
         {
             get
             {
-                return Headers.GetValueOrDefault(HeaderNames.AnswerState).HeaderToEnum<AnswerState>();
+                return Headers.GetValueOrDefault(HeaderNames.AnswerState).HeaderToEnumOrNull<AnswerState>();
             }
         }
 

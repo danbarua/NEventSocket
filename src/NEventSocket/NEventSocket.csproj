@@ -65,6 +65,9 @@
     <Compile Include="..\..\SharedAssemblyInfo.cs">
       <Link>Properties\SharedAssemblyInfo.cs</Link>
     </Compile>
+    <Compile Include="Channels\BasicChannel.cs" />
+    <Compile Include="Channels\BridgedChannel.cs" />
+    <Compile Include="Channels\BridgeStatus.cs" />
     <Compile Include="CommandExtensions.cs" />
     <Compile Include="ApplicationExtensions.cs" />
     <Compile Include="FreeSwitch\BridgeResult.cs" />
@@ -86,7 +89,6 @@
     <Compile Include="FreeSwitch\OriginateOptions.cs" />
     <Compile Include="FreeSwitch\OriginateResult.cs" />
     <Compile Include="FreeSwitch\ApplicationResult.cs" />
-    <Compile Include="Channels\IChannel.cs" />
     <Compile Include="FreeSwitch\HangupCause.cs" />
     <Compile Include="InboundSocketExtensions.cs" />
     <Compile Include="Logging\LibLog.cs" />

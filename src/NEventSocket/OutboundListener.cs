@@ -28,7 +28,7 @@ namespace NEventSocket
         /// <summary>
         /// Gets an observable sequence of incoming calls wrapped as <seealso cref="IChannel"/> abstractions.
         /// </summary>
-        public IObservable<IChannel> Channels
+        public IObservable<Channel> Channels
         {
             get
             {

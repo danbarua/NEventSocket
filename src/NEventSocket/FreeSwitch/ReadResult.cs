@@ -37,5 +37,10 @@ namespace NEventSocket.FreeSwitch
         /// Gets the digits read from the Channel.
         /// </summary>
         public string Digits { get; private set; }
+
+        public override string ToString()
+        {
+            return Digits;
+        }
     }
 }

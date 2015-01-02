@@ -29,6 +29,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Examples", "Examples", "{57
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KitchenSink", "examples\KitchenSink\KitchenSink.csproj", "{0486B4C4-BD02-4DF1-99C8-1188400B08E1}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Channels", "examples\Channels\Channels.csproj", "{F0FBCE0F-6FC9-4048-83D3-F6EABD6BFCFE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -47,6 +49,10 @@ Global
 		{0486B4C4-BD02-4DF1-99C8-1188400B08E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0486B4C4-BD02-4DF1-99C8-1188400B08E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0486B4C4-BD02-4DF1-99C8-1188400B08E1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F0FBCE0F-6FC9-4048-83D3-F6EABD6BFCFE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F0FBCE0F-6FC9-4048-83D3-F6EABD6BFCFE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F0FBCE0F-6FC9-4048-83D3-F6EABD6BFCFE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F0FBCE0F-6FC9-4048-83D3-F6EABD6BFCFE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -54,5 +60,6 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{731A678B-6827-468A-BFA1-AB2533947D61} = {8A973BD1-83E8-4794-A81A-538CC7069BDC}
 		{0486B4C4-BD02-4DF1-99C8-1188400B08E1} = {5755C001-7B02-45D2-81D6-ADF9AD698706}
+		{F0FBCE0F-6FC9-4048-83D3-F6EABD6BFCFE} = {5755C001-7B02-45D2-81D6-ADF9AD698706}
 	EndGlobalSection
 EndGlobal

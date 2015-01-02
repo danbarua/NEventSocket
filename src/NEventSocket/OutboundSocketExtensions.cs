@@ -45,11 +45,11 @@ namespace NEventSocket
         }
 
         /// <summary>
-        /// Gets an <seealso cref="IChannel"/> abstraction wrapper using the <seealso cref="OutboundSocket"/> instance.
+        /// Gets an <seealso cref="Channel"/> abstraction wrapper using the <seealso cref="OutboundSocket"/> instance.
         /// </summary>
         /// <param name="eventSocket">The <seealso cref="OutboundSocket"/> instance to use.</param>
-        /// <returns>A Task of <seealso cref="IChannel"/>.</returns>
-        public static async Task<IChannel> GetChannel(this OutboundSocket eventSocket)
+        /// <returns>A Task of <seealso cref="Channel"/>.</returns>
+        public static async Task<Channel> GetChannel(this OutboundSocket eventSocket)
         {
             await eventSocket.Connect();
             return new Channel(eventSocket);

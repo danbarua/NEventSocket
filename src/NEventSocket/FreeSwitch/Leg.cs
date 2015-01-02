@@ -7,23 +7,22 @@
 namespace NEventSocket.FreeSwitch
 {
     /// <summary>
-    /// Describes a leg of a call consisting of two channels bridged together.
-    /// Used when playing audio into a bridged call.
+    /// Refers to a leg of a call consisting of one or more channels
     /// </summary>
     public enum Leg
     {
         /// <summary>
-        /// Play to both legs of the call
+        /// Both Legs of the Call
         /// </summary>
         Both, 
 
         /// <summary>
-        /// Play to the A-Leg of the call
+        /// The A-Leg of the call
         /// </summary>
         ALeg, 
 
         /// <summary>
-        /// Play to the B-Leg of the call
+        /// The B-Leg of the call
         /// </summary>
         BLeg, 
     }
