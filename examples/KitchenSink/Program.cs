@@ -404,103 +404,94 @@
             listener.Connections.Subscribe(
                 async connection =>
                 {
+                    var channel = await connection.GetChannel();
 
-                    var aLeg = await connection.GetChannel();
-                    Console.WriteLine("New Socket connected");
+                    try
+                    {
+                        Console.WriteLine("New Socket connected");
 
-                    aLeg.HangupCallBack = (e) =>
-                        {
-                            ColorConsole.WriteLine("Hangup Detected on A-Leg ".Red(),
-                                                        e.Headers[HeaderNames.CallerUniqueId],
-                                                        " ",
-                                                        e.Headers[HeaderNames.HangupCause]);
+                        channel.HangupCallBack = (e) =>
+                            {
+                                ColorConsole.WriteLine("Hangup Detected on A-Leg ".Red(),
+                                                            e.Headers[HeaderNames.CallerUniqueId],
+                                                            " ",
+                                                            e.Headers[HeaderNames.HangupCause]);
 
-                            aLeg.Dispose();
-                        };
+                                channel.Dispose();
+                            };
 
-                    await aLeg.Answer();
-                    await aLeg.PlayFile("ivr/8000/ivr-call_being_transferred.wav");
-                    await aLeg.SetChannelVariable("bridge_filter_dtmf", "true");
-                    await connection.ExecuteApplication(aLeg.UUID, "digit_action_set_realm", "feature_codes");
-                    await connection.SubscribeCustomEvents("NEventSocket::FeatureCode");
+                        await channel.Answer();
+                        await channel.PlayFile("ivr/8000/ivr-call_being_transferred.wav");
 
-                    var bridgeOptions = new BridgeOptions()
-                                            {
-                                                UUID = Guid.NewGuid().ToString(),
-                                                IgnoreEarlyMedia = true,
-                                                RingBack =
-                                                    "tone_stream://%(400,200,400,450);%(400,2000,400,450);loops=-1",
-                                                ContinueOnFail = true,
-                                                HangupAfterBridge = true,
-                                                TimeoutSeconds = 60,
-                                                CallerIdName = aLeg["effective_caller_id_name"],
-                                                CallerIdNumber = aLeg["effective_caller_id_number"],
-                                                //ConfirmPrompt = "ivr/8000/ivr-to_accept_press_one.wav",
-                                                //ConfirmInvalidPrompt =
-                                                //    "ivr/8000/ivr-that_was_an_invalid_entry.wav",
-                                                //ConfirmKey = "1234",
+                        var bridgeOptions = new BridgeOptions()
+                                                {
+                                                    UUID = Guid.NewGuid().ToString(),
+                                                    IgnoreEarlyMedia = true,
+                                                    RingBack =
+                                                        "tone_stream://%(400,200,400,450);%(400,2000,400,450);loops=-1",
+                                                    ContinueOnFail = true,
+                                                    HangupAfterBridge = true,
+                                                    TimeoutSeconds = 60,
+                                                    CallerIdName = channel["effective_caller_id_name"],
+                                                    CallerIdNumber = channel["effective_caller_id_number"],
                                                 };
 
-                    bridgeOptions.ChannelVariables.Add("x_callcraft_account_id", "1234");
-                    bridgeOptions.ChannelVariables.Add("x_callcallcraft_agent_id", "1234");
-                    bridgeOptions.ChannelVariables.Add("bridge_filter_dtmf", "true");
-                    bridgeOptions.ChannelVariables.Add("bridge_pre_execute_bleg_app", "bind_digit_action");
-                    bridgeOptions.ChannelVariables.Add(
-                        "bridge_pre_execute_bleg_data",
-                        @"feature_codes,~^#\d+,exec:event,Event-Name=CUSTOM\,Event-Subclass=NEventSocket::FeatureCode,self,both"); //self,peer,both
-                    
-                    await aLeg.Bridge("user/1003", bridgeOptions);
+                        bridgeOptions.ChannelVariables.Add("bridge_filter_dtmf", "true");
 
-                    if (!aLeg.IsBridged)
-                    {
-                        ColorConsole.WriteLine("Originate Failed - ".Red(), aLeg["bridge_hangup_cause"]);
-                        
-                        await aLeg.PlayFile("ivr/8000/ivr-call_rejected.wav");
-                        await aLeg.Hangup(HangupCause.NormalTemporaryFailure);
-                    }
-                    else
-                    {
-                        ColorConsole.WriteLine("BRIDGED success".Green());
+                        await channel.StartDetectingInbandDtmf();
 
-                        await aLeg.SetChannelVariable("RECORD_STEREO", "true");
-                        var recordingPath = "{0}.wav".Fmt(aLeg.UUID);
-                        
-                        aLeg.FeatureCodes.Subscribe(
-                            async x =>
+                        await channel.Bridge("user/1003", bridgeOptions, (e) => ColorConsole.WriteLine("Ringing...".DarkGreen()));
+
+                        if (!channel.IsBridged)
+                        {
+                            ColorConsole.WriteLine("Originate Failed - ".Red(), channel["bridge_hangup_cause"]);
+
+                            await channel.PlayFile("ivr/8000/ivr-call_rejected.wav");
+                            await channel.Hangup(HangupCause.NormalTemporaryFailure);
+                        }
+                        else
+                        {
+                            ColorConsole.WriteLine("BRIDGED success".Green());
+
+                            await channel.SetChannelVariable("RECORD_STEREO", "true");
+                            var recordingPath = "{0}.wav".Fmt(channel.UUID);
+
+                            channel.FeatureCodes(Leg.BLeg).Subscribe(
+                                async x =>
                                 {
                                     ColorConsole.WriteLine("Detected Feature Code: ".DarkYellow(), x);
                                     switch (x)
                                     {
                                         case "#4":
                                             ColorConsole.WriteLine("Mask recording".Yellow());
-                                            await aLeg.MaskRecording();
+                                            await channel.MaskRecording();
                                             await
                                                 Task.WhenAll(
-                                                    aLeg.PlayFile(
+                                                    channel.PlayFile(
                                                         "ivr/8000/ivr-recording_paused.wav", Leg.BLeg));
                                             break;
                                         case "#5":
                                             ColorConsole.WriteLine("Unmask recording".Yellow());
-                                            await aLeg.UnmaskRecording();
+                                            await channel.UnmaskRecording();
                                             await
-                                                aLeg.PlayFile("ivr/8000/ivr-begin_recording.wav", Leg.BLeg);
+                                                channel.PlayFile("ivr/8000/ivr-begin_recording.wav", Leg.BLeg);
                                             break;
                                         case "#8":
                                             ColorConsole.WriteLine("Stop recording".Yellow());
-                                            await aLeg.StopRecording();
+                                            await channel.StopRecording();
                                             await
-                                                aLeg.PlayFile(
+                                                channel.PlayFile(
                                                     "ivr/8000/ivr-recording_stopped.wav", Leg.Both);
                                             break;
                                         case "#7":
                                             ColorConsole.WriteLine("Start recording".Yellow());
-                                            await aLeg.StartRecording(recordingPath);
+                                            await channel.StartRecording(recordingPath);
                                             await
-                                                aLeg.PlayFile("ivr/8000/ivr-begin_recording.wav", Leg.Both);
+                                                channel.PlayFile("ivr/8000/ivr-begin_recording.wav", Leg.Both);
                                             break;
                                         case "#9":
                                             ColorConsole.WriteLine("Attended x-fer".Yellow());
-                                                
+
                                             var digits = await connection.Read(bridgeOptions.UUID, new ReadOptions { MinDigits = 3, MaxDigits = 4, Prompt = "tone_stream://%(10000,0,350,440)", TimeoutMs = 30000, Terminators = "#" });
                                             if (digits.Result == ReadResultStatus.Success && digits.Digits.Length == 4)
                                             {
@@ -531,6 +522,13 @@
                                             break;
                                     }
                                 });
+                        }
+                    }
+                    catch (TaskCanceledException ex)
+                    {
+                        ColorConsole.WriteLine("TaskCancelled - shutting down\r\n{0}".Fmt(ex.ToString()).OnRed());
+                        ColorConsole.WriteLine("Channel {0} is {1}".Fmt(channel.UUID, channel.AnswerState).OnRed());
+                        //aLeg.Dispose();
                     }
                 });
 

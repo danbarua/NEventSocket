@@ -25,11 +25,11 @@ namespace NEventSocket.Channels
 
         IObservable<string> Dtmf { get; }
 
-        IObservable<string> FeatureCodes { get; }
-
         bool IsBridged { get; }
 
         string this[string variableName] { get; }
+
+        IObservable<string> FeatureCodes(Leg leg);
 
         Task Bridge(IChannel other);
 

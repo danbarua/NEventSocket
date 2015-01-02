@@ -6,6 +6,8 @@
 namespace NEventSocket.Channels
 {
     using System;
+    using System.Collections.Generic;
+    using System.Linq;
     using System.Reactive.Disposables;
     using System.Reactive.Linq;
     using System.Threading.Tasks;
@@ -17,8 +19,6 @@ namespace NEventSocket.Channels
 
     public class Channel : IChannel
     {
-        private const string FeatureCodeEvent = "NEventSocket::FeatureCode";
-
         private static readonly ILog Log = LogProvider.GetCurrentClassLogger();
 
         private readonly EventSocket eventSocket;
@@ -146,19 +146,17 @@ namespace NEventSocket.Channels
             }
         }
 
-        public IObservable<string> FeatureCodes
+        public IObservable<string> FeatureCodes(Leg leg)
         {
-            get
-            {
-                return
-                    this.eventSocket.Events.Where(
-                        x =>
-                        x.UUID == this.UUID && x.EventName == EventName.Custom && x.GetHeader(HeaderNames.EventSubclass) == FeatureCodeEvent)
-                        .Do(
-                            x =>
-                            Log.Trace(() => "Channel {0} Detected Feature Code {1}".Fmt(this.UUID, x.GetVariable("last_matching_digits"))))
-                        .Select(x => x.GetVariable("last_matching_digits"));
-            }
+            var dtmfEvents = leg == Leg.ALeg
+                             ? eventSocket.Events.Where(x => x.EventName == EventName.Dtmf && x.UUID == this.UUID)
+                             : eventSocket.Events.Where(x => x.EventName == EventName.Dtmf && x.UUID == this.bridgedLegUUID);
+
+            return dtmfEvents.Select(x => x.Headers[HeaderNames.DtmfDigit])
+                            .Buffer(TimeSpan.FromSeconds(2), 2)
+                            .Where(x => x.Count == 2 && x[0] == "#")
+                            .Select(x => string.Concat(x))
+                            .Do(x => Log.Debug(() => "Channel {0} detected Feature Code {1}".Fmt(UUID, x)));
         }
 
         public bool IsAnswered
@@ -231,7 +229,6 @@ namespace NEventSocket.Channels
 
             if (onProgress != null)
             {
-                // only works on inbound sockets
                 subscriptions.Add(
                     this.eventSocket.Events.Where(x => x.UUID == options.UUID && x.EventName == EventName.ChannelProgress)
                         .Take(1)
