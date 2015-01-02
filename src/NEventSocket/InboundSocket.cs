@@ -102,7 +102,7 @@ namespace NEventSocket
                             x.UUID == options.UUID
                             && (x.EventName == EventName.ChannelAnswer || x.EventName == EventName.ChannelHangup
                                 || (options.ReturnRingReady && x.EventName == EventName.ChannelProgress))).Cast<BasicMessage>())
-                    .LastAsync(x => ((x is BackgroundJobResult) && !((BackgroundJobResult)x).Success) || (x is EventMessage))
+                    .FirstAsync(x => ((x is BackgroundJobResult) && !((BackgroundJobResult)x).Success) || (x is EventMessage))
                     .Select(OriginateResult.FromBackgroundJobResultOrChannelEvent)
                     .ToTask();
         }

@@ -14,9 +14,18 @@ namespace NEventSocket.FreeSwitch
     {
         internal ReadResult(EventMessage eventMessage, string channelVariable) : base(eventMessage)
         {
-            this.Digits = eventMessage.GetVariable(channelVariable);
-            var readResult = eventMessage.GetVariable("read_result");
-            this.Result = !string.IsNullOrEmpty(readResult) ? (ReadResultStatus)Enum.Parse(typeof(ReadResultStatus), readResult, true) : ReadResultStatus.Failure;
+            if (eventMessage != null)
+            {
+                this.Digits = eventMessage.GetVariable(channelVariable);
+                var readResult = eventMessage.GetVariable("read_result");
+                this.Result = !string.IsNullOrEmpty(readResult)
+                                  ? (ReadResultStatus)Enum.Parse(typeof(ReadResultStatus), readResult, true)
+                                  : ReadResultStatus.Failure;
+            }
+            else
+            {
+                Result = ReadResultStatus.Failure;
+            }
         }
 
         /// <summary>

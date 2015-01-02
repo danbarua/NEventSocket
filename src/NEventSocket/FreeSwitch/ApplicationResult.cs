@@ -23,11 +23,17 @@ namespace NEventSocket.FreeSwitch
         /// <param name="eventMessage">The <seealso cref="EventMessage"/> to wrap.</param>
         protected ApplicationResult(EventMessage eventMessage)
         {
-            this.ChannelData = eventMessage;
+            //eventMessage may be null, this is the case where the other side disconnected and closed down
+            //the socket before we got the CHANNEL_EXECUTE_COMPLETE event.
 
-            if (this.ChannelData.Headers.ContainsKey(HeaderNames.ApplicationResponse))
+            if (eventMessage != null)
             {
-                this.ResponseText = this.ChannelData.Headers[HeaderNames.ApplicationResponse];
+                this.ChannelData = eventMessage;
+
+                if (this.ChannelData.Headers.ContainsKey(HeaderNames.ApplicationResponse))
+                {
+                    this.ResponseText = this.ChannelData.Headers[HeaderNames.ApplicationResponse];
+                }
             }
         }
 

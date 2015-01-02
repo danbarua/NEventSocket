@@ -49,7 +49,7 @@ namespace NEventSocket
                     {
                         this.ChannelData = x;
                         this.Messages.FirstAsync(m => m.ContentType == ContentTypes.DisconnectNotice)
-                            .Do(_ => Log.Trace(() => "Channel {0} Disconnect Notice received.".Fmt(ChannelData.UUID)));
+                            .Do(dn => Log.Trace(() => "Channel {0} Disconnect Notice {1} received.".Fmt(ChannelData.UUID, dn.BodyText)));
                     }).ToTask();
         }
     }

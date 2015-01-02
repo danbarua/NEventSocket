@@ -13,12 +13,20 @@ namespace NEventSocket.FreeSwitch
     {
         internal BridgeResult(EventMessage eventMessage) : base(eventMessage)
         {
-            this.Success = eventMessage.Headers.ContainsKey(HeaderNames.OtherLegUniqueId);
-            this.ResponseText = eventMessage.GetVariable("DIALSTATUS");
-
-            if (this.Success)
+            if (eventMessage != null)
             {
-                this.BridgeUUID = eventMessage.Headers[HeaderNames.OtherLegUniqueId];
+                this.Success = eventMessage.Headers.ContainsKey(HeaderNames.OtherLegUniqueId);
+                this.ResponseText = eventMessage.GetVariable("DIALSTATUS");
+
+                if (this.Success)
+                {
+                    this.BridgeUUID = eventMessage.Headers[HeaderNames.OtherLegUniqueId];
+                }
+            }
+            else
+            {
+                this.Success = false;
+                this.ResponseText = "Aborted";
             }
         }
 

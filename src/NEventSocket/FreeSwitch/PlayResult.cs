@@ -15,13 +15,20 @@ namespace NEventSocket.FreeSwitch
     {
         internal PlayResult(EventMessage eventMessage) : base(eventMessage)
         {
-            if (eventMessage.Headers[HeaderNames.ApplicationResponse] == "FILE NOT FOUND")
+            if (eventMessage != null)
             {
-                throw new FileNotFoundException(
-                    "FreeSwitch was unable to play the file.", eventMessage.Headers[HeaderNames.ApplicationData]);
-            }
+                if (eventMessage.Headers[HeaderNames.ApplicationResponse] == "FILE NOT FOUND")
+                {
+                    throw new FileNotFoundException(
+                        "FreeSwitch was unable to play the file.", eventMessage.Headers[HeaderNames.ApplicationData]);
+                }
 
-            this.Success = eventMessage.Headers[HeaderNames.ApplicationResponse] == "FILE PLAYED";
+                this.Success = eventMessage.Headers[HeaderNames.ApplicationResponse] == "FILE PLAYED";
+            }
+            else
+            {
+                this.Success = false;
+            }
         }
     }
 }

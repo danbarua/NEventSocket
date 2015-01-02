@@ -11,6 +11,8 @@ namespace NEventSocket.Util
 
     internal static class TaskHelper
     {
+        public static Task Completed { get { return Task.FromResult(0); } }
+
         /// <summary>
         /// Completes a TaskCompletionSource based on the failed outcome of another Task.
         /// </summary>
