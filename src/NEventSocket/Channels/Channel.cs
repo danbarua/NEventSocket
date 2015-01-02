@@ -168,6 +168,7 @@ namespace NEventSocket.Channels
                 return this.AnswerState == AnswerState.Answered;
             }
         }
+
         public bool IsBridged
         {
             get
@@ -226,14 +227,6 @@ namespace NEventSocket.Channels
                 options.UUID = Guid.NewGuid().ToString();
             }
 
-            if (featureCodesEnabledLeg == Leg.BLeg)
-            {
-                options.ChannelVariables.Add("bridge_pre_execute_bleg_app", "bind_digit_action");
-                options.ChannelVariables.Add(
-                    "bridge_pre_execute_bleg_data",
-                    @"feature_codes,~^#\d+,exec:event,Event-Name=CUSTOM\,Event-Subclass=NEventSocket::FeatureCode,self,both"); //self,peer,both
-            }
-
             var subscriptions = new CompositeDisposable();
 
             if (onProgress != null)
@@ -248,27 +241,6 @@ namespace NEventSocket.Channels
             var result = await this.eventSocket.Bridge(this.UUID, destination, options);
             Log.Debug(() => "Channel {0} bridge complete {1} {2}".Fmt(this.UUID, result.Success, result.ResponseText));
             subscriptions.Dispose();
-
-            Log.Debug(() => "Channel {0} bridge complete {1} {2}".Fmt(this.UUID, result.Success, result.ResponseText));
-
-            // if (result.Success)
-            // {
-            // this.bridgedLegUUID = result.BridgeUUID;
-
-            // eventSocket.Events.Where(x => x.UUID == this.UUID && x.EventName == EventName.ChannelUnbridge)
-            // .Take(1)
-            // .Subscribe(
-            // x =>
-            // {
-            // Log.DebugFormat(
-            // "Channel {0} B-Leg {1} hungup {2}",
-            // UUID,
-            // bridgedLegUUID,
-            // x.GetVariable("bridge_hangup_cause"));
-            // //this.bridgedLegUUID = null;
-            // });
-            // }
-            return result;
         }
 
         public Task Execute(string application, string args)

@@ -33,7 +33,7 @@ namespace NEventSocket.Channels
 
         Task Bridge(IChannel other);
 
-        Task<BridgeResult> Bridge(string destination, BridgeOptions options, Action<EventMessage> onProgress = null);
+        Task Bridge(string destination, BridgeOptions options, Action<EventMessage> onProgress = null);
 
         Task Hold();
 
