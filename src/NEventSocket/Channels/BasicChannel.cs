@@ -155,7 +155,7 @@ namespace NEventSocket.Channels
             return this.RunIfAnswered(() => this.eventSocket.SendApi("uuid_kill {0} {1}".Fmt(this.UUID, hangupCause.ToString().ToUpperWithUnderscores())));
         }
 
-        public async Task PlayFile(string file, Leg leg = Leg.ALeg, string terminator = null)
+        public async Task PlayFile(string file, Leg leg = Leg.ALeg, bool mix = false, string terminator = null)
         {
             if (!this.IsAnswered)
             {
@@ -179,14 +179,14 @@ namespace NEventSocket.Channels
                 case Leg.Both:
                     await
                         Task.WhenAll(
-                            this.eventSocket.ExecuteApplication(this.UUID, "displace_session", "{0} m{1}".Fmt(file, "w"), false, true),
-                            this.eventSocket.ExecuteApplication(this.UUID, "displace_session", "{0} m{1}".Fmt(file, "r"), false, true));
+                        this.eventSocket.ExecuteApplication(this.UUID, "displace_session", "{0} {1}{2}".Fmt(file, mix ? "m" : string.Empty, "w"), false, false),
+                            this.eventSocket.ExecuteApplication(this.UUID, "displace_session", "{0} {1}{2}".Fmt(file, mix ? "m" : string.Empty, "r"), false, false));
                     break;
                 case Leg.ALeg:
-                    await this.eventSocket.ExecuteApplication(this.UUID, "displace_session", "{0} m{1}".Fmt(file, "w"));
+                    await this.eventSocket.ExecuteApplication(this.UUID, "displace_session", "{0} {1}{2}".Fmt(file, mix ? "m" : string.Empty, "w"), false, false);
                     break;
                 case Leg.BLeg:
-                    await this.eventSocket.ExecuteApplication(this.UUID, "displace_session", "{0} m{1}".Fmt(file, "r"));
+                    await this.eventSocket.ExecuteApplication(this.UUID, "displace_session", "{0} {1}{2}".Fmt(file, mix ? "m" : string.Empty, "r"), false, false);
                     break;
                 default:
                     throw new NotSupportedException("Leg {0} is not supported".Fmt(leg));
@@ -219,11 +219,18 @@ namespace NEventSocket.Channels
             return this.RunIfAnswered(() => this.eventSocket.Say(this.UUID, options));
         }
 
-        public async Task AttendedTransfer(string endpoint)
+        /// <summary>
+        /// Performs an attended transfer. If succeded, it will replace the Bridged Channel of the other Leg.
+        /// </summary>
+        /// <remarks>
+        /// See https://freeswitch.org/confluence/display/FREESWITCH/Attended+Transfer
+        /// </remarks>
+        /// <param name="endpoint">The endpoint to transfer to eg. user/1000, sofia/foo@bar.com etc</param>
+        public async Task<AttendedTransferResult> AttendedTransfer(string endpoint)
         {
             var result = await eventSocket.ExecuteApplication(UUID, "att_xfer", endpoint);
             Console.WriteLine(result);
-            return;
+            return new AttendedTransferResult(result);
         }
 
         public async Task StartDetectingInbandDtmf()

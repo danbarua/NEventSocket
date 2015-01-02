@@ -70,6 +70,7 @@
     <Compile Include="Channels\BridgeStatus.cs" />
     <Compile Include="CommandExtensions.cs" />
     <Compile Include="ApplicationExtensions.cs" />
+    <Compile Include="FreeSwitch\AttendedTransferResult.cs" />
     <Compile Include="FreeSwitch\BridgeResult.cs" />
     <Compile Include="FreeSwitch\Leg.cs" />
     <Compile Include="FreeSwitch\PlayGetDigitsOptions.cs" />

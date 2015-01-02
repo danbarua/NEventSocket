@@ -30,30 +30,42 @@ namespace NEventSocket.Channels
 
         protected Channel(EventMessage eventMessage, EventSocket eventSocket) : base(eventMessage, eventSocket)
         {
-            eventSocket.SubscribeEvents(EventName.ChannelCreate, EventName.ChannelOriginate, EventName.ChannelDestroy).Wait();
-
-            this.Disposables.Add(
-                eventSocket.Events.Where(x => x.UUID == this.UUID && x.EventName == EventName.ChannelUnbridge).Subscribe(
-                    x =>
-                        {
-                            Log.Debug(
-                                () =>
-                                "Channel [{0}] B-Leg [{1}] hungup [{2}]".Fmt(
-                                    this.UUID, this.BridgedChannel.UUID, x.GetVariable("bridge_hangup_cause")));
-                            Log.Trace(() => "Channel [{0}] Unbridged from [{1}]".Fmt(this.UUID, this.BridgedChannel.UUID));
-                        }));
+            eventSocket.SubscribeEvents(EventName.ChannelCreate).Wait();
 
             this.Disposables.Add(
                 eventSocket.Events.Where(x => x.UUID == this.UUID && x.EventName == EventName.ChannelBridge).Subscribe(
                     x =>
                         {
-                            Log.Trace(() => "Channel [{0}] Bridged to [{1}]".Fmt(this.UUID, x.GetHeader(HeaderNames.OtherLegUniqueId)));
-                            if (x.UUID != BridgedChannel.UUID)
+                            this.Log.Trace(() => "Channel [{0}] Bridged to [{1}]".Fmt(this.UUID, x.GetHeader(HeaderNames.OtherLegUniqueId)));
+
+                            if (Bridge.Channel != null && x.GetHeader(HeaderNames.OtherLegUniqueId) != Bridge.Channel.UUID)
                             {
-                                Log.Warn(
-                                    () =>
-                                    "Channel [{0}] was Bridged to [{1}] but now changed to [{2}]".Fmt(UUID, BridgedChannel.UUID, x.UUID));
+                                //possibly changed bridge partner as part of att_xfer
+                                Log.Warn(() => "Channel [{0}] was Bridged to [{1}] but now changed to [{2}]".Fmt(UUID, Bridge.Channel.UUID, x.UUID));
+
+                                this.Bridge.Channel.Dispose();
+                                this.Bridge = new BridgeStatus(true, "TRANSFERRED", new BridgedChannel(x, eventSocket));
                             }
+                        }));
+
+            this.Disposables.Add(
+                eventSocket.Events.Where(x => x.UUID == this.UUID && x.EventName == EventName.ChannelUnbridge).Subscribe(
+                    x => this.Log.Trace(() => "Channel [{0}] Unbridged from [{1}] {2}".Fmt(this.UUID, this.Bridge.Channel.UUID, x.GetVariable("bridge_hangup_cause")))));
+
+            this.Disposables.Add(
+                eventSocket.Events.Where(x => x.EventName == EventName.ChannelBridge 
+                                                && x.UUID != UUID
+                                                && x.GetHeader(HeaderNames.OtherLegUniqueId) == UUID
+                                                && (Bridge.Channel != null && x.UUID != Bridge.Channel.UUID))
+                    .Subscribe(x =>
+                        {
+                            //there is another channel out there that has bridged to us but we didn't get the CHANNEL_BRIDGE event on this channel
+                            //possibly an attended transfer. We'll swap our bridge partner so we can get its events
+
+                            Log.Warn(() => "Channel [{0}] was Bridged to [{1}] but now changed to [{2}]".Fmt(UUID, Bridge.Channel.UUID, x.UUID));
+
+                            this.Bridge.Channel.Dispose();
+                            this.Bridge = new BridgeStatus(true, "TRANSFERRED", new BridgedChannel(x, eventSocket));
                         }));
 
             if (this.eventSocket is OutboundSocket)
@@ -63,16 +75,14 @@ namespace NEventSocket.Channels
                                .Subscribe(e => eventSocket.Exit()));
             }
 
+            //populate empty bridge status
             this.Bridge = new BridgeStatus(false, null);
         }
-    
 
         ~Channel()
         {
             this.Dispose(false);
         }
-
-        protected BridgedChannel BridgedChannel { get; private set; }
 
         public BridgeStatus Bridge { get; private set; }
 
@@ -80,7 +90,7 @@ namespace NEventSocket.Channels
         {
             if (this.IsBridged)
             {
-                throw new InvalidOperationException("Channel {0} is already bridged to {1}".Fmt(this.UUID, this.BridgedChannel.UUID));
+                throw new InvalidOperationException("Channel {0} is already bridged to {1}".Fmt(this.UUID, this.Bridge.Channel.UUID));
             }
 
             if (this.Answered != AnswerState.Answered && other.Answered != AnswerState.Answered)
@@ -92,11 +102,11 @@ namespace NEventSocket.Channels
 
             if (result.Success)
             {
-                this.BridgedChannel = new BridgedChannel(other.lastEvent, eventSocket);
-
-                this.eventSocket.Events.Where(x => x.UUID == other.UUID && x.EventName == EventName.ChannelHangup)
-                    .Take(1)
-                    .Subscribe(x => this.Log.Debug(() => "Channel {0} B-Leg {1} hungup {2}".Fmt(this.UUID, other.UUID, x.HangupCause)));
+                this.Bridge = new BridgeStatus(result.Success, result.BodyText, new BridgedChannel(other.lastEvent, eventSocket));
+            }
+            else
+            {
+                this.Bridge = new BridgeStatus(result.Success, result.ErrorMessage);
             }
         }
 
@@ -119,7 +129,7 @@ namespace NEventSocket.Channels
             subscriptions.Add(
                 this.eventSocket.Events.Where(x => x.UUID == options.UUID)
                     .Take(1)
-                    .Subscribe(x => this.BridgedChannel = new BridgedChannel(x, eventSocket)));
+                    .Subscribe(x => this.Bridge = new BridgeStatus(false, "In Progress", new BridgedChannel(x, eventSocket))));
 
             if (onProgress != null)
             {
@@ -134,7 +144,7 @@ namespace NEventSocket.Channels
             Log.Debug(() => "Channel {0} bridge complete {1} {2}".Fmt(this.UUID, result.Success, result.ResponseText));
             subscriptions.Dispose();
 
-            this.Bridge = new BridgeStatus(result.Success, result.ResponseText, this.BridgedChannel);
+            this.Bridge = new BridgeStatus(result.Success, result.ResponseText, this.Bridge.Channel);
         }
 
         public Task Execute(string application, string args)
@@ -268,6 +278,11 @@ namespace NEventSocket.Channels
                     if (!this.Disposables.IsDisposed)
                     {
                         this.Disposables.Dispose();
+                    }
+
+                    if (this.Bridge.Channel != null)
+                    {
+                        this.Bridge.Channel.Dispose();
                     }
                 }
 
