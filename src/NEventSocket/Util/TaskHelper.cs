@@ -43,12 +43,12 @@ namespace NEventSocket.Util
                     {
                         if (t.IsFaulted && t.Exception != null)
                         {
-                            tcs.SetException(t.Exception);
+                            tcs.TrySetException(t.Exception);
                             onFailure();
                         }
                         else if (t.IsCanceled)
                         {
-                            tcs.SetCanceled();
+                            tcs.TrySetCanceled();
                             onFailure();
                         }
                     });
