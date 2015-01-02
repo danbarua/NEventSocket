@@ -21,7 +21,7 @@
             Logging.LogProvider.SetCurrentLogProvider(new ColouredConsoleLogProvider());
         }
 
-        [Fact(Timeout = 5000)]
+        [Fact(Timeout = 10000)]
         public async Task sending_a_correct_password_should_connect()
         {
             using (var listener = new FakeFreeSwitchListener(0))
@@ -64,7 +64,7 @@
             }
         }
 
-        [Fact(Timeout = 5000)]
+        [Fact(Timeout = 10000)]
         public void an_invalid_password_should_throw_a_SecurityException()
         {
             using (var listener = new FakeFreeSwitchListener(0))
@@ -92,7 +92,7 @@
             }
         }
 
-        [Fact(Timeout = 5000)]
+        [Fact(Timeout = 10000)]
         public void when_no_AuthRequest_received_it_should_throw_TimeoutException()
         {
             using (var listener = new FakeFreeSwitchListener(0))
@@ -122,7 +122,7 @@
             }
         }
 
-        [Fact(Timeout = 5000)]
+        [Fact(Timeout = 10000)]
         public async Task can_send_api()
         {
             using (var listener = new FakeFreeSwitchListener(0))
@@ -201,7 +201,7 @@
             }
         }
 
-        [Fact(Timeout = 5000)]
+        [Fact(Timeout = 10000)]
         public async Task can_send_command()
         {
             using (var listener = new FakeFreeSwitchListener(0))
@@ -237,7 +237,7 @@
             }
         }
 
-        [Fact(Timeout = 5000)]
+        [Fact(Timeout = 10000)]
         public async Task can_send_multiple_commands()
         {
             using (var listener = new FakeFreeSwitchListener(0))
