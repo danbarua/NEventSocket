@@ -73,7 +73,7 @@ using (var listener = new OutboundListener(8084))
       await socket.Linger(); //we'll need to exit after hangup if we do this
       await socket.ExecuteApplication(uuid, "answer");
       await socket.Play(uuid, "misc/8000/misc-freeswitch_is_state_of_the_art.wav");
-      await socket.Hangup(HangupCause.NormalClearing);
+      await socket.Hangup(uuid, HangupCause.NormalClearing);
     });
 
   listener.Start();
