@@ -62,7 +62,7 @@ using (var listener = new OutboundListener(8084))
 
       //after calling .Connect(), socket.ChannelData
       //is populated with all the headers and variables of the channel
-      
+
       var uuid = socket.ChannelData.Headers[HeaderNames.UniqueId];
       Console.WriteLine("OutboundSocket connected for channel " + uuid);
 
@@ -91,7 +91,7 @@ Channel API
 Whilst the ```InboundSocket``` and ```OutboundSocket``` give you a close-to-the-metal experience with the EventSocket interface, the Channel API is a high level abstraction built on top of these.
 A Channel object maintains its own state by subscribing to events from FreeSwitch and allows us to control calls in a more object oriented manner without having to pass channel UUIDs around as strings.
 
-Whilst the InboundSocket and OutboundSocket interfaces are reasonably stable, the Channel API is a work in progress  with the goal of providing a pleasant, easy to use, strongly-typed API on top of the EventSocket.
+Although the InboundSocket and OutboundSocket APIs are reasonably stable, the Channel API is a work in progress  with the goal of providing a pleasant, easy to use, strongly-typed API on top of the EventSocket.
 
 There is an in-depth example in the examples/Channels folder.
 
