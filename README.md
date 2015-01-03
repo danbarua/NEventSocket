@@ -78,7 +78,7 @@ using (var listener = new OutboundListener(8084))
 
 Channel API
 ---------------
-Whilst the InboundSocket and OutboundSocket interfaces give you a close-to-the-metal experience with the EventSocket interfce, the Channel API is a high level abstraction built on top of this. A Channel object maintains its state based on events from FreeSwitch and allows us to control calls in a more object oriented manner without having to pass channel UUIDs around all over the place.
+Whilst the InboundSocket and OutboundSocket interfaces give you a close-to-the-metal experience with the EventSocket interface, the Channel API is a high level abstraction built on top of this. A Channel object maintains its state based on events from FreeSwitch and allows us to control calls in a more object oriented manner without having to pass channel UUIDs around all over the place.
 
 Whilst the InboundSocket and OutboundSocket interfaces are stable, the Channel API is experimental and work is ongoing with the goal of providing a pleasant strongly-typed API on top of the EventSocket.
 
