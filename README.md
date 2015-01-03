@@ -60,6 +60,9 @@ using (var listener = new OutboundListener(8084))
     async socket => {
       await socket.Connect();
 
+      //after calling .Connect(), socket.ChannelData
+      //is populated with all the headers and variables of the channel
+      
       var uuid = socket.ChannelData.Headers[HeaderNames.UniqueId];
       Console.WriteLine("OutboundSocket connected for channel " + uuid);
 
