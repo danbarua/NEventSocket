@@ -9,6 +9,11 @@ NEventSocket is a FreeSwitch [event socket](https://freeswitch.org/confluence/di
 
 Inbound Socket Client
 --------------
+
+An ```InboundSocket``` connects and authenticates to a FreeSwitch server (inbound from the point of view of FreeSwitch) and can listen for all events going on in the system and issue commands to control calls.
+You can use ReactiveExtensions to filter events using LINQ queries and extension methods.
+All methods are async and awaitable.
+
 ```csharp
 using System;
 using System.Reactive.Linq;
@@ -38,6 +43,8 @@ using (var socket = await InboundSocket.Connect("localhost", 8021, "ClueCon"))
 
 Outbound Socket Server
 ---------------
+An ```OutboundListener``` listens on a TCP port for socket connections (outbound from the point of view of FreeSwitch) when the FreeSwitch dialplan is setup to route calls to the EventSocket.
+An ```OutboundSocket``` receives events for one particular channel, the API is the same as for an ```InboundSocket```, so you will need to pass in the channel UUID to issue commands for it.
 
 ```csharp
 using System;
@@ -78,9 +85,10 @@ using (var listener = new OutboundListener(8084))
 
 Channel API
 ---------------
-Whilst the InboundSocket and OutboundSocket interfaces give you a close-to-the-metal experience with the EventSocket interface, the Channel API is a high level abstraction built on top of this. A Channel object maintains its state based on events from FreeSwitch and allows us to control calls in a more object oriented manner without having to pass channel UUIDs around all over the place.
+Whilst the ```InboundSocket``` and ```OutboundSocket``` give you a close-to-the-metal experience with the EventSocket interface, the Channel API is a high level abstraction built on top of these.
+A Channel object maintains its own state by subscribing to events from FreeSwitch and allows us to control calls in a more object oriented manner without having to pass channel UUIDs around as strings.
 
-Whilst the InboundSocket and OutboundSocket interfaces are stable, the Channel API is experimental and work is ongoing with the goal of providing a pleasant strongly-typed API on top of the EventSocket.
+Whilst the InboundSocket and OutboundSocket interfaces are reasonably stable, the Channel API is a work in progress  with the goal of providing a pleasant, easy to use, strongly-typed API on top of the EventSocket.
 
 There is an in-depth example in the examples/Channels folder.
 
