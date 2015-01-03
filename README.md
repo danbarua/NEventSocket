@@ -23,9 +23,12 @@ using (var socket = await InboundSocket.Connect("localhost", 8021, "ClueCon"))
   Console.WriteLine(apiResponse.BodyText);
 
   socket.Events.Where(x => x.EventName == EventName.ChannelAnswer)
-              .Subscribe(x =>
+              .Subscribe(async x =>
                   {
                       Console.WriteLine("Channel Answer Event " +  x.UUID);
+
+                      //we have a channel, now we can do stuff with it
+                      await socket.Play(x.UUID, "misc/8000/misc-freeswitch_is_state_of_the_art.wav");
                   });
 
   Console.WriteLine("Press [Enter] to exit.");
@@ -60,7 +63,7 @@ using (var listener = new OutboundListener(8084))
                           socket.Exit();
                       });
 
-      await socket.Linger();
+      await socket.Linger(); //we'll need to exit after hangup if we do this
       await socket.ExecuteApplication(uuid, "answer");
       await socket.Play(uuid, "misc/8000/misc-freeswitch_is_state_of_the_art.wav");
       await socket.Hangup(HangupCause.NormalClearing);
