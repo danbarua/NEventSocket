@@ -156,7 +156,7 @@ using (var listener = new OutboundListener(8084))
                                     new ReadOptions {
                                         MinDigits = 3,
                                         MaxDigits = 4, 
-                                        Pompt = "tone_stream://%(10000,0,350,440)",
+                                        Prompt = "tone_stream://%(10000,0,350,440)",
                                         TimeoutMs = 30000,
                                         Terminators = "#" });
 
