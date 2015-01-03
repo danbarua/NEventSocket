@@ -162,9 +162,11 @@ using (var listener = new OutboundListener(8084))
 
                   if (digits.Result == ReadResultStatus.Success && digits.Digits.Length == 4)
                   {
-                    await channel.Bridge.Channel.PlayFile("ivr/8000/ivr-please_hold_while_party_contacted.wav");
+                    await channel.Bridge.Channel
+                      .PlayFile("ivr/8000/ivr-please_hold_while_party_contacted.wav");
                     
-                    var xfer = await channel.Bridge.Channel.AttendedTransfer("user/{0}".Fmt(digits));
+                    var xfer = await channel.Bridge.Channel
+                      .AttendedTransfer("user/{0}".Fmt(digits));
 
                     //attended transfers are a work-in-progress at the moment
                     if (xfer.Status == AttendedTransferResultStatus.Failed)
@@ -172,17 +174,20 @@ using (var listener = new OutboundListener(8084))
                       if (xfer.HangupCause == HangupCause.CallRejected)
                       {
                           //we can play audio into the b-leg via the a-leg channel
-                          await channel.PlayFile("ivr/8000/ivr-call-rejected.wav", Leg.BLeg);
+                          await channel
+                            .PlayFile("ivr/8000/ivr-call-rejected.wav", Leg.BLeg);
                       }
                       else if (xfer.HangupCause == HangupCause.NoUserResponse 
                                 || xfer.HangupCause == HangupCause.NoAnswer)
                       {
                           //or we can play audio on the b-leg channel object
-                          await channel.Bridge.Channel.PlayFile("ivr/8000/ivr-no_user_response.wav");
+                          await channel.Bridge.Channel
+                            .PlayFile("ivr/8000/ivr-no_user_response.wav");
                       }
                       else if (xfer.HangupCause == HangupCause.UserBusy)
                       {
-                          await channel.Bridge.ChannelPlayFile("ivr/8000/ivr-user_busy.wav");
+                          await channel.Bridge.Channel
+                            .PlayFile("ivr/8000/ivr-user_busy.wav");
                       }
                     }
                     else
@@ -193,7 +198,8 @@ using (var listener = new OutboundListener(8084))
                       // 2) the b-leg and the c-leg in a 3-way chat
                       //    in this case, if the b-leg hangs up, then channel.Bridge.Channel
                       //    will become the c-leg
-                      await channel.PlayFile("ivr/8000/ivr-call_being_transferred.wav", Leg.ALeg);
+                      await channel
+                      .PlayFile("ivr/8000/ivr-call_being_transferred.wav", Leg.ALeg);
                     }
                   }
                 break;
