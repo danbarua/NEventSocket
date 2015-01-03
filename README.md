@@ -96,7 +96,6 @@ using (var listener = new OutboundListener(8084))
       try
       {
           await channel.Answer();
-          await channel.Bridge("user/1001");
           await channel.PlayFile("ivr/8000/ivr-call_being_transferred.wav");
           await channel.StartDetectingInbandDtmf();
 
