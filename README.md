@@ -72,3 +72,123 @@ using (var listener = new OutboundListener(8084))
   Console.ReadLine();
 }
 ```
+
+Channel API
+---------------
+Whilst the InboundSocket and OutboundSocket interfaces give you a close-to-the-metal experience with the EventSocket interfce, the Channel API is a high level abstraction built on top of this. A Channel object maintains its state based on events from FreeSwitch and allows us to control calls in a more object oriented manner without having to pass channel UUIDs around all over the place.
+
+Whilst the InboundSocket and OutboundSocket interfaces are stable, the Channel API is experimental and work is ongoing with the goal of providing a pleasant strongly-typed API on top of the EventSocket.
+
+There is an in-depth example in the examples/Channels folder.
+
+```csharp
+using System;
+using System.Reactive.Linq;
+using System.Threading.Tasks;
+
+using NEventSocket;
+using NEventSocket.FreeSwitch;
+
+using (var listener = new OutboundListener(8084))
+{
+  listener.Channels.Subscribe(
+    async channel => {
+      try
+      {
+          await channel.Answer();
+          await channel.Bridge("user/1001");
+          await channel.PlayFile("ivr/8000/ivr-call_being_transferred.wav");
+          await channel.StartDetectingInbandDtmf();
+
+          var bridgeOptions = new BridgeOptions()
+                                  {
+                                      IgnoreEarlyMedia = true,
+                                      RingBack =
+                                          "tone_stream://%(400,200,400,450);%(400,2000,400,450);loops=-1",
+                                      ContinueOnFail = true,
+                                      HangupAfterBridge = true,
+                                      TimeoutSeconds = 60,
+                                      CallerIdName = channel["effective_caller_id_name"], //can get variables from a channel using the indexer
+                                      CallerIdNumber = channel["effective_caller_id_number"],
+                                  };
+
+          //attempt a bridge to user/1001, write to the console when it starts ringing
+          await channel.BridgeTo("user/1001", bridgeOptions, (evt) => Console.WriteLine("B-Leg is ringing..."))
+
+          //channel.Bridge represents the bridge status
+          if (!channel.Bridge.IsBridged)
+          {
+              //we can inspect the HangupCause to determine why it failed
+              Console.WriteLine("Bridge Failed - {0}".Fmt(channel.Bridge.HangupCause));
+              await channel.PlayFile("ivr/8000/ivr-call_rejected.wav");
+              await channel.Hangup(HangupCause.NormalTemporaryFailure);
+          }
+          else
+          {
+              Console.WriteLine("Bridge success - {0}".Fmt(channel.Bridge.ResponseText));
+
+              //the bridged channel maintains its own state and handles a subset of full Channel operations
+              channel.Bridge.Channel.HangupCallBack = (e) => ColorConsole.WriteLine("Hangup Detected on B-Leg {0} {1}".Fmt(e.Headers[HeaderNames.CallerUniqueId], e.Headers[HeaderNames.HangupCause]));
+
+              //we'll listen out for the feature code #9 on the b-leg to do an attended transfer
+              channel.Bridge.Channel.FeatureCodes("#")
+                .Subscribe(async x =>
+                {
+                    switch (x)
+                    {
+                      case "#9":
+                        Console.WriteLine("Getting the extension to do an attended transfer to...");
+                        var digits = await channel.Bridge.Channel.Read(new ReadOptions { MinDigits = 3, MaxDigits = 4, Prompt = "tone_stream://%(10000,0,350,440)", TimeoutMs = 30000, Terminators = "#" });
+                        if (digits.Result == ReadResultStatus.Success && digits.Digits.Length == 4)
+                        {
+                          await channel.Bridge.Channel.PlayFile("ivr/8000/ivr-please_hold_while_party_contacted.wav");
+                          var xfer = await channel.Bridge.Channel.AttendedTransfer("user/{0}".Fmt(digits));
+
+                          //attended transfers are a work-in-progress at the moment
+                          if (xfer.Status == AttendedTransferResultStatus.Failed)
+                          {
+                              if (xfer.HangupCause == HangupCause.CallRejected)
+                              {
+                                  //we can play audio into the b-leg via the a-leg channel
+                                  await channel.PlayFile("ivr/8000/ivr-call-rejected.wav", Leg.BLeg);
+                              }
+                              else if (xfer.HangupCause == HangupCause.NoUserResponse
+                                       || xfer.HangupCause == HangupCause.NoAnswer)
+                              {
+                                  //or we can play audio on the b-leg channel object
+                                  await channel.Bridge.Channel.PlayFile("ivr/8000/ivr-no_user_response.wav");
+                              }
+                              else if (xfer.HangupCause == HangupCause.UserBusy)
+                              {
+                                  await channel.Bridge.ChannelPlayFile("ivr/8000/ivr-user_busy.wav");
+                              }
+                          }
+                          else
+                          {
+                              //otherwise the a-leg is now connected to either
+                              // 1) the c-leg
+                              //    in this case, channel.Bridge.Channel is now the c-leg channel
+                              // 2) the b-leg and the c-leg in a 3-way chat
+                              //    in this case, if the b-leg hangs up, then channel.Bridge.Channel
+                              //    will become the c-leg
+                              await channel.PlayFile("ivr/8000/ivr-call_being_transferred.wav", Leg.ALeg);
+                          }
+                        }
+                      break;
+                    }
+                });
+          }
+      }
+      catch(TaskCancelledException)
+      {
+          Console.WriteLine("Channel {0} hungup".Fmt(channel.UUID));
+      }
+    }
+    });
+
+  listener.Start();
+
+  Console.WriteLine("Press [Enter] to exit.");
+  Console.ReadLine();
+}
+```
