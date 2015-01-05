@@ -63,9 +63,14 @@ namespace NEventSocket.Tests.Fakes
             return this.SendAsync(msg, CancellationToken.None);
         }
 
-        public Task SendCommandReplyOk()
+        public Task SendDisconnectNotice()
         {
-            return this.SendAsync("Content-Type: command/reply\nReply-Text: +OK\n\n", CancellationToken.None);
+            return this.SendAsync("Content-Type: text/disconnect-notice\nContent-Length: 67\n\nDisconnected, goodbye.\nSee you at ClueCon! http://www.cluecon.com/\n", CancellationToken.None);
+        }
+
+        public Task SendCommandReplyOk(string message = null)
+        {
+            return this.SendAsync("Content-Type: command/reply\nReply-Text: +OK {0}\n\n".Fmt(message), CancellationToken.None);
         }
 
         public Task SendCommandReplyError(string error)
