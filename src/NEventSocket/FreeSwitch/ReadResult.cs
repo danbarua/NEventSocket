@@ -26,6 +26,8 @@ namespace NEventSocket.FreeSwitch
             {
                 Result = ReadResultStatus.Failure;
             }
+
+            this.Success = Result == ReadResultStatus.Success;
         }
 
         /// <summary>

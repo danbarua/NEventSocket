@@ -167,7 +167,7 @@ namespace NEventSocket.Channels
                 await this.SetChannelVariable("playback_terminators", terminator);
             }
 
-            if (!this.IsBridged)
+            if (leg == Leg.ALeg) //!this.IsBridged)
             {
                 await this.eventSocket.Play(this.UUID, file, new PlayOptions());
                 return;
@@ -228,9 +228,16 @@ namespace NEventSocket.Channels
         /// <param name="endpoint">The endpoint to transfer to eg. user/1000, sofia/foo@bar.com etc</param>
         public async Task<AttendedTransferResult> AttendedTransfer(string endpoint)
         {
-            var result = await eventSocket.ExecuteApplication(UUID, "att_xfer", endpoint);
-            Console.WriteLine(result);
-            return new AttendedTransferResult(result);
+            try
+            {
+                var result = await eventSocket.ExecuteApplication(UUID, "att_xfer", endpoint);
+                Console.WriteLine(result);
+                return new AttendedTransferResult(result);
+            }
+            catch (TaskCanceledException ex)
+            {
+                return new AttendedTransferResult(null);
+            }
         }
 
         public async Task StartDetectingInbandDtmf()

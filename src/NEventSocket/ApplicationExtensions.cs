@@ -13,7 +13,9 @@ namespace NEventSocket
     using System.Threading.Tasks;
 
     using NEventSocket.FreeSwitch;
+    using NEventSocket.Logging;
     using NEventSocket.Sockets;
+    using NEventSocket.Util;
 
     /// <summary>
     /// Defines Application operations that can operate on either an <seealso cref="InboundSocket"/> or an <seealso cref="OutboundSocket"/>.
@@ -40,21 +42,71 @@ namespace NEventSocket
                 options = new PlayOptions();
             }
 
-            // todo: what if applicationresult is null (hang up occurs before the application completes)
-            return new PlayResult(await eventSocket.ExecuteApplication(uuid, "playback", applicationArguments: file, loops: options.Loops).ConfigureAwait(false));
+            try
+            {
+                // todo: what if applicationresult is null (hang up occurs before the application completes)
+                var result = 
+                    new PlayResult(
+                        await
+                        eventSocket.ExecuteApplication(uuid, "playback", file, loops: options.Loops)
+                                   .ConfigureAwait(false));
+
+                if (!result.Success)
+                {
+                    LogFailedApplicationResult(eventSocket, result);
+                }
+
+                return result;
+            }
+            catch (TaskCanceledException ex)
+            {
+                return new PlayResult(null);
+            }
         }
 
         public static async Task<PlayGetDigitsResult> PlayGetDigits(this EventSocket eventSocket, string uuid, PlayGetDigitsOptions options)
         {
-            // todo: what if applicationresult is null (hang up occurs before the application completes)
-            return new PlayGetDigitsResult(
-                await eventSocket.ExecuteApplication(uuid, "play_and_get_digits", options.ToString()).ConfigureAwait(false), options.ChannelVariableName);
+            try
+            {
+                // todo: what if applicationresult is null (hang up occurs before the application completes)
+                var result = 
+                    new PlayGetDigitsResult(
+                        await eventSocket.ExecuteApplication(uuid, "play_and_get_digits", options.ToString()).ConfigureAwait(false),
+                        options.ChannelVariableName);
+
+                if (!result.Success)
+                {
+                    LogFailedApplicationResult(eventSocket, result);
+                }
+
+                return result;
+            }
+            catch (TaskCanceledException ex)
+            {
+                return new PlayGetDigitsResult(null, null);
+            }
         }
 
         public static async Task<ReadResult> Read(this EventSocket eventSocket, string uuid, ReadOptions options)
         {
-            // todo: what if applicationresult is null (hang up occurs before the application completes)
-            return new ReadResult(await eventSocket.ExecuteApplication(uuid, "read", options.ToString()).ConfigureAwait(false), options.ChannelVariableName);
+            try
+            {
+                // todo: what if applicationresult is null (hang up occurs before the application completes)
+                var result = new ReadResult(
+                    await eventSocket.ExecuteApplication(uuid, "read", options.ToString()).ConfigureAwait(false),
+                    options.ChannelVariableName);
+
+                if (!result.Success)
+                {
+                    LogFailedApplicationResult(eventSocket, result);
+                }
+
+                return result;
+            }
+            catch (TaskCanceledException ex)
+            {
+                return new ReadResult(null, null);
+            }
         }
 
         public static Task<EventMessage> Say(this EventSocket eventSocket, string uuid, SayOptions options)
@@ -70,6 +122,17 @@ namespace NEventSocket
         public static Task<EventMessage> Stoptmf(this EventSocket eventSocket, string uuid)
         {
             return eventSocket.ExecuteApplication(uuid, "spandsp_stop_dtmf");
+        }
+
+        private static void LogFailedApplicationResult(EventSocket eventSocket, ApplicationResult result)
+        {
+            LogProvider.GetLogger(eventSocket.GetType())
+                       .Error(
+                           () =>
+                           "Application {0} {1} failed - {2}".Fmt(
+                               result.ChannelData.Headers[HeaderNames.Application],
+                               result.ChannelData.Headers[HeaderNames.ApplicationData],
+                               result.ChannelData.Headers[HeaderNames.ApplicationResponse]));
         }
     }
 }

@@ -145,27 +145,27 @@
 
                                                             if (xfer.HangupCause == HangupCause.CallRejected)
                                                             {
-                                                                await channel.PlayFile("ivr/8000/ivr-call-rejected.wav", Leg.BLeg);
+                                                                await channel.Bridge.Channel.PlayFile("ivr/8000/ivr-call_rejected.wav");
                                                             }
                                                             else if (xfer.HangupCause == HangupCause.NoUserResponse
                                                                      || xfer.HangupCause == HangupCause.NoAnswer)
                                                             {
-                                                                await channel.PlayFile("ivr/8000/ivr-no_user_response.wav", Leg.BLeg);
+                                                                await channel.Bridge.Channel.PlayFile("ivr/8000/ivr-no_user_response.wav");
                                                             }
                                                             else if (xfer.HangupCause == HangupCause.UserBusy)
                                                             {
-                                                                await channel.PlayFile("ivr/8000/ivr-user_busy.wav", Leg.BLeg);
+                                                                await channel.Bridge.Channel.PlayFile("ivr/8000/ivr-user_busy.wav");
                                                             }
                                                             else
                                                             {
                                                                 await
-                                                                    channel.PlayFile(
-                                                                        "ivr/8000/ivr-call_cannot_be_completed_as_dialed.wav", Leg.BLeg);
+                                                                    channel.Bridge.Channel.PlayFile(
+                                                                        "ivr/8000/ivr-call_cannot_be_completed_as_dialed.wav");
                                                             }
                                                         }
                                                         else
                                                         {
-                                                            await channel.PlayFile("ivr/8000/ivr-call_being_transferred.wav", Leg.ALeg);
+                                                            await channel.PlayFile("ivr/8000/ivr-call_being_transferred.wav");
                                                         }
 
                                                         // att_xfer_result contains "success" if aborted (c-leg hung up or b-leg pressed #) or if pressed "0" for three-way chat
