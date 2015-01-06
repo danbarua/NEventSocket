@@ -102,7 +102,7 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
-    <EmbeddedResource Include="Fixtures\Example1.txt" />
+    <Content Include="Fixtures\Example1.txt" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Fixtures\Example2.txt" />
