@@ -423,7 +423,11 @@ namespace NEventSocket.Sockets
                                             tcs.TrySetException(ex);
                                         }
                                     },
-                                subscriptions.Dispose));
+                                () =>
+                                    { 
+                                        subscriptions.Dispose();
+                                        tcs.TrySetResult(null);
+                                    }));
 
                 SendAsync(Encoding.ASCII.GetBytes(command + "\n\n"), CancellationToken.None)
                     .ContinueOnFaultedOrCancelled(tcs, subscriptions.Dispose);
