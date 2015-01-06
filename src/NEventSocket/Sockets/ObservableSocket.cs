@@ -28,7 +28,7 @@ namespace NEventSocket.Sockets
     /// </summary>
     public abstract class ObservableSocket : IDisposable
     {
-        protected bool disposed;
+        private bool disposed;
 
         private readonly ILog Log;
 

@@ -42,7 +42,7 @@ namespace NEventSocket.Sockets
         {
             get
             {
-                return this.contentLength.HasValue;
+                return this.contentLength.HasValue && this.contentLength > 0;
             }
         }
 
@@ -66,17 +66,26 @@ namespace NEventSocket.Sockets
                 if (this.previous == '\n' && next == '\n')
                 {
                     // \n\n denotes the end of the Headers
-                    this.headers = this.buffer.ToString().ParseKeyValuePairs("\n", ": ");
+                    var headerString = this.buffer.ToString();
+
+                    this.headers = headerString.ParseKeyValuePairs("\n", ": ");
 
                     if (this.headers.ContainsKey(HeaderNames.ContentLength))
                     {
                         this.contentLength = int.Parse(this.headers[HeaderNames.ContentLength]);
 
-                        // start parsing the body content
-                        this.buffer.Clear();
+                        if (this.contentLength == 0)
+                        {
+                            this.Completed = true;
+                        }
+                        else
+                        {
+                            // start parsing the body content
+                            this.buffer.Clear();
 
-                        // allocate the buffer up front given that we now know the expected size
-                        this.buffer.EnsureCapacity(this.contentLength.Value);
+                            // allocate the buffer up front given that we now know the expected size
+                            this.buffer.EnsureCapacity(this.contentLength.Value);
+                        }
                     }
                     else
                     {
@@ -92,7 +101,7 @@ namespace NEventSocket.Sockets
             else
             {
                 // if we've read the Content-Length amount of bytes then we're done
-                this.Completed = this.buffer.Length == this.contentLength.GetValueOrDefault();
+                this.Completed = this.buffer.Length == this.contentLength.GetValueOrDefault() || this.contentLength == 0;
             }
 
             return this;

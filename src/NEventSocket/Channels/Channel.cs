@@ -6,8 +6,6 @@
 namespace NEventSocket.Channels
 {
     using System;
-    using System.Collections.Generic;
-    using System.Linq;
     using System.Reactive.Disposables;
     using System.Reactive.Linq;
     using System.Threading.Tasks;
@@ -72,8 +70,11 @@ namespace NEventSocket.Channels
             {
                 this.Disposables.Add(
                     eventSocket.Events.Where(x => x.UUID == this.UUID && x.EventName == EventName.ChannelHangup)
-                               .Subscribe(e => eventSocket.Exit()));
-            }
+                               .Subscribe(async e =>
+                                   {
+                                       await eventSocket.Exit();
+                                   }));
+             }
 
             //populate empty bridge status
             this.Bridge = new BridgeStatus(false, null);

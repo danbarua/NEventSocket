@@ -134,11 +134,6 @@ namespace NEventSocket
                     "sendmsg {0}\ncall-command: hangup\nhangup-cause: {1}".Fmt(uuid, hangupCause.ToString().ToUpperWithUnderscores()));
         }
 
-        public static void Exit(this EventSocket eventSocket)
-        {
-            eventSocket.SendCommand("exit"); // will disconnect, a reply might not arrive in time to be read
-        }
-
         public static Task<CommandReply> FsLog(this EventSocket eventSocket, string logLevel)
         {
             return eventSocket.SendCommand("log " + logLevel);

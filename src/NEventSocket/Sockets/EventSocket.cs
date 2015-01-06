@@ -14,6 +14,7 @@ namespace NEventSocket.Sockets
     using System.Reactive.Concurrency;
     using System.Reactive.Disposables;
     using System.Reactive.Linq;
+    using System.Reactive.Subjects;
     using System.Reactive.Threading.Tasks;
     using System.Text;
     using System.Threading;
@@ -50,6 +51,10 @@ namespace NEventSocket.Sockets
 
         private readonly object gate = new object();
 
+        private readonly IObservable<BasicMessage> messages;
+
+        private bool disposed;
+
         /// <summary>
         /// Instantiates an <see cref="EventSocket"/> instance wrapping the provided <seealso cref="TcpClient"/>
         /// </summary>
@@ -61,16 +66,16 @@ namespace NEventSocket.Sockets
 
             ResponseTimeOut = responseTimeOut ?? TimeSpan.FromSeconds(5);
 
-            Messages =
-                Receiver.SelectMany(x => Encoding.ASCII.GetString(x))
+            messages =
+                Receiver.SelectMany(x => Encoding.UTF8.GetString(x))
                         .AggregateUntil(() => new Parser(), (builder, ch) => builder.Append(ch), builder => builder.Completed)
                         .Select(builder => builder.ExtractMessage())
                         .SubscribeOn(TaskPoolScheduler.Default)
-                        .Do(x => Log.Trace("Received [{0}].".Fmt(x.ContentType)))
+                        .Do(x => Log.Trace("Messages Received [{0}].".Fmt(x.ContentType)), ex => { }, () => Log.Info(() => "Messages Observable completed."))
                         .Publish()
                         .RefCount();
 
-            Events.Subscribe(x => Log.Info(() => "Event Received [{0}] [{1}]".Fmt(x.UUID, x.EventName)), ex => { }, () => Log.Info(() => "Events Observable Completed."));
+            Events.Subscribe(x => Log.Trace(() => "Events Received [{0}] [{1}]".Fmt(x.UUID, x.EventName)), ex => { }, () => Log.Info(() => "Events Observable Completed."));
 
             Log.Trace(() => "EventSocket initialized");
         }
@@ -97,7 +102,13 @@ namespace NEventSocket.Sockets
         /// <summary>
         /// Gets an observable sequence of <seealso cref="BasicMessage"/>.
         /// </summary>
-        public IObservable<BasicMessage> Messages { get; private set; }
+        public IObservable<BasicMessage> Messages
+        {
+            get
+            {
+                return this.messages.AsObservable();
+            }
+        }
 
         /// <summary>
         /// Send an api command (blocking mode)
@@ -360,6 +371,68 @@ namespace NEventSocket.Sockets
         }
 
         /// <summary>
+        /// Requests FreeSwitch shuts down the socket
+        /// </summary>
+        public Task Exit()
+        {
+            // we're not using the CancellationToken here because we want to wait until the reply comes back
+            var command = "exit";
+
+            Log.Trace(() => "Sending [{0}]".Fmt(command));
+
+            lock (gate)
+            {
+                var tcs = new TaskCompletionSource<BasicMessage>();
+                var subscriptions = new CompositeDisposable();
+
+                subscriptions.Add(
+                    Messages.Where(x => x.ContentType == ContentTypes.CommandReply)
+                            .Take(1)
+                            .Select(x => new CommandReply(x))
+                            .Subscribe(
+                                result =>
+                                Log.Debug(
+                                    () => "CommandReply received [{0}] for [{1}]".Fmt(result.ReplyText.Replace("\n", string.Empty), command)),
+                                ex =>
+                                    {
+                                        Log.ErrorException("Error waiting for Command Reply to [{0}].".Fmt(command), ex);
+                                        tcs.TrySetException(ex);
+                                    }));
+
+                subscriptions.Add(
+                    Messages.Where(x => x.ContentType == ContentTypes.DisconnectNotice)
+                            .Take(1)
+                            .Timeout(
+                                TimeSpan.FromSeconds(2),
+                                Observable.Throw<BasicMessage>(new TimeoutException("No Disconnect Notice received.")))
+                            .Subscribe(
+                                x =>
+                                    {
+                                        Log.Info(() => "Disconnect Notice received [{0}]".Fmt(x.BodyText));
+                                        tcs.TrySetResult(x);
+                                    },
+                                ex =>
+                                    {
+                                        Log.ErrorException("Error waiting for Disconnect Notice", ex);
+                                        if (ex is TimeoutException)
+                                        {
+                                            tcs.TrySetResult(null);
+                                        }
+                                        else
+                                        {
+                                            tcs.TrySetException(ex);
+                                        }
+                                    },
+                                subscriptions.Dispose));
+
+                SendAsync(Encoding.ASCII.GetBytes(command + "\n\n"), CancellationToken.None)
+                    .ContinueOnFaultedOrCancelled(tcs, subscriptions.Dispose);
+
+                return tcs.Task;
+            }
+        }
+
+        /// <summary>
         /// Subscribes this EventSocket to one or more events.
         /// </summary>
         /// <param name="events">The <seealso cref="EventName"/>s to subscribe to.</param>
@@ -415,6 +488,8 @@ namespace NEventSocket.Sockets
                         cts.Cancel();
                     }
                 }
+
+                disposed = true;
             }
 
             base.Dispose(disposing);

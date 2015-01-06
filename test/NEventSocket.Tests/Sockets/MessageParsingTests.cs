@@ -5,7 +5,9 @@
     using System.Reactive.Linq;
 
     using NEventSocket.FreeSwitch;
+    using NEventSocket.Logging.LogProviders;
     using NEventSocket.Sockets;
+    using NEventSocket.Tests.Properties;
     using NEventSocket.Tests.TestSupport;
     using NEventSocket.Util;
 
@@ -218,6 +220,48 @@
             Console.WriteLine(response);
         }
 
+        [Theory]
+        [PropertyData("ExampleSessions")]
+        public void Can_parse_example_sessions_to_completion(string input)
+        {
+            Logging.LogProvider.SetCurrentLogProvider(new ColouredConsoleLogProvider());
+
+            bool gotDisconnectNotice = false;
+
+            input.ToObservable()
+                .AggregateUntil(() => new Parser(), (builder, ch) => builder.Append(ch), builder => builder.Completed)
+                .Select(parser => parser.ExtractMessage())
+                .Subscribe(
+                    m =>
+                        {
+                            Console.WriteLine(m.ContentType);
+                            if (m.ContentType == ContentTypes.DisconnectNotice)
+                            {
+                                gotDisconnectNotice = true;
+                            }
+                        });
+
+            Assert.True(gotDisconnectNotice);
+        }
+
+        [Fact]
+        public void Can_parse_disconnect_notice()
+        {
+            var msg = @"Content-Type: text/disconnect-notice
+Controlled-Session-UUID: 78b86350-4fb8-4d2b-a629-1eeafd7d2f74
+Content-Disposition: disconnect
+Content-Length: 67
+
+Disconnected, goodbye.
+See you at ClueCon! http://www.cluecon.com/
+";
+            msg.ToObservable()
+                .AggregateUntil(() => new Parser(), (builder, ch) => builder.Append(ch), builder => builder.Completed)
+                         .Select(parser => parser.ExtractMessage())
+                         .Subscribe(
+                             Console.WriteLine);
+        }
+
         public static IEnumerable<object[]> ExampleMessages
         {
             get
@@ -228,5 +272,17 @@
                 yield return new object[] { 5, "Content-Type: auth/request\n\nContent-Type: command/reply\nReply-Text: +OK accepted\n\nContent-Type: command/reply\nReply-Text: +OK event listener enabled plain\n\nContent-Type: command/reply\nReply-Text: +OK Job-UUID: 43e14ab9-38b1-4187-9f08-e13f35136bb2\nJob-UUID: 43e14ab9-38b1-4187-9f08-e13f35136bb2\n\nContent-Length: 759\nContent-Type: text/event-plain\n\nEvent-Name: BACKGROUND_JOB\nCore-UUID: ac1ed77b-cf11-4f8a-a36f-3feeb6b53d0e\nFreeSWITCH-Hostname: Dan-MacBook\nFreeSWITCH-Switchname: Dan-MacBook\nFreeSWITCH-IPv4: 192.168.0.6\nFreeSWITCH-IPv6: 2001%3A0%3A5ef5%3A79fd%3A815%3A1a92%3A3f57%3Afff9\nEvent-Date-Local: 2013-06-06%2017%3A24%3A02\nEvent-Date-GMT: Thu,%2006%20Jun%202013%2016%3A24%3A02%20GMT\nEvent-Date-Timestamp: 1370535842909368\nEvent-Calling-File: mod_event_socket.c\nEvent-Calling-Function: api_exec\nEvent-Calling-Line-Number: 1456\nEvent-Sequence: 534\nJob-UUID: 43e14ab9-38b1-4187-9f08-e13f35136bb2\nJob-Command: originate\nJob-Command-Arg: sofia/external/1000%4010.10.10.108%3A5070%20%26playback(C%3A%5C%5Ctemp%5C%5Cmisc-freeswitch_is_state_of_the_art.wav\nContent-Length: 30\n\n-ERR RECOVERY_ON_TIMER_EXPIRE\n"};
             }
         }
+
+        public static IEnumerable<object[]> ExampleSessions
+        {
+            get
+            {
+                yield return new object[] { Resources.Example1 };
+                yield return new object[] { Resources.Example2 };
+                yield return new object[] { Resources.Example3 };
+                yield return new object[] { Resources.Example4 };
+                yield return new object[] { Resources.Example5 };
+            }
+        } 
     }
 }

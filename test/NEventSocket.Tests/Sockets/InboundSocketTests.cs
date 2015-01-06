@@ -5,10 +5,7 @@
     using System.Security;
     using System.Threading.Tasks;
 
-    using NEventSocket.FreeSwitch;
-    using NEventSocket.Logging;
     using NEventSocket.Logging.LogProviders;
-    using NEventSocket.Sockets;
     using NEventSocket.Tests.Fakes;
     using NEventSocket.Tests.TestSupport;
 
@@ -47,6 +44,7 @@
                                       {
                                           exitRequestReceived = true;
                                           await socket.SendCommandReplyOk();
+                                          await socket.SendDisconnectNotice();
                                       });
                         
                         await socket.Send("Content-Type: auth/request");
@@ -56,7 +54,7 @@
                 {
                     Assert.True(authRequestReceived);
 
-                    client.Exit();
+                    await client.Exit();
 
                     ThreadUtils.WaitUntil(() => exitRequestReceived);
                     Assert.True(exitRequestReceived);
@@ -159,7 +157,7 @@
         }
 
         [Fact(Timeout = 5000, Skip = "Removing timeouts")]
-        public void when_no_api_response_received_it_should_throw_a_TimeOutException()
+        public async Task when_no_api_response_received_it_should_throw_a_TimeOutException()
         {
             using (var listener = new FakeFreeSwitchListener(0))
             {
@@ -184,6 +182,14 @@
                                       await socket.SendApiResponseError("error");
                                   });
 
+                        socket.MessagesReceived.Where(m => m.Equals("exit"))
+                              .Subscribe(
+                                  async _ =>
+                                  {
+                                      await socket.SendCommandReplyOk();
+                                      await socket.SendDisconnectNotice();
+                                  });
+
                         await socket.Send("Content-Type: auth/request");
                     });
 
@@ -196,7 +202,7 @@
                     Assert.IsType<TimeoutException>(ex.InnerException);
                     Assert.True(apiRequestReceived);
 
-                    client.Exit();
+                    await client.Exit();
                 }
             }
         }
