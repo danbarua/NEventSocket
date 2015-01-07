@@ -1,6 +1,7 @@
 ﻿namespace NEventSocket.Tests.Sockets
 {
     using System;
+    using System.Threading.Tasks;
 
     using NEventSocket.Logging;
     using NEventSocket.Logging.LogProviders;
@@ -17,7 +18,7 @@
         }
 
         [Fact(Timeout = 2000)]
-        public void Disposing_the_listener_completes_the_connections_observable()
+        public async Task Disposing_the_listener_completes_the_connections_observable()
         {
             using (var listener = new OutboundListener(0))
             {
@@ -34,7 +35,7 @@
         }
 
         [Fact(Timeout = 2000)]
-        public void Disposing_the_listener_disposes_any_connected_clients()
+        public async Task Disposing_the_listener_disposes_any_connected_clients()
         {
             using (var listener = new OutboundListener(0))
             {
@@ -51,7 +52,7 @@
 
                var client = new FakeFreeSwitchSocket(listener.Port);
 
-                ThreadUtils.WaitUntil(() => connected);
+                await Wait.Until(() => connected);
                 listener.Dispose();
 
                 Assert.True(disposed);
@@ -59,7 +60,7 @@
         }
 
         [Fact(Timeout = 2000)]
-        public void a_new_connection_produces_an_outbound_socket()
+        public async Task a_new_connection_produces_an_outbound_socket()
         {
             using (var listener = new OutboundListener(0))
             {
@@ -71,13 +72,13 @@
 
                 var client = new FakeFreeSwitchSocket(listener.Port);
 
-                ThreadUtils.WaitUntil(() => connected);
+                await Wait.Until(() => connected);
                 Assert.True(connected);
             }
         }
 
         [Fact(Timeout = 2000)]
-        public void each_new_connection_produces_a_new_outbound_socket_from_the_Connections_observable()
+        public async Task each_new_connection_produces_a_new_outbound_socket_from_the_Connections_observable()
         {
             const int NumberOfConnections = 3;
 
@@ -94,7 +95,7 @@
                     var client = new FakeFreeSwitchSocket(listener.Port);
                 }
 
-                ThreadUtils.WaitUntil(() => connected == NumberOfConnections);
+                await Wait.Until(() => connected == NumberOfConnections);
                 Assert.Equal(NumberOfConnections, connected);
             }
         }

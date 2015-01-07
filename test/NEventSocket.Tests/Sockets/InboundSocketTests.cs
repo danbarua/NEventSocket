@@ -18,7 +18,7 @@
             Logging.LogProvider.SetCurrentLogProvider(new ColouredConsoleLogProvider());
         }
 
-        [Fact(Timeout = 10000)]
+        [Fact(Timeout = TimeOut.TestTimeOutMs)]
         public async Task sending_a_correct_password_should_connect()
         {
             using (var listener = new FakeFreeSwitchListener(0))
@@ -56,13 +56,13 @@
 
                     await client.Exit();
 
-                    ThreadUtils.WaitUntil(() => exitRequestReceived);
+                    await Wait.Until(() => exitRequestReceived);
                     Assert.True(exitRequestReceived);
                 }
             }
         }
 
-        [Fact(Timeout = 10000)]
+        [Fact(Timeout = TimeOut.TestTimeOutMs)]
         public void an_invalid_password_should_throw_a_SecurityException()
         {
             using (var listener = new FakeFreeSwitchListener(0))
@@ -90,7 +90,7 @@
             }
         }
 
-        [Fact(Timeout = 10000)]
+        [Fact(Timeout = TimeOut.TestTimeOutMs)]
         public void when_no_AuthRequest_received_it_should_throw_TimeoutException()
         {
             using (var listener = new FakeFreeSwitchListener(0))
@@ -120,7 +120,7 @@
             }
         }
 
-        [Fact(Timeout = 10000)]
+        [Fact(Timeout = TimeOut.TestTimeOutMs)]
         public async Task can_send_api()
         {
             using (var listener = new FakeFreeSwitchListener(0))
@@ -207,7 +207,7 @@
             }
         }
 
-        [Fact(Timeout = 10000)]
+        [Fact(Timeout = TimeOut.TestTimeOutMs)]
         public async Task can_send_command()
         {
             using (var listener = new FakeFreeSwitchListener(0))
@@ -243,7 +243,7 @@
             }
         }
 
-        [Fact(Timeout = 10000)]
+        [Fact(Timeout = TimeOut.TestTimeOutMs)]
         public async Task can_send_multiple_commands()
         {
             using (var listener = new FakeFreeSwitchListener(0))
@@ -324,6 +324,102 @@
                     Assert.NotNull(ex);
                     Assert.IsType<TimeoutException>(ex.InnerException);
                     Assert.True(commandRequestReceived);
+                }
+            }
+        }
+
+        [Fact(Timeout = TimeOut.TestTimeOutMs)]
+        public async Task when_the_inbound_socket_is_disposed_it_should_complete_the_observables()
+        {
+            using (var listener = new FakeFreeSwitchListener(0))
+            {
+                listener.Start();
+
+                listener.Connections.Subscribe(
+                    async socket =>
+                    {
+                        socket.MessagesReceived.Where(m => m.Equals("auth ClueCon"))
+                              .Take(1)
+                              .Subscribe(async m =>
+                              {
+                                  await socket.SendCommandReplyOk();
+                              });
+
+
+                        socket.MessagesReceived.Where(m => m.StartsWith("exit"))
+                              .Take(1)
+                              .Subscribe(
+                                  async m =>
+                                  {
+                                      await socket.SendCommandReplyOk();
+                                      await socket.SendDisconnectNotice();
+                                  });
+
+                        await socket.Send("Content-Type: auth/request");
+                    });
+
+                using (var client = await InboundSocket.Connect("127.0.0.1", listener.Port, "ClueCon"))
+                {
+                    bool completed = false;
+                    
+                    client.Messages.Subscribe(_ => { },ex => { },() => completed = true);
+
+                    await client.Exit();
+                    client.Dispose();
+
+                    await Wait.Until(() => completed);
+                    Assert.True(completed);
+                }
+            }
+        }
+
+        [Fact(Timeout = TimeOut.TestTimeOutMs)]
+        public async Task when_FreeSwitch_disconnects_it_should_complete_the_observables()
+        {
+            using (var listener = new FakeFreeSwitchListener(0))
+            {
+                listener.Start();
+
+                bool disconnected = false;
+
+                listener.Connections.Subscribe(
+                    async socket =>
+                    {
+                        socket.MessagesReceived.Where(m => m.Equals("auth ClueCon"))
+                              .Take(1)
+                              .Subscribe(async m =>
+                              {
+                                  await socket.SendCommandReplyOk();
+                              });
+
+
+                        socket.MessagesReceived.Where(m => m.StartsWith("exit"))
+                              .Take(1)
+                              .Subscribe(
+                                  async m =>
+                                  {
+                                      await socket.SendCommandReplyOk();
+                                      await socket.SendDisconnectNotice();
+                                      socket.Dispose();
+                                      disconnected = true;
+                                  });
+
+                        await socket.Send("Content-Type: auth/request");
+                    });
+
+                using (var client = await InboundSocket.Connect("127.0.0.1", listener.Port, "ClueCon"))
+                {
+                    bool completed = false;
+                    client.Messages.Subscribe(_ => { }, ex => { }, () => completed = true);
+
+                    await client.Exit();
+
+                    await Wait.Until(() => disconnected);
+                    Console.WriteLine("Disconnected, completed:" + completed);
+
+                    await Wait.Until(() => completed);
+
+                    Assert.True(completed);
                 }
             }
         }

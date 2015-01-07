@@ -164,5 +164,26 @@ namespace NEventSocket.Tests.Properties {
                 return ResourceManager.GetString("Example5", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Event-Name: CHANNEL_DATA
+        ///Core-UUID: 93444bb0-338e-4475-83b1-4d9931e536ae
+        ///FreeSWITCH-Hostname: dan-win8-dev
+        ///FreeSWITCH-Switchname: dan-win8-dev
+        ///FreeSWITCH-IPv4: 172.16.50.134
+        ///FreeSWITCH-IPv6: 2001%3A0%3A9d38%3A90d7%3A876%3Aa68%3Aa72c%3Ab644
+        ///Event-Date-Local: 2015-01-07%2008%3A56%3A01
+        ///Event-Date-GMT: Wed,%2007%20Jan%202015%2008%3A56%3A01%20GMT
+        ///Event-Date-Timestamp: 1420620961716607
+        ///Event-Calling-File: mod_event_socket.c
+        ///Event-Calling-Function: parse_command
+        ///Event-Calling-Line-Number: 1875
+        ///Event-Sequence: 1058 [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string Example6 {
+            get {
+                return ResourceManager.GetString("Example6", resourceCulture);
+            }
+        }
     }
 }

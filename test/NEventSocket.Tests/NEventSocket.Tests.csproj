@@ -81,7 +81,8 @@
     <Compile Include="Sockets\OutboundListenerTests.cs" />
     <Compile Include="Sockets\MessageParsingTests.cs" />
     <Compile Include="TestSupport\TestMessages.cs" />
-    <Compile Include="TestSupport\ThreadUtils.cs" />
+    <Compile Include="TestSupport\Wait.cs" />
+    <Compile Include="TestSupport\TimeOut.cs" />
     <Compile Include="Util\StringExtensionsTests.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -98,6 +99,7 @@
     <Folder Include="Channels\" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Fixtures\Example6.txt" />
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>

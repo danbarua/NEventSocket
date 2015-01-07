@@ -20,8 +20,8 @@ namespace NEventSocket.Tests.Sockets
             LogProvider.SetCurrentLogProvider(new ColouredConsoleLogProvider());
         }
 
-        [Fact(Timeout = 10000)]
-        public void Disposing_the_listener_completes_the_message_observables()
+        [Fact(Timeout = TimeOut.TestTimeOutMs)]
+        public async Task Disposing_the_listener_completes_the_message_observables()
         {
             using (var listener = new OutboundListener(0))
             {
@@ -30,21 +30,29 @@ namespace NEventSocket.Tests.Sockets
                 bool connected = false;
                 bool messagesObservableCompleted = false;
                 bool eventsObservableCompleted = false;
+                bool channelDataReceived = false;
 
-                listener.Connections.Subscribe((connection) =>
+                listener.Connections.Subscribe(async (connection) =>
                 {
                     connected = true;
                     connection.Messages.Subscribe(_ => { }, () => messagesObservableCompleted = true);
                     connection.Events.Subscribe(_ => { }, () => eventsObservableCompleted = true);
+                    await connection.Connect();
+
+                    channelDataReceived = connection.ChannelData != null;
+                    Assert.True(channelDataReceived);
                 });
 
-                using (var client = new FakeFreeSwitchSocket(listener.Port))
+                using (var freeSwitch = new FakeFreeSwitchSocket(listener.Port))
                 {
-                    ThreadUtils.WaitUntil(() => connected);
+                    freeSwitch.MessagesReceived.FirstAsync(m => m.StartsWith("connect"))
+                          .Subscribe(async _ => await freeSwitch.SendChannelDataEvent());
+
+                    await Wait.Until(() => channelDataReceived);
                     listener.Dispose(); // will dispose the socket
 
-                    ThreadUtils.WaitUntil(() => messagesObservableCompleted);
-                    ThreadUtils.WaitUntil(() => eventsObservableCompleted);
+                    await Wait.Until(() => messagesObservableCompleted);
+                    await Wait.Until(() => eventsObservableCompleted);
 
                     Assert.True(connected, "Expect a connection to have been made.");
                     Assert.True(messagesObservableCompleted, "Expect the BasicMessage observable to be completed");
@@ -53,41 +61,44 @@ namespace NEventSocket.Tests.Sockets
             }
         }
 
-        [Fact(Timeout = 10000)]
-        public void When_FreeSwitch_disconnects_it_completes_the_message_observables()
+        [Fact(Timeout = TimeOut.TestTimeOutMs)]
+        public async Task When_FreeSwitch_disconnects_it_completes_the_message_observables()
         {
             using (var listener = new OutboundListener(0))
             {
                 listener.Start();
 
                 bool connected = false;
+                bool disposed = true;
                 bool messagesObservableCompleted = false;
                 bool eventsObservableCompleted = false;
 
-                listener.Connections.Subscribe((connection) =>
+                listener.Connections.Subscribe(async (connection) =>
                 {
                     connected = true;
                     connection.Messages.Subscribe(_ => { }, () => messagesObservableCompleted = true);
                     connection.Events.Subscribe(_ => { }, () => eventsObservableCompleted = true);
+                    connection.Disposed += (o, e) => disposed = true;
                 });
 
                 using (var client = new FakeFreeSwitchSocket(listener.Port))
                 {
-                    ThreadUtils.WaitUntil(() => connected);
+                    await Wait.Until(() => connected);
                     client.Dispose();
 
-                    ThreadUtils.WaitUntil(() => messagesObservableCompleted);
-                    ThreadUtils.WaitUntil(() => eventsObservableCompleted);
+                    await Wait.Until(() => messagesObservableCompleted);
+                    await Wait.Until(() => eventsObservableCompleted);
 
                     Assert.True(connected, "Expect a connection to have been made.");
+                    Assert.True(disposed, "Expect the socket to have been disposed.");
                     Assert.True(messagesObservableCompleted, "Expect the BasicMessage observable to be completed");
                     Assert.True(eventsObservableCompleted, "Expect the EventMessage observable to be completed");
                 }
             }
         }
 
-        [Fact(Timeout = 10000)]
-        public void Calling_Connect_on_a_new_OutboundSocket_should_populate_the_ChannelData()
+        [Fact(Timeout = TimeOut.TestTimeOutMs)]
+        public async Task Calling_Connect_on_a_new_OutboundSocket_should_populate_the_ChannelData()
         {
             using (var listener = new OutboundListener(0))
             {
@@ -105,7 +116,7 @@ namespace NEventSocket.Tests.Sockets
                     freeSwitch.MessagesReceived.FirstAsync(m => m.StartsWith("connect"))
                           .Subscribe(async _ => await freeSwitch.SendChannelDataEvent());
 
-                    ThreadUtils.WaitUntil(() => channelData != null);
+                    await Wait.Until(() => channelData != null);
 
                     Assert.NotNull(channelData);
                     Assert.Equal(ChannelState.Execute, channelData.ChannelState);
@@ -114,8 +125,8 @@ namespace NEventSocket.Tests.Sockets
             }
         }
 
-        [Fact(Timeout = 10000)]
-        public void can_send_api()
+        [Fact(Timeout = TimeOut.TestTimeOutMs)]
+        public async Task can_send_api()
         {
             using (var listener = new OutboundListener(0))
             {
@@ -144,7 +155,7 @@ namespace NEventSocket.Tests.Sockets
                                 await freeSwitch.SendApiResponseOk();
                             });
 
-                    ThreadUtils.WaitUntil(() => apiRequestReceived);
+                    await Wait.Until(() => apiRequestReceived);
 
                     Assert.True(apiRequestReceived);
                     Assert.NotNull(apiResponse);
@@ -153,8 +164,8 @@ namespace NEventSocket.Tests.Sockets
             }
         }
 
-        [Fact(Timeout = 10000)]
-        public void can_send_command()
+        [Fact(Timeout = TimeOut.TestTimeOutMs)]
+        public async Task can_send_command()
         {
             using (var listener = new OutboundListener(0))
             {
@@ -183,7 +194,7 @@ namespace NEventSocket.Tests.Sockets
                                   await freeSwitch.SendCommandReplyOk();
                               });
 
-                    ThreadUtils.WaitUntil(() => commandRequestReceived);
+                    await Wait.Until(() => commandRequestReceived);
 
                     Assert.True(commandRequestReceived);
                     Assert.NotNull(commandReply);
@@ -192,8 +203,8 @@ namespace NEventSocket.Tests.Sockets
             }
         }
 
-        [Fact(Timeout = 10000)]
-        public void can_send_multple_commands()
+        [Fact(Timeout = TimeOut.TestTimeOutMs)]
+        public async Task can_send_multple_commands()
         {
             using (var listener = new OutboundListener(0))
             {
@@ -230,7 +241,7 @@ namespace NEventSocket.Tests.Sockets
                               commandRequestReceived = true;
                           });
 
-                    ThreadUtils.WaitUntil(() => commandRequestReceived);
+                    await Wait.Until(() => commandRequestReceived);
 
                     Assert.True(commandRequestReceived);
                     Assert.NotNull(commandReply);

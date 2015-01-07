@@ -28,8 +28,6 @@ namespace NEventSocket.Sockets
     /// </summary>
     public abstract class ObservableSocket : IDisposable
     {
-        private bool disposed;
-
         private readonly ILog Log;
 
         private readonly SemaphoreSlim syncLock = new SemaphoreSlim(1);
@@ -38,11 +36,11 @@ namespace NEventSocket.Sockets
 
         private TcpClient tcpClient;
 
-        private Subject<Unit> receiverTermination = new Subject<Unit>();
-
         private IDisposable readSubscription;
 
         private BlockingCollection<byte[]> received = new BlockingCollection<byte[]>(16);
+
+        private bool disposed;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ObservableSocket"/> class.
@@ -54,18 +52,30 @@ namespace NEventSocket.Sockets
 
             this.tcpClient = tcpClient;
 
-            receiver = received.GetConsumingEnumerable().ToObservable(Scheduler.Default).TakeUntil(receiverTermination);
+            receiver = received
+                .GetConsumingEnumerable()
+                .ToObservable(TaskPoolScheduler.Default)
+                        .Finally(
+                            () =>
+                                {
+                                    Log.Trace(() => "Buffer Read Observable Completed {0} chunks left.".Fmt(received.Count));
+                                    received.Dispose();
+                                    received = null;
+                                });
 
             readSubscription = Observable.Defer(
                 () =>
                     {
                         var stream = tcpClient.GetStream();
-                        var buffer = SharedPools.ByteArray.Allocate(); // new byte[8192]; //todo: use bufferpool or socketasynceventargs
+                        var buffer = SharedPools.ByteArray.Allocate();
                         return
                             Observable.FromAsync(() => stream.ReadAsync(buffer, 0, buffer.Length))
                                       .Select(x => buffer.Take(x).ToArray())
-                                      .Do(_ => SharedPools.ByteArray.Free(buffer));
-                    }).Repeat().TakeWhile(x => x.Any()).Subscribe(
+                                      .Finally(() => SharedPools.ByteArray.Free(buffer));
+                    })
+                    .Repeat()
+                    .TakeWhile(x => x.Any())
+                    .Subscribe(
                         (bytes) => received.Add(bytes), 
                         ex =>
                             {
@@ -74,7 +84,7 @@ namespace NEventSocket.Sockets
                             }, 
                         () =>
                             {
-                                Log.Trace(() => "Read Observable Completed");
+                                Log.Trace(() => "Socket Read Observable Completed");
                                 Dispose();
                             });
         }
@@ -221,7 +231,9 @@ namespace NEventSocket.Sockets
         {
             if (!disposed)
             {
-                Log.Trace(() => "Disposing (disposing:{0})".Fmt(disposing));
+                disposed = true;
+                Log.Trace(() => "Disposing {0} (disposing:{1})".Fmt(this.GetType(), disposing));
+
                 if (disposing)
                 {
                     if (readSubscription != null)
@@ -230,39 +242,25 @@ namespace NEventSocket.Sockets
                         readSubscription = null;
                     }
 
-                    if (receiverTermination != null)
-                    {
-                        receiverTermination.OnNext(Unit.Default);
-
-                        if (receiverTermination != null)
-                        {
-                            receiverTermination.Dispose();
-                            receiverTermination = null;
-                        }
-                    }
-
                     if (received != null)
                     {
-                        received.Dispose();
-                        received = null;
-                    }
-
-                    if (IsConnected)
-                    {
-                        if (tcpClient != null)
-                        {
-                            tcpClient.Close();
-                            tcpClient = null;
-                            Log.Trace(() => "TcpClient closed");
-                        }
+                        received.CompleteAdding();
                     }
                 }
 
-                disposed = true;
+                if (IsConnected)
+                {
+                    if (tcpClient != null)
+                    {
+                        tcpClient.Close();
+                        tcpClient = null;
+                        Log.Trace(() => "TcpClient closed");
+                    }
+                }
 
                 Disposed(this, EventArgs.Empty);
 
-                Log.Trace(() => "Disposed");
+                Log.Trace(() => "{0} Disposed".Fmt(this.GetType()));
             }
         }
     }
