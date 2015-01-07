@@ -13,3 +13,4 @@ packages/*
 *.suo
 build/*
 Gemfile.lock
+*GhostDoc.xml
