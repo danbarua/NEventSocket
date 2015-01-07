@@ -126,13 +126,16 @@ namespace NEventSocket
 
         private static void LogFailedApplicationResult(EventSocket eventSocket, ApplicationResult result)
         {
-            LogProvider.GetLogger(eventSocket.GetType())
-                       .Error(
-                           () =>
-                           "Application {0} {1} failed - {2}".Fmt(
-                               result.ChannelData.Headers[HeaderNames.Application],
-                               result.ChannelData.Headers[HeaderNames.ApplicationData],
-                               result.ChannelData.Headers[HeaderNames.ApplicationResponse]));
+            if (result.ChannelData != null)
+            {
+                LogProvider.GetLogger(eventSocket.GetType())
+                           .Error(
+                               () =>
+                               "Application {0} {1} failed - {2}".Fmt(
+                                   result.ChannelData.Headers[HeaderNames.Application],
+                                   result.ChannelData.Headers[HeaderNames.ApplicationData],
+                                   result.ChannelData.Headers[HeaderNames.ApplicationResponse]));
+            }
         }
     }
 }

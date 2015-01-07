@@ -35,6 +35,10 @@ namespace NEventSocket.FreeSwitch
                     this.ResponseText = this.ChannelData.Headers[HeaderNames.ApplicationResponse];
                 }
             }
+            else
+            {
+                Success = false;
+            }
         }
 
         /// <summary>
