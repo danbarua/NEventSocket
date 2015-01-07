@@ -39,12 +39,12 @@ task Compile {
 task RunTests -depends Compile {
   New-Item "$reportsDir\xUnit\$project\" -Type Directory -ErrorAction SilentlyContinue
 
-  #if ($is_appveyor_build){
-  #  exec { xunit.console.clr4 "$rootDir\test\NEventSocket.Tests\bin\Release\NEventSocket.Tests.dll" /appveyor }
-  #}
-  #else{
+  if ($is_appveyor_build){
+    exec { xunit.console.clr4 "$rootDir\test\NEventSocket.Tests\bin\Release\NEventSocket.Tests.dll" /appveyor }
+  }
+  else{
     exec { .$xunit_path "$rootDir\test\NEventSocket.Tests\bin\Release\NEventSocket.Tests.dll" /html "$reportsDir\xUnit\$project\index.html"}
-  #}
+  }
 }
 
 task ILMerge -depends Compile {
