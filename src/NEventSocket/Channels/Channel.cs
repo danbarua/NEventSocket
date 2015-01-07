@@ -72,12 +72,17 @@ namespace NEventSocket.Channels
                     eventSocket.Events.Where(x => x.UUID == this.UUID && x.EventName == EventName.ChannelHangup)
                                .Subscribe(async e =>
                                    {
-                                       await eventSocket.Exit();
+                                       if (ExitOnHangup)
+                                       {
+                                           await eventSocket.Exit();
+                                           Log.Info(() => "Channel [{0}] exited".Fmt(UUID));
+                                       }
                                    }));
              }
 
             //populate empty bridge status
             this.Bridge = new BridgeStatus(false, null);
+            this.ExitOnHangup = true;
         }
 
         ~Channel()
@@ -298,5 +303,7 @@ namespace NEventSocket.Channels
                 this.disposed = true;
             }
         }
+
+        public bool ExitOnHangup { get; set; }
     }
 }

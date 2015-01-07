@@ -226,17 +226,28 @@ namespace NEventSocket.Channels
         /// See https://freeswitch.org/confluence/display/FREESWITCH/Attended+Transfer
         /// </remarks>
         /// <param name="endpoint">The endpoint to transfer to eg. user/1000, sofia/foo@bar.com etc</param>
-        public async Task<AttendedTransferResult> AttendedTransfer(string endpoint)
+        public Task<AttendedTransferResult> AttendedTransfer(string endpoint)
         {
             try
             {
-                var result = await eventSocket.ExecuteApplication(UUID, "att_xfer", endpoint);
-                Console.WriteLine(result);
-                return new AttendedTransferResult(result);
+                var tcs = new TaskCompletionSource<AttendedTransferResult>();
+                var subscriptions = new CompositeDisposable();
+
+                var otherChannel = this.lastEvent.Headers[HeaderNames.OtherLegUniqueId];
+
+                subscriptions.Add(
+                    eventSocket.Events.FirstOrDefaultAsync(x => x.UUID == otherChannel && x.EventName == EventName.ChannelHangup)
+                               .Subscribe(x => tcs.TrySetResult(new AttendedTransferResult(null))));
+
+                eventSocket.ExecuteApplication(UUID, "att_xfer", endpoint)
+                           .ContinueWithCompleted(tcs, evt => new AttendedTransferResult(evt))
+                           .ContinueOnFaultedOrCancelled(tcs, subscriptions.Dispose);
+
+                return tcs.Task;
             }
             catch (TaskCanceledException ex)
             {
-                return new AttendedTransferResult(null);
+                return Task.FromResult(new AttendedTransferResult(null));
             }
         }
 
@@ -265,6 +276,11 @@ namespace NEventSocket.Channels
 
             this.Log.Debug(() => "Channel {0} setting variable '{1}' to '{2}'".Fmt(this.UUID, name, value));
             return this.eventSocket.SendApi("uuid_setvar {0} {1} {2}".Fmt(this.UUID, name, value));
+        }
+
+        public Task Exit()
+        {
+            return eventSocket.Exit();
         }
 
         public void Dispose()
