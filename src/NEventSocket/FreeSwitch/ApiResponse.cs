@@ -34,7 +34,7 @@ namespace NEventSocket.FreeSwitch
         {
             get
             {
-                return this.BodyText != null && this.BodyText[0] == '+';
+                return this.BodyText != null && this.BodyText[0] != '-';
             }
         }
 
