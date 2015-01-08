@@ -71,7 +71,9 @@ namespace NEventSocket.FreeSwitch
                     var payload = parser.ExtractMessage();
 
                     this.Headers = payload.Headers;
-                    this.BodyText = payload.BodyText.Trim();
+                    this.BodyText = payload.BodyText.EndsWith("\n\n")
+                                        ? payload.BodyText.Substring(0, payload.BodyText.Length - 2)
+                                        : payload.BodyText;
                 }
             }
             catch (Exception ex)
