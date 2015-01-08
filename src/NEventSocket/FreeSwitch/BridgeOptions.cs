@@ -247,6 +247,44 @@ namespace NEventSocket.FreeSwitch
         }
 
         /// <summary>
+        /// Privacy ID type - default is Remote-Party-ID header.
+        /// See https://wiki.freeswitch.org/wiki/Variable_sip_cid_type
+        /// </summary>
+        public SipCallerIdType SipCallerIdType
+        {
+            set
+            {
+                this.parameters["sip_cid_type"] = value.ToString().ToLowerInvariant();
+            }
+        }
+
+        /// <summary>
+        /// Sets the origination privacy.
+        /// See https://wiki.freeswitch.org/wiki/Variable_origination_privacy
+        /// Can be ORed together
+        /// </summary>
+        public OriginationPrivacy OriginationPrivacy
+        {
+            set
+            {
+                var flags = value.GetUniqueFlags();
+                var sb = StringBuilderPool.Allocate();
+                foreach (var flag in flags)
+                {
+                    sb.Append(flag.ToString().ToUpperWithUnderscores().ToLowerInvariant());
+                    sb.Append(":");
+                }
+
+                if (sb.Length > 0)
+                {
+                    sb.Remove(sb.Length - 1, 1);
+                }
+
+                this.parameters["origination_privacy"] = StringBuilderPool.ReturnAndFree(sb);
+            }
+        }
+
+        /// <summary>
         /// Container for any Channel Variables to be set before executing the bridge
         /// </summary>
         public IDictionary<string, string> ChannelVariables { get; private set; }

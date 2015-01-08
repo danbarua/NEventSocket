@@ -22,7 +22,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;DETECT_LEAKS;TRACE_LEAKS</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>bin\Debug\NEventSocket.XML</DocumentationFile>
@@ -74,6 +74,7 @@
     <Compile Include="FreeSwitch\AttendedTransferResultStatus.cs" />
     <Compile Include="FreeSwitch\BridgeResult.cs" />
     <Compile Include="FreeSwitch\Leg.cs" />
+    <Compile Include="FreeSwitch\OriginationPrivacy.cs" />
     <Compile Include="FreeSwitch\PlayGetDigitsOptions.cs" />
     <Compile Include="FreeSwitch\PlayGetDigitsResult.cs" />
     <Compile Include="FreeSwitch\PlayOptions.cs" />
@@ -92,6 +93,7 @@
     <Compile Include="FreeSwitch\OriginateResult.cs" />
     <Compile Include="FreeSwitch\ApplicationResult.cs" />
     <Compile Include="FreeSwitch\HangupCause.cs" />
+    <Compile Include="FreeSwitch\SipCallerIdType.cs" />
     <Compile Include="InboundSocketExtensions.cs" />
     <Compile Include="Logging\LibLog.cs" />
     <Compile Include="OutboundListener.cs" />
@@ -137,6 +139,7 @@
     <Compile Include="Sockets\ObservableListener.cs" />
     <Compile Include="Sockets\Parser.cs" />
     <Compile Include="Util\AsyncLock.cs" />
+    <Compile Include="Util\EnumExtensions.cs" />
     <Compile Include="Util\ObjectPooling\ObjectPool.cs" />
     <Compile Include="Util\ObservableExtensions.cs" />
     <Compile Include="Util\ObjectPooling\SharedPoolExtensions.cs" />
