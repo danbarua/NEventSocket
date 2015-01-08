@@ -34,8 +34,8 @@ namespace NEventSocket.FreeSwitch
                  */
                 if (basicMessage.Headers.ContainsKey(HeaderNames.EventName))
                 {
-                    this.Headers = basicMessage.Headers;
-                    this.BodyText = basicMessage.BodyText;
+                    Headers = basicMessage.Headers;
+                    BodyText = basicMessage.BodyText;
                     return;
                 }
 
@@ -54,8 +54,8 @@ namespace NEventSocket.FreeSwitch
                 if (!basicMessage.BodyText.Contains(HeaderNames.ContentLength))
                 {
                     // body text consists of key-value-pair event headers
-                    this.Headers = basicMessage.BodyText.ParseKeyValuePairs("\n", ": ");
-                    this.BodyText = null;
+                    Headers = basicMessage.BodyText.ParseKeyValuePairs(": ");
+                    BodyText = null;
                 }
                 else
                 {
@@ -70,8 +70,8 @@ namespace NEventSocket.FreeSwitch
                         }
 
                         var payload = parser.ExtractMessage();
-                        this.Headers = payload.Headers;
-                        this.BodyText = payload.BodyText.EndsWith("\n\n")
+                        Headers = payload.Headers;
+                        BodyText = payload.BodyText.EndsWith("\n\n")
                                             ? payload.BodyText.Substring(0, payload.BodyText.Length - 2)
                                             : payload.BodyText;
                     }
@@ -80,7 +80,7 @@ namespace NEventSocket.FreeSwitch
             catch (Exception ex)
             {
                 Log.ErrorException("Failed to parse body of event", ex);
-                Log.Error(this.BodyText);
+                Log.Error(BodyText);
                 throw;
             }
         }
@@ -168,7 +168,7 @@ namespace NEventSocket.FreeSwitch
         /// <returns>The Channel Variable value.</returns>
         public string GetVariable(string variable)
         {
-            return this.GetHeader("variable_" + variable);
+            return GetHeader("variable_" + variable);
         }
 
         /// <summary>

@@ -23,8 +23,8 @@ namespace NEventSocket.FreeSwitch
                 throw new ArgumentException("Expected content type api/response, got {0} instead.".Fmt(basicMessage.ContentType));
             }
 
-            this.Headers = basicMessage.Headers;
-            this.BodyText = basicMessage.BodyText;
+            Headers = basicMessage.Headers;
+            BodyText = basicMessage.BodyText;
         }
 
         /// <summary>
@@ -34,7 +34,7 @@ namespace NEventSocket.FreeSwitch
         {
             get
             {
-                return this.BodyText != null && this.BodyText[0] != '-';
+                return BodyText != null && BodyText[0] != '-';
             }
         }
 
@@ -45,8 +45,8 @@ namespace NEventSocket.FreeSwitch
         {
             get
             {
-                return this.BodyText != null && this.BodyText.StartsWith("-ERR")
-                           ? this.BodyText.Substring(5, this.BodyText.Length - 5)
+                return BodyText != null && BodyText.StartsWith("-ERR")
+                           ? BodyText.Substring(5, BodyText.Length - 5)
                            : string.Empty;
             }
         }

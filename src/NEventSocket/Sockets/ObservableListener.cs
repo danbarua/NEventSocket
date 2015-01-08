@@ -51,7 +51,7 @@ namespace NEventSocket.Sockets
         /// <param name="observableSocketFactory">A function returning an object that inherits from <seealso cref="ObservableSocket" />.</param>
         protected ObservableListener(int port, Func<TcpClient, T> observableSocketFactory)
         {
-            this.Log = LogProvider.GetLogger(this.GetType());
+            Log = LogProvider.GetLogger(GetType());
             this.port = port;
             this.observableSocketFactory = observableSocketFactory;
         }
@@ -61,7 +61,7 @@ namespace NEventSocket.Sockets
         /// </summary>
         ~ObservableListener()
         {
-            this.Dispose(false);
+            Dispose(false);
         }
 
         /// <summary>
@@ -93,16 +93,16 @@ namespace NEventSocket.Sockets
         {
             if (disposed)
             {
-                throw new ObjectDisposedException(this.ToString());
+                throw new ObjectDisposedException(ToString());
             }
 
             tcpListener = new TcpListener(IPAddress.Any, port);
 
             tcpListener.Start();
 
-            Log.Trace(() => "Listener Started on Port {0}".Fmt(this.Port));
+            Log.Trace(() => "Listener Started on Port {0}".Fmt(Port));
 
-            this.subscription =
+            subscription =
                 Observable.FromAsync(tcpListener.AcceptTcpClientAsync)
                           .Repeat()
                           .TakeUntil(listenerTermination)

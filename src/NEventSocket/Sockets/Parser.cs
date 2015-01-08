@@ -49,7 +49,7 @@ namespace NEventSocket.Sockets
         {
             get
             {
-                return this.contentLength.HasValue && this.contentLength > 0;
+                return contentLength.HasValue && contentLength > 0;
             }
         }
 
@@ -60,55 +60,55 @@ namespace NEventSocket.Sockets
         /// <returns>The same instance of the <see cref="Parser"/>.</returns>
         public Parser Append(char next)
         {
-            if (this.Completed)
+            if (Completed)
             {
                 return new Parser().Append(next);
             }
 
-            this.buffer.Append(next);
+            buffer.Append(next);
 
-            if (!this.HasBody)
+            if (!HasBody)
             {
                 // we're parsing the headers
-                if (this.previous == '\n' && next == '\n')
+                if (previous == '\n' && next == '\n')
                 {
                     // \n\n denotes the end of the Headers
-                    var headerString = this.buffer.ToString();
+                    var headerString = buffer.ToString();
 
-                    this.headers = headerString.ParseKeyValuePairs("\n", ": ");
+                    headers = headerString.ParseKeyValuePairs(": ");
 
-                    if (this.headers.ContainsKey(HeaderNames.ContentLength))
+                    if (headers.ContainsKey(HeaderNames.ContentLength))
                     {
-                        this.contentLength = int.Parse(this.headers[HeaderNames.ContentLength]);
+                        contentLength = int.Parse(headers[HeaderNames.ContentLength]);
 
-                        if (this.contentLength == 0)
+                        if (contentLength == 0)
                         {
-                            this.Completed = true;
+                            Completed = true;
                         }
                         else
                         {
                             // start parsing the body content
-                            this.buffer.Clear();
+                            buffer.Clear();
 
                             // allocate the buffer up front given that we now know the expected size
-                            this.buffer.EnsureCapacity(this.contentLength.Value);
+                            buffer.EnsureCapacity(contentLength.Value);
                         }
                     }
                     else
                     {
                         // end of message
-                        this.Completed = true;
+                        Completed = true;
                     }
                 }
                 else
                 {
-                    this.previous = next;
+                    previous = next;
                 }
             }
             else
             {
                 // if we've read the Content-Length amount of bytes then we're done
-                this.Completed = this.buffer.Length == this.contentLength.GetValueOrDefault() || this.contentLength == 0;
+                Completed = buffer.Length == contentLength.GetValueOrDefault() || contentLength == 0;
             }
 
             return this;
@@ -139,11 +139,16 @@ namespace NEventSocket.Sockets
         /// </exception>
         public BasicMessage ExtractMessage()
         {
-            if (!this.Completed)
+            if (disposed)
+            {
+                throw new ObjectDisposedException(GetType().Name, "Should only call ExtractMessage() once per parser.");
+            }
+
+            if (!Completed)
             {
                 var errorMessage = "The message was not completely parsed.";
 
-                if (this.HasBody)
+                if (HasBody)
                 {
                     errorMessage += "expected a body with length {0}, got {1} instead.".Fmt(contentLength, buffer.Length);
                 }
@@ -151,9 +156,8 @@ namespace NEventSocket.Sockets
                 throw new InvalidOperationException(errorMessage);
             }
 
-            var result = this.HasBody ? new BasicMessage(this.headers, buffer.ToString()) : new BasicMessage(this.headers);
-            StringBuilderPool.Free(buffer);
-            buffer = null;
+            var result = HasBody ? new BasicMessage(headers, buffer.ToString()) : new BasicMessage(headers);
+            Dispose();
             return result;
         }
 

@@ -35,7 +35,7 @@ namespace NEventSocket.FreeSwitch
 
             set
             {
-                this.channelVariableName = value;
+                channelVariableName = value;
             }
         }
 
@@ -44,13 +44,13 @@ namespace NEventSocket.FreeSwitch
         public override string ToString()
         {
             return string.Format(
-                "{0} {1} {2} {3} {4} {5}", 
-                this.MinDigits, 
-                this.MaxDigits, 
-                this.Prompt, 
-                this.ChannelVariableName, 
-                this.TimeoutMs, 
-                this.Terminators);
+                "{0} {1} {2} {3} {4} {5}",
+                MinDigits,
+                MaxDigits,
+                Prompt,
+                ChannelVariableName,
+                TimeoutMs,
+                Terminators);
         }
     }
 }

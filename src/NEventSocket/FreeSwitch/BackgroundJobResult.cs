@@ -16,8 +16,8 @@ namespace NEventSocket.FreeSwitch
     {
         internal BackgroundJobResult(EventMessage basicMessage)
         {
-            this.Headers = basicMessage.Headers;
-            this.BodyText = basicMessage.BodyText;
+            Headers = basicMessage.Headers;
+            BodyText = basicMessage.BodyText;
         }
 
         /// <summary>
@@ -27,7 +27,7 @@ namespace NEventSocket.FreeSwitch
         {
             get
             {
-                return this.Headers[HeaderNames.JobUUID];
+                return Headers[HeaderNames.JobUUID];
             }
         }
 
@@ -38,7 +38,7 @@ namespace NEventSocket.FreeSwitch
         {
             get
             {
-                return this.BodyText != null && this.BodyText[0] == '+';
+                return BodyText != null && BodyText[0] == '+';
             }
         }
 
@@ -49,9 +49,9 @@ namespace NEventSocket.FreeSwitch
         {
             get
             {
-                return this.BodyText != null && this.BodyText.StartsWith("-ERR ")
-                           ? this.BodyText.Substring(5, this.BodyText.Length - 5)
-                           : this.BodyText;
+                return BodyText != null && BodyText.StartsWith("-ERR ")
+                           ? BodyText.Substring(5, BodyText.Length - 5)
+                           : BodyText;
             }
         }
     }

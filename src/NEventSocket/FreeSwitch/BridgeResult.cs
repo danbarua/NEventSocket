@@ -15,18 +15,18 @@ namespace NEventSocket.FreeSwitch
         {
             if (eventMessage != null)
             {
-                this.Success = eventMessage.Headers.ContainsKey(HeaderNames.OtherLegUniqueId);
-                this.ResponseText = eventMessage.GetVariable("DIALSTATUS");
+                Success = eventMessage.Headers.ContainsKey(HeaderNames.OtherLegUniqueId);
+                ResponseText = eventMessage.GetVariable("DIALSTATUS");
 
-                if (this.Success)
+                if (Success)
                 {
-                    this.BridgeUUID = eventMessage.Headers[HeaderNames.OtherLegUniqueId];
+                    BridgeUUID = eventMessage.Headers[HeaderNames.OtherLegUniqueId];
                 }
             }
             else
             {
-                this.Success = false;
-                this.ResponseText = "Aborted";
+                Success = false;
+                ResponseText = "Aborted";
             }
         }
 

@@ -28,11 +28,11 @@ namespace NEventSocket.FreeSwitch
 
             if (eventMessage != null)
             {
-                this.ChannelData = eventMessage;
+                ChannelData = eventMessage;
 
-                if (this.ChannelData.Headers.ContainsKey(HeaderNames.ApplicationResponse))
+                if (ChannelData.Headers.ContainsKey(HeaderNames.ApplicationResponse))
                 {
-                    this.ResponseText = this.ChannelData.Headers[HeaderNames.ApplicationResponse];
+                    ResponseText = ChannelData.Headers[HeaderNames.ApplicationResponse];
                 }
             }
             else

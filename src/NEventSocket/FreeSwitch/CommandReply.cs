@@ -34,7 +34,7 @@ namespace NEventSocket.FreeSwitch
         {
             get
             {
-                return this.ReplyText != null && this.ReplyText[0] == '+';
+                return ReplyText != null && ReplyText[0] == '+';
             }
         }
 
@@ -45,7 +45,7 @@ namespace NEventSocket.FreeSwitch
         {
             get
             {
-                return this.Headers[HeaderNames.ReplyText];
+                return Headers[HeaderNames.ReplyText];
             }
         }
 
@@ -56,8 +56,8 @@ namespace NEventSocket.FreeSwitch
         {
             get
             {
-                return this.ReplyText != null && this.ReplyText.StartsWith("-ERR")
-                           ? this.ReplyText.Substring(5, this.ReplyText.Length - 5)
+                return ReplyText != null && ReplyText.StartsWith("-ERR")
+                           ? ReplyText.Substring(5, ReplyText.Length - 5)
                            : string.Empty;
             }
         }

@@ -20,12 +20,12 @@ namespace NEventSocket.FreeSwitch
         {
             get
             {
-                return this.loops;
+                return loops;
             }
 
             set
             {
-                this.loops = value;
+                loops = value;
             }
         }
 

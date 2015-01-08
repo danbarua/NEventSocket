@@ -17,21 +17,21 @@ namespace NEventSocket.FreeSwitch
     {
         private OriginateResult(EventMessage channelEvent)
         {
-            this.ChannelData = channelEvent;
-            this.Success = channelEvent.AnswerState != AnswerState.Hangup;
-            this.HangupCause = channelEvent.HangupCause;
+            ChannelData = channelEvent;
+            Success = channelEvent.AnswerState != AnswerState.Hangup;
+            HangupCause = channelEvent.HangupCause;
         }
 
         private OriginateResult(BackgroundJobResult backgroundJobResult)
         {
-            this.Success = backgroundJobResult.Success;
+            Success = backgroundJobResult.Success;
 
-            if (!this.Success)
+            if (!Success)
             {
-                this.HangupCause = backgroundJobResult.ErrorMessage.HeaderToEnumOrNull<HangupCause>();
+                HangupCause = backgroundJobResult.ErrorMessage.HeaderToEnumOrNull<HangupCause>();
             }
 
-            this.ResponseText = backgroundJobResult.ErrorMessage;
+            ResponseText = backgroundJobResult.ErrorMessage;
         }
 
         /// <summary>

@@ -23,12 +23,12 @@ namespace NEventSocket.FreeSwitch
         {
             get
             {
-                return this.moduleName;
+                return moduleName;
             }
 
             set
             {
-                this.moduleName = value;
+                moduleName = value;
             }
         }
 
@@ -55,12 +55,12 @@ namespace NEventSocket.FreeSwitch
         {
             get
             {
-                return this.gender;
+                return gender;
             }
 
             set
             {
-                this.gender = value;
+                gender = value;
             }
         }
 
@@ -76,12 +76,12 @@ namespace NEventSocket.FreeSwitch
         public override string ToString()
         {
             return string.Format(
-                "{0} {1} {2} {3} {4}", 
-                this.ModuleName, 
-                this.Type.ToString().ToUpperWithUnderscores().ToUpperInvariant(), 
-                this.Method.ToString().ToLowerInvariant(), 
-                this.Gender.ToString().ToUpperInvariant(), 
-                this.Text);
+                "{0} {1} {2} {3} {4}",
+                ModuleName,
+                Type.ToString().ToUpperWithUnderscores().ToUpperInvariant(),
+                Method.ToString().ToLowerInvariant(),
+                Gender.ToString().ToUpperInvariant(),
+                Text);
         }
     }
 }

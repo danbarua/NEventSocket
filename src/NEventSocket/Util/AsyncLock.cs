@@ -18,15 +18,15 @@ namespace NEventSocket.Util
 
         public AsyncLock()
         {
-            this.releaser = Task.FromResult((IDisposable)new Releaser(this));
+            releaser = Task.FromResult((IDisposable)new Releaser(this));
         }
 
         public Task<IDisposable> LockAsync()
         {
-            var wait = this.semaphore.WaitAsync();
+            var wait = semaphore.WaitAsync();
             return wait.IsCompleted
-                       ? this.releaser
-                       : wait.ContinueWith((_, state) => (IDisposable)state, this.releaser.Result, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+                       ? releaser
+                       : wait.ContinueWith((_, state) => (IDisposable)state, releaser.Result, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
         }
 
         private sealed class Releaser : IDisposable
@@ -40,7 +40,7 @@ namespace NEventSocket.Util
 
             public void Dispose()
             {
-                this.toRelease.semaphore.Release();
+                toRelease.semaphore.Release();
             }
         }
     }

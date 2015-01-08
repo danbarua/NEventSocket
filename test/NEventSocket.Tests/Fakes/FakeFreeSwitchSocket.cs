@@ -29,7 +29,7 @@ namespace NEventSocket.Tests.Fakes
         public FakeFreeSwitchSocket(TcpClient client)
             : base(client)
         {
-            this.Receiver.SelectMany(x => Encoding.ASCII.GetString(x))
+            Receiver.SelectMany(x => Encoding.ASCII.GetString(x))
                 .AggregateUntil(
                     () => new StringBuilder(), (sb, c) => sb.Append(c), sb => sb.ToString().EndsWith("\n\n"))
                 .Select(x => x.ToString().Remove(x.Length - 2, 2))
@@ -54,38 +54,38 @@ namespace NEventSocket.Tests.Fakes
 
         public Task Send(string message)
         {
-            return this.SendAsync(message + "\n\n", CancellationToken.None);
+            return SendAsync(message + "\n\n", CancellationToken.None);
         }
 
         public Task SendChannelDataEvent()
         {
             var msg = TestMessages.ConnectEvent.Replace("\r\n", "\n") + "\n\n";
-            return this.SendAsync(msg, CancellationToken.None);
+            return SendAsync(msg, CancellationToken.None);
         }
 
         public Task SendDisconnectNotice()
         {
-            return this.SendAsync("Content-Type: text/disconnect-notice\nContent-Length: 67\n\nDisconnected, goodbye.\nSee you at ClueCon! http://www.cluecon.com/\n", CancellationToken.None);
+            return SendAsync("Content-Type: text/disconnect-notice\nContent-Length: 67\n\nDisconnected, goodbye.\nSee you at ClueCon! http://www.cluecon.com/\n", CancellationToken.None);
         }
 
         public Task SendCommandReplyOk(string message = null)
         {
-            return this.SendAsync("Content-Type: command/reply\nReply-Text: +OK {0}\n\n".Fmt(message), CancellationToken.None);
+            return SendAsync("Content-Type: command/reply\nReply-Text: +OK {0}\n\n".Fmt(message), CancellationToken.None);
         }
 
         public Task SendCommandReplyError(string error)
         {
-            return this.SendAsync("Content-Type: command/reply\nReply-Text: -ERR {0}\n\n".Fmt(error), CancellationToken.None);
+            return SendAsync("Content-Type: command/reply\nReply-Text: -ERR {0}\n\n".Fmt(error), CancellationToken.None);
         }
 
         public Task SendApiResponseOk()
         {
-            return this.SendAsync("Content-Type: api/response\nContent-Length: 3\n\n+OK", CancellationToken.None);
+            return SendAsync("Content-Type: api/response\nContent-Length: 3\n\n+OK", CancellationToken.None);
         }
 
         public Task SendApiResponseError(string error)
         {
-            return this.SendAsync("Content-Type: api/response\nContent-Length: {0}\n\n-ERR {1}".Fmt(5 + error.Length, error), CancellationToken.None);
+            return SendAsync("Content-Type: api/response\nContent-Length: {0}\n\n-ERR {1}".Fmt(5 + error.Length, error), CancellationToken.None);
         }
     }
 }

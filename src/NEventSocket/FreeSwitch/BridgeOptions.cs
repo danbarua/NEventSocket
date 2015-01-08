@@ -26,7 +26,7 @@ namespace NEventSocket.FreeSwitch
         /// </summary>
         public BridgeOptions()
         {
-            this.ChannelVariables = new Dictionary<string, string>();
+            ChannelVariables = new Dictionary<string, string>();
         }
 
         /// <summary>
@@ -39,12 +39,12 @@ namespace NEventSocket.FreeSwitch
         {
             get
             {
-                return this.parameters.GetValueOrDefault("origination_uuid");
+                return parameters.GetValueOrDefault("origination_uuid");
             }
 
             set
             {
-                this.parameters["origination_uuid"] = value;
+                parameters["origination_uuid"] = value;
             }
         }
 
@@ -58,7 +58,7 @@ namespace NEventSocket.FreeSwitch
         {
             set
             {
-                this.parameters["origination_caller_id_name"] = value;
+                parameters["origination_caller_id_name"] = value;
             }
         }
 
@@ -72,7 +72,7 @@ namespace NEventSocket.FreeSwitch
         {
             set
             {
-                this.parameters["origination_caller_id_number"] = value;
+                parameters["origination_caller_id_number"] = value;
             }
         }
 
@@ -87,7 +87,7 @@ namespace NEventSocket.FreeSwitch
         {
             set
             {
-                this.parameters["ignore_early_media"] = value.ToLowerBooleanString();
+                parameters["ignore_early_media"] = value.ToLowerBooleanString();
             }
         }
 
@@ -101,7 +101,7 @@ namespace NEventSocket.FreeSwitch
         {
             set
             {
-                this.ChannelVariables["hangup_after_bridge"] = value.ToLowerBooleanString();
+                ChannelVariables["hangup_after_bridge"] = value.ToLowerBooleanString();
             }
         }
 
@@ -112,7 +112,7 @@ namespace NEventSocket.FreeSwitch
         {
             set
             {
-                this.ChannelVariables["ringback"] = value;
+                ChannelVariables["ringback"] = value;
             }
         }
 
@@ -125,7 +125,7 @@ namespace NEventSocket.FreeSwitch
         {
             set
             {
-                this.parameters["call_timeout"] = value.ToString();
+                parameters["call_timeout"] = value.ToString();
             }
         }
 
@@ -138,7 +138,7 @@ namespace NEventSocket.FreeSwitch
         {
             set
             {
-                this.ChannelVariables["continue_on_fail"] = value.ToString().ToLowerInvariant();
+                ChannelVariables["continue_on_fail"] = value.ToString().ToLowerInvariant();
             }
         }
 
@@ -152,7 +152,7 @@ namespace NEventSocket.FreeSwitch
         {
             set
             {
-                this.ChannelVariables["bridge_filter_dtmf"] = value.ToString().ToLowerInvariant();
+                ChannelVariables["bridge_filter_dtmf"] = value.ToString().ToLowerInvariant();
             }
         }
 
@@ -166,7 +166,7 @@ namespace NEventSocket.FreeSwitch
         {
             set
             {
-                this.ChannelVariables["api_after_bridge"] = value;
+                ChannelVariables["api_after_bridge"] = value;
             }
         }
 
@@ -183,7 +183,7 @@ namespace NEventSocket.FreeSwitch
         {
             set
             {
-                this.parameters["group_confirm_file"] = value;
+                parameters["group_confirm_file"] = value;
             }
         }
 
@@ -195,7 +195,7 @@ namespace NEventSocket.FreeSwitch
         {
             set
             {
-                this.parameters["group_confirm_error_file"] = value;
+                parameters["group_confirm_error_file"] = value;
             }
         }
 
@@ -209,7 +209,7 @@ namespace NEventSocket.FreeSwitch
         {
             set
             {
-                this.parameters["group_confirm_key"] = value;
+                parameters["group_confirm_key"] = value;
             }
         }
 
@@ -220,7 +220,7 @@ namespace NEventSocket.FreeSwitch
         {
             set
             {
-                this.parameters["group_confirm_read_timeout"] = value.ToString();
+                parameters["group_confirm_read_timeout"] = value.ToString();
             }
         }
 
@@ -231,7 +231,7 @@ namespace NEventSocket.FreeSwitch
         {
             set
             {
-                this.parameters["fail_on_single_reject"] = value.ToString().ToLowerInvariant();
+                parameters["fail_on_single_reject"] = value.ToString().ToLowerInvariant();
             }
         }
 
@@ -242,7 +242,7 @@ namespace NEventSocket.FreeSwitch
         {
             set
             {
-                this.parameters["group_confirm_cancel_timeout "] = value.ToString().ToLowerInvariant();
+                parameters["group_confirm_cancel_timeout "] = value.ToString().ToLowerInvariant();
             }
         }
 
@@ -254,7 +254,7 @@ namespace NEventSocket.FreeSwitch
         {
             set
             {
-                this.parameters["sip_cid_type"] = value.ToString().ToLowerInvariant();
+                parameters["sip_cid_type"] = value.ToString().ToLowerInvariant();
             }
         }
 
@@ -280,7 +280,7 @@ namespace NEventSocket.FreeSwitch
                     sb.Remove(sb.Length - 1, 1);
                 }
 
-                this.parameters["origination_privacy"] = StringBuilderPool.ReturnAndFree(sb);
+                parameters["origination_privacy"] = StringBuilderPool.ReturnAndFree(sb);
             }
         }
 
@@ -299,7 +299,7 @@ namespace NEventSocket.FreeSwitch
             var sb = StringBuilderPool.Allocate();
             sb.Append("{");
 
-            sb.Append(this.parameters.ToOriginateString());
+            sb.Append(parameters.ToOriginateString());
 
             if (sb.Length > 1)
             {

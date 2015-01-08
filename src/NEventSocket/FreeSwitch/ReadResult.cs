@@ -16,9 +16,9 @@ namespace NEventSocket.FreeSwitch
         {
             if (eventMessage != null)
             {
-                this.Digits = eventMessage.GetVariable(channelVariable);
+                Digits = eventMessage.GetVariable(channelVariable);
                 var readResult = eventMessage.GetVariable("read_result");
-                this.Result = !string.IsNullOrEmpty(readResult)
+                Result = !string.IsNullOrEmpty(readResult)
                                   ? (ReadResultStatus)Enum.Parse(typeof(ReadResultStatus), readResult, true)
                                   : ReadResultStatus.Failure;
             }
@@ -27,7 +27,7 @@ namespace NEventSocket.FreeSwitch
                 Result = ReadResultStatus.Failure;
             }
 
-            this.Success = Result == ReadResultStatus.Success;
+            Success = Result == ReadResultStatus.Success;
         }
 
         /// <summary>

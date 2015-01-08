@@ -27,7 +27,7 @@ namespace NEventSocket.FreeSwitch
         /// </summary>
         public OriginateOptions()
         {
-            this.ChannelVariables = new Dictionary<string, string>();
+            ChannelVariables = new Dictionary<string, string>();
         }
 
         /// <summary>
@@ -40,12 +40,12 @@ namespace NEventSocket.FreeSwitch
         {
             get
             {
-                return this.parameters.GetValueOrDefault("origination_uuid");
+                return parameters.GetValueOrDefault("origination_uuid");
             }
 
             set
             {
-                this.parameters["origination_uuid"] = value;
+                parameters["origination_uuid"] = value;
             }
         }
 
@@ -59,7 +59,7 @@ namespace NEventSocket.FreeSwitch
         {
             set
             {
-                this.parameters["origination_caller_id_name"] = value;
+                parameters["origination_caller_id_name"] = value;
             }
         }
 
@@ -73,7 +73,7 @@ namespace NEventSocket.FreeSwitch
         {
             set
             {
-                this.parameters["origination_caller_id_number"] = value;
+                parameters["origination_caller_id_number"] = value;
             }
         }
 
@@ -84,7 +84,7 @@ namespace NEventSocket.FreeSwitch
         {
             set
             {
-                this.parameters["originate_retries"] = value.ToString();
+                parameters["originate_retries"] = value.ToString();
             }
         }
 
@@ -95,7 +95,7 @@ namespace NEventSocket.FreeSwitch
         {
             set
             {
-                this.parameters["originate_retry_sleep_ms"] = value.ToString();
+                parameters["originate_retry_sleep_ms"] = value.ToString();
             }
         }
 
@@ -106,7 +106,7 @@ namespace NEventSocket.FreeSwitch
         {
             set
             {
-                this.parameters["originate_timeout"] = value.ToString();
+                parameters["originate_timeout"] = value.ToString();
             }
         }
 
@@ -118,7 +118,7 @@ namespace NEventSocket.FreeSwitch
         {
             set
             {
-                this.parameters["execute_on_originate"] = value;
+                parameters["execute_on_originate"] = value;
             }
         }
 
@@ -129,7 +129,7 @@ namespace NEventSocket.FreeSwitch
         {
             set
             {
-                this.ChannelVariables["hangup_after_bridge"] = value.ToLowerBooleanString();
+                ChannelVariables["hangup_after_bridge"] = value.ToLowerBooleanString();
             }
         }
 
@@ -145,12 +145,12 @@ namespace NEventSocket.FreeSwitch
             get
             {
                 bool returnRingReady;
-                return bool.TryParse(this.parameters.GetValueOrDefault("return_ring_ready"), out returnRingReady) && returnRingReady;
+                return bool.TryParse(parameters.GetValueOrDefault("return_ring_ready"), out returnRingReady) && returnRingReady;
             }
 
             set
             {
-                this.parameters["return_ring_ready"] = value.ToLowerBooleanString();
+                parameters["return_ring_ready"] = value.ToLowerBooleanString();
             }
         }
 
@@ -161,7 +161,7 @@ namespace NEventSocket.FreeSwitch
         {
             set
             {
-                this.parameters["ignore_early_media"] = value.ToLowerBooleanString();
+                parameters["ignore_early_media"] = value.ToLowerBooleanString();
             }
         }
 
@@ -177,7 +177,7 @@ namespace NEventSocket.FreeSwitch
         {
             set
             {
-                this.parameters["bypass_media"] = value.ToLowerBooleanString();
+                parameters["bypass_media"] = value.ToLowerBooleanString();
             }
         }
 
@@ -189,7 +189,7 @@ namespace NEventSocket.FreeSwitch
         {
             set
             {
-                this.parameters["sip_cid_type"] = value.ToString().ToLowerInvariant();
+                parameters["sip_cid_type"] = value.ToString().ToLowerInvariant();
             }
         }
 
@@ -215,7 +215,7 @@ namespace NEventSocket.FreeSwitch
                     sb.Remove(sb.Length - 1, 1);
                 }
 
-                this.parameters["origination_privacy"] = StringBuilderPool.ReturnAndFree(sb);
+                parameters["origination_privacy"] = StringBuilderPool.ReturnAndFree(sb);
             }
         }
 
@@ -233,8 +233,8 @@ namespace NEventSocket.FreeSwitch
             var sb = StringBuilderPool.Allocate();
             sb.Append("{");
 
-            sb.Append(this.parameters.ToOriginateString());
-            sb.Append(this.ChannelVariables.ToOriginateString());
+            sb.Append(parameters.ToOriginateString());
+            sb.Append(ChannelVariables.ToOriginateString());
 
             if (sb.Length > 1)
             {

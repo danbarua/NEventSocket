@@ -94,7 +94,7 @@ namespace NEventSocket
             var originateString = string.Format("{0}{1} &{2}", options, endpoint, application);
 
             return
-                this.BackgroundJob("originate", originateString)
+                BackgroundJob("originate", originateString)
                     .ToObservable()
                     .Merge(
                         Events.FirstAsync(

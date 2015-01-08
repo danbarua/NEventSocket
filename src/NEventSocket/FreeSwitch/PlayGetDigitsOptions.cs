@@ -40,12 +40,12 @@ namespace NEventSocket.FreeSwitch
         {
             get
             {
-                return this.minDigits;
+                return minDigits;
             }
 
             set
             {
-                this.minDigits = value;
+                minDigits = value;
             }
         }
 
@@ -56,12 +56,12 @@ namespace NEventSocket.FreeSwitch
         {
             get
             {
-                return this.maxDigits;
+                return maxDigits;
             }
 
             set
             {
-                this.maxDigits = value;
+                maxDigits = value;
             }
         }
 
@@ -72,12 +72,12 @@ namespace NEventSocket.FreeSwitch
         {
             get
             {
-                return this.maxTries;
+                return maxTries;
             }
 
             set
             {
-                this.maxTries = value;
+                maxTries = value;
             }
         }
 
@@ -88,12 +88,12 @@ namespace NEventSocket.FreeSwitch
         {
             get
             {
-                return this.timeoutMs;
+                return timeoutMs;
             }
 
             set
             {
-                this.timeoutMs = value;
+                timeoutMs = value;
             }
         }
 
@@ -104,12 +104,12 @@ namespace NEventSocket.FreeSwitch
         {
             get
             {
-                return this.terminatorDigits;
+                return terminatorDigits;
             }
 
             set
             {
-                this.terminatorDigits = value;
+                terminatorDigits = value;
             }
         }
 
@@ -120,12 +120,12 @@ namespace NEventSocket.FreeSwitch
         {
             get
             {
-                return this.promptAudioFile;
+                return promptAudioFile;
             }
 
             set
             {
-                this.promptAudioFile = value;
+                promptAudioFile = value;
             }
         }
 
@@ -136,12 +136,12 @@ namespace NEventSocket.FreeSwitch
         {
             get
             {
-                return this.badInputAudioFile;
+                return badInputAudioFile;
             }
 
             set
             {
-                this.badInputAudioFile = value;
+                badInputAudioFile = value;
             }
         }
 
@@ -177,7 +177,7 @@ namespace NEventSocket.FreeSwitch
                 }
 
                 sb.Append(")+");
-                this.digitsRegex = StringBuilderPool.ReturnAndFree(sb);
+                digitsRegex = StringBuilderPool.ReturnAndFree(sb);
             }
         }
 
@@ -188,12 +188,12 @@ namespace NEventSocket.FreeSwitch
         {
             get
             {
-                return this.digitTimeoutMs;
+                return digitTimeoutMs;
             }
 
             set
             {
-                this.digitTimeoutMs = value;
+                digitTimeoutMs = value;
             }
         }
 
@@ -209,7 +209,7 @@ namespace NEventSocket.FreeSwitch
 
             set
             {
-                this.channelVariableName = value;
+                channelVariableName = value;
             }
         }
 
@@ -220,17 +220,17 @@ namespace NEventSocket.FreeSwitch
         public override string ToString()
         {
             return string.Format(
-                "{0} {1} {2} {3} {4} {5} {6} {7} {8} {9}", 
-                this.MinDigits, 
-                this.MaxDigits, 
-                this.MaxTries, 
-                this.TimeoutMs, 
-                this.TerminatorDigits, 
-                this.PromptAudioFile, 
-                this.BadInputAudioFile, 
-                channelVariableName, 
-                this.digitsRegex, 
-                this.DigitTimeoutMs);
+                "{0} {1} {2} {3} {4} {5} {6} {7} {8} {9}",
+                MinDigits,
+                MaxDigits,
+                MaxTries,
+                TimeoutMs,
+                TerminatorDigits,
+                PromptAudioFile,
+                BadInputAudioFile, 
+                channelVariableName,
+                digitsRegex,
+                DigitTimeoutMs);
         }
     }
 }

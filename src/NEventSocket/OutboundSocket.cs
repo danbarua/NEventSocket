@@ -44,11 +44,11 @@ namespace NEventSocket
         /// </summary>
         public Task<EventMessage> Connect()
         {
-            return this.SendCommand("connect").ToObservable().Select(reply => new EventMessage(reply)).Do(
+            return SendCommand("connect").ToObservable().Select(reply => new EventMessage(reply)).Do(
                 x =>
                     {
-                        this.ChannelData = x;
-                        this.Messages.FirstAsync(m => m.ContentType == ContentTypes.DisconnectNotice)
+                        ChannelData = x;
+                        Messages.FirstAsync(m => m.ContentType == ContentTypes.DisconnectNotice)
                             .Do(dn => Log.Trace(() => "Channel {0} Disconnect Notice {1} received.".Fmt(ChannelData.UUID, dn.BodyText)));
                     }).ToTask();
         }

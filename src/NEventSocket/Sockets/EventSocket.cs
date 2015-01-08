@@ -62,7 +62,7 @@ namespace NEventSocket.Sockets
         /// <param name="responseTimeOut">(Optional) The response timeout.</param>
         protected EventSocket(TcpClient tcpClient, TimeSpan? responseTimeOut = null) : base(tcpClient)
         {
-            Log = LogProvider.GetLogger(this.GetType());
+            Log = LogProvider.GetLogger(GetType());
 
             ResponseTimeOut = responseTimeOut ?? TimeSpan.FromSeconds(5);
 
@@ -106,7 +106,7 @@ namespace NEventSocket.Sockets
         {
             get
             {
-                return this.messages.AsObservable();
+                return messages.AsObservable();
             }
         }
 
@@ -125,7 +125,7 @@ namespace NEventSocket.Sockets
             lock (gate)
             {
                 var tcs = new TaskCompletionSource<ApiResponse>();
-                var subscriptions = new CompositeDisposable { this.cts.Token.Register(() => tcs.TrySetCanceled()) };
+                var subscriptions = new CompositeDisposable { cts.Token.Register(() => tcs.TrySetCanceled()) };
 
                 subscriptions.Add(
                     Messages.Where(x => x.ContentType == ContentTypes.ApiResponse)
@@ -160,7 +160,7 @@ namespace NEventSocket.Sockets
             lock (gate)
             {
                 var tcs = new TaskCompletionSource<CommandReply>();
-                var subscriptions = new CompositeDisposable { this.cts.Token.Register(() => tcs.TrySetCanceled()) };
+                var subscriptions = new CompositeDisposable { cts.Token.Register(() => tcs.TrySetCanceled()) };
                
                 subscriptions.Add(
                     Messages.Where(x => x.ContentType == ContentTypes.CommandReply)
@@ -234,7 +234,7 @@ namespace NEventSocket.Sockets
                 sb.AppendFormat("content-type: text/plain\ncontent-length: {0}\n\n{1}\n", applicationArguments.Length, applicationArguments);
             }
 
-            var query = from send in this.SendCommand(StringBuilderPool.ReturnAndFree(sb)).ToObservable()
+            var query = from send in SendCommand(StringBuilderPool.ReturnAndFree(sb)).ToObservable()
                         from e in
                             Events.FirstOrDefaultAsync(
                                 x => x.EventName == EventName.ChannelExecuteComplete
@@ -288,7 +288,7 @@ namespace NEventSocket.Sockets
             if (cts.Token.CanBeCanceled)
             {
                 subscriptions.Add(
-                    this.cts.Token.Register(() => tcs.TrySetCanceled()));
+                    cts.Token.Register(() => tcs.TrySetCanceled()));
             }
 
             subscriptions.Add(
@@ -352,10 +352,10 @@ namespace NEventSocket.Sockets
                                     switch (e.EventName)
                                     {
                                         case EventName.ChannelBridge:
-                                            this.Log.Debug(() => "Bridge [{0} - {1}] complete - {2}".Fmt(uuid, options.UUID, e.Headers[HeaderNames.OtherLegUniqueId]));
+                                        Log.Debug(() => "Bridge [{0} - {1}] complete - {2}".Fmt(uuid, options.UUID, e.Headers[HeaderNames.OtherLegUniqueId]));
                                             break;
                                         case EventName.ChannelHangup:
-                                            this.Log.Debug(() => "Bridge [{0} - {1}]  aborted, channel hangup [{2}]".Fmt(uuid, options.UUID, e.Headers[HeaderNames.HangupCause]));
+                                        Log.Debug(() => "Bridge [{0} - {1}]  aborted, channel hangup [{2}]".Fmt(uuid, options.UUID, e.Headers[HeaderNames.HangupCause]));
                                             break;
                                     }
                                 }
@@ -460,10 +460,10 @@ namespace NEventSocket.Sockets
         /// <returns>A Task.</returns>
         public async Task SubscribeCustomEvents(params string[] events)
         {
-            if (!this.customEvents.SequenceEqual(events))
+            if (!customEvents.SequenceEqual(events))
             {
-                this.customEvents.UnionWith(events); // ensures we are always at least using the default minimum events
-                await this.SubscribeEvents();
+                customEvents.UnionWith(events); // ensures we are always at least using the default minimum events
+                await SubscribeEvents();
             }
         }
 

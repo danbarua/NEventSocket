@@ -17,11 +17,11 @@ namespace NEventSocket.FreeSwitch
         {
             if (eventMessage != null)
             {
-                this.Success = ResponseText == "FILE PLAYED";  //eventMessage.Headers[HeaderNames.ApplicationResponse] == "FILE PLAYED";
+                Success = ResponseText == "FILE PLAYED";  //eventMessage.Headers[HeaderNames.ApplicationResponse] == "FILE PLAYED";
             }
             else
             {
-                this.Success = false;
+                Success = false;
             }
         }
     }

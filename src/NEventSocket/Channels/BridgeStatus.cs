@@ -19,13 +19,13 @@ namespace NEventSocket.Channels
         public BridgeStatus(bool success, string responseText)
         {
             this.success = success;
-            this.ResponseText = responseText;
+            ResponseText = responseText;
         }
 
         public BridgeStatus(bool success, string responseText, BridgedChannel channel)
             : this(success, responseText)
         {
-            this.Channel = channel;
+            Channel = channel;
         }
 
         public string ResponseText { get; private set; }
@@ -36,12 +36,12 @@ namespace NEventSocket.Channels
         {
             get
             {
-                if (this.Channel != null)
+                if (Channel != null)
                 {
-                    return this.Channel.IsAnswered;
+                    return Channel.IsAnswered;
                 }
 
-                return this.success;
+                return success;
             }
         }
 
@@ -49,12 +49,12 @@ namespace NEventSocket.Channels
         {
             get
             {
-                if (this.Channel != null)
+                if (Channel != null)
                 {
-                    return this.Channel.HangupCause;
+                    return Channel.HangupCause;
                 }
 
-                return this.ResponseText.HeaderToEnumOrNull<HangupCause>();
+                return ResponseText.HeaderToEnumOrNull<HangupCause>();
             }
         }
     }

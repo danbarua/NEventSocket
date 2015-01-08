@@ -48,7 +48,7 @@ namespace NEventSocket.Sockets
         /// <param name="tcpClient">The TCP client to wrap.</param>
         protected ObservableSocket(TcpClient tcpClient)
         {
-            Log = LogProvider.GetLogger(this.GetType());
+            Log = LogProvider.GetLogger(GetType());
 
             this.tcpClient = tcpClient;
 
@@ -169,7 +169,7 @@ namespace NEventSocket.Sockets
             catch (TaskCanceledException)
             {
                 Log.Warn(() => "Write operation was cancelled.");
-                this.Dispose();
+                Dispose();
             }
             catch (IOException ex)
             {
@@ -177,7 +177,7 @@ namespace NEventSocket.Sockets
                     && ((SocketException)ex.InnerException).SocketErrorCode == SocketError.ConnectionAborted)
                 {
                     Log.Warn(() => "Socket disconnected");
-                    this.Dispose();
+                    Dispose();
                     return;
                 }
 
@@ -188,7 +188,7 @@ namespace NEventSocket.Sockets
                 if (ex.SocketErrorCode == SocketError.ConnectionAborted)
                 {
                     Log.Warn(() => "Socket disconnected");
-                    this.Dispose();
+                    Dispose();
                     return;
                 }
 
@@ -223,6 +223,8 @@ namespace NEventSocket.Sockets
             return tcpClient.GetStream();
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2213:DisposableFieldsShouldBeDisposed", MessageId = "received"
+            ,Justification = "received is disposed of asynchronously, when the buffer has been flushed out by the consumers")]
         /// <summary>
         /// Releases unmanaged and - optionally - managed resources.
         /// </summary>
@@ -232,7 +234,7 @@ namespace NEventSocket.Sockets
             if (!disposed)
             {
                 disposed = true;
-                Log.Trace(() => "Disposing {0} (disposing:{1})".Fmt(this.GetType(), disposing));
+                Log.Trace(() => "Disposing {0} (disposing:{1})".Fmt(GetType(), disposing));
 
                 if (disposing)
                 {
@@ -260,7 +262,7 @@ namespace NEventSocket.Sockets
 
                 Disposed(this, EventArgs.Empty);
 
-                Log.Trace(() => "{0} Disposed".Fmt(this.GetType()));
+                Log.Trace(() => "{0} Disposed".Fmt(GetType()));
             }
         }
     }

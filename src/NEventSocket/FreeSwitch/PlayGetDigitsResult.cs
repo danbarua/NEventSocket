@@ -13,11 +13,11 @@ namespace NEventSocket.FreeSwitch
     {
         internal PlayGetDigitsResult(EventMessage eventMessage, string channelVariable) : base(eventMessage)
         {
-            this.Digits = eventMessage.GetVariable(channelVariable);
+            Digits = eventMessage.GetVariable(channelVariable);
 
-            this.TerminatorUsed = eventMessage.GetVariable("read_terminator_used");
+            TerminatorUsed = eventMessage.GetVariable("read_terminator_used");
 
-            this.Success = !string.IsNullOrEmpty(this.Digits);
+            Success = !string.IsNullOrEmpty(Digits);
         }
 
         /// <summary>
