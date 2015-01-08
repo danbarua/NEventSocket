@@ -62,18 +62,19 @@ namespace NEventSocket.FreeSwitch
                     // ...but some Event Messages also carry a body payload, eg. a BACKGROUND_JOB event
                     // which is a message carried inside an EventMessage carried inside a BasicMessage..
                     // yo dawg, i heard you like messages...
-                    var parser = new Parser();
-                    foreach (var c in basicMessage.BodyText)
+                    using (var parser = new Parser())
                     {
-                        parser.Append(c);
+                        foreach (var c in basicMessage.BodyText)
+                        {
+                            parser.Append(c);
+                        }
+
+                        var payload = parser.ExtractMessage();
+                        this.Headers = payload.Headers;
+                        this.BodyText = payload.BodyText.EndsWith("\n\n")
+                                            ? payload.BodyText.Substring(0, payload.BodyText.Length - 2)
+                                            : payload.BodyText;
                     }
-
-                    var payload = parser.ExtractMessage();
-
-                    this.Headers = payload.Headers;
-                    this.BodyText = payload.BodyText.EndsWith("\n\n")
-                                        ? payload.BodyText.Substring(0, payload.BodyText.Length - 2)
-                                        : payload.BodyText;
                 }
             }
             catch (Exception ex)

@@ -17,7 +17,7 @@ namespace NEventSocket.Sockets
     /// <summary>
     /// A parser for converting a stream of strings or chars into a stream of <seealso cref="BasicMessage"/>s from FreeSwitch.
     /// </summary>
-    public class Parser
+    public class Parser : IDisposable
     {
         private static readonly ILog Log = LogProvider.GetCurrentClassLogger();
 
@@ -29,6 +29,13 @@ namespace NEventSocket.Sockets
         private int? contentLength;
 
         private IDictionary<string, string> headers;
+
+        private bool disposed;
+
+        ~Parser()
+        {
+            Dispose(false);
+        }
 
         /// <summary>
         /// Gets a value indicating whether parsing an incoming message has completed.
@@ -148,6 +155,26 @@ namespace NEventSocket.Sockets
             StringBuilderPool.Free(buffer);
             buffer = null;
             return result;
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposed)
+            {
+                if (buffer != null)
+                {
+                    StringBuilderPool.Free(buffer);
+                    buffer = null;
+                }
+
+                disposed = true;
+            }
         }
     }
 }
