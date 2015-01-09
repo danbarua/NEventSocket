@@ -149,14 +149,22 @@ namespace NEventSocket.Util
                     var name = line.Substring(0, index);
                     var value = line.Substring(index + delimiter.Length, line.Length - (index + delimiter.Length));
 
-                    try
+                    if (value.IndexOf("%", StringComparison.Ordinal) <= 0)
                     {
-                        dictionary[name] = Uri.UnescapeDataString(value);
-                    }
-                    catch (UriFormatException)
-                    {
-                        //oh well, we tried
                         dictionary[name] = value;
+                    }
+                    else
+                    {
+                        //some values are UriEncoded so they fit on a single line
+                        try
+                        {
+                            dictionary[name] = Uri.UnescapeDataString(value);
+                        }
+                        catch (UriFormatException)
+                        {
+                            //oh well, we tried
+                            dictionary[name] = value;
+                        }
                     }
                 }
             }
