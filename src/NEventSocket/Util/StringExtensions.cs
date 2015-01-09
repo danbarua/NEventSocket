@@ -9,7 +9,7 @@ namespace NEventSocket.Util
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Globalization;
-
+    using System.IO;
     using NEventSocket.Util.ObjectPooling;
 
     /// <summary>
@@ -122,13 +122,11 @@ namespace NEventSocket.Util
         /// Parses a string of delimited key-value pairs into a dictionary.
         /// </summary>
         /// <param name="inputString">The input string.</param>
-        /// <param name="keyValuePairDelimiter">The delimiter which separates key-value pairs, e.g. a newline.</param>
-        /// <param name="keyValueDelimiter">The delimiter which separates keys and values, e.g. a colon.</param>
+        /// <param name="delimiter">The delimiter which separates keys and values, e.g. a colon.</param>
         /// <returns>A dictionary containing the key-value pairs.</returns>
         /// <exception cref="FormatException">Thrown when an invalid key-value pair is encountered.</exception>
         [DebuggerStepThrough]
-        public static IDictionary<string, string> ParseKeyValuePairs(
-            this string inputString, string keyValuePairDelimiter, string keyValueDelimiter)
+        public static IDictionary<string, string> ParseKeyValuePairs(this string inputString, string delimiter)
         {
             var dictionary = new Dictionary<string, string>();
 
@@ -137,25 +135,29 @@ namespace NEventSocket.Util
                 return dictionary;
             }
 
-            var split = inputString.Split(new[] { keyValuePairDelimiter }, StringSplitOptions.RemoveEmptyEntries);
-
-            foreach (var s in split)
+            using (var reader = new StringReader(inputString))
             {
-                if (s.IndexOf(keyValueDelimiter, StringComparison.Ordinal) == -1)
+                string line;
+                while (!string.IsNullOrWhiteSpace(line = reader.ReadLine()))
                 {
-                    throw new FormatException("Value provided was not a valid key-value pair - '{0}'".Fmt(s));
-                }
+                    var index = line.IndexOf(delimiter, StringComparison.Ordinal);
+                    if (index == -1)
+                    {
+                        throw new FormatException("Value provided was not a valid key-value pair - '{0}'".Fmt(line));
+                    }
 
-                var kvp = s.Split(new[] { keyValueDelimiter }, StringSplitOptions.RemoveEmptyEntries);
+                    var name = line.Substring(0, index);
+                    var value = line.Substring(index + delimiter.Length, line.Length - (index + delimiter.Length));
 
-                try
-                {
-                    dictionary[kvp[0]] = Uri.UnescapeDataString(kvp[1]);
-                }
-                catch (UriFormatException)
-                {
-                    // oh well, we tried.
-                    dictionary[kvp[0]] = kvp[1];
+                    try
+                    {
+                        dictionary[name] = Uri.UnescapeDataString(value);
+                    }
+                    catch (UriFormatException)
+                    {
+                        //oh well, we tried
+                        dictionary[name] = value;
+                    }
                 }
             }
 
