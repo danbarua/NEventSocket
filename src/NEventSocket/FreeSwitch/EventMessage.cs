@@ -51,9 +51,10 @@ namespace NEventSocket.FreeSwitch
 
             try
             {
-                if (!basicMessage.BodyText.Contains(HeaderNames.ContentLength))
+                var delimiterIndex = basicMessage.BodyText.IndexOf("\n\n", StringComparison.Ordinal);
+                if (delimiterIndex == -1 || delimiterIndex == basicMessage.BodyText.Length - 2)
                 {
-                    // body text consists of key-value-pair event headers
+                    // body text consists of key-value-pair event headers, no body
                     Headers = basicMessage.BodyText.ParseKeyValuePairs(": ");
                     BodyText = null;
                 }
@@ -61,20 +62,14 @@ namespace NEventSocket.FreeSwitch
                 {
                     // ...but some Event Messages also carry a body payload, eg. a BACKGROUND_JOB event
                     // which is a message carried inside an EventMessage carried inside a BasicMessage..
-                    // yo dawg, i heard you like messages...
-                    using (var parser = new Parser())
-                    {
-                        foreach (var c in basicMessage.BodyText)
-                        {
-                            parser.Append(c);
-                        }
+                    Headers = basicMessage.BodyText.Substring(0, delimiterIndex).ParseKeyValuePairs(": ");
+                    var contentLength = int.Parse(Headers[HeaderNames.ContentLength]);
 
-                        var payload = parser.ExtractMessage();
-                        Headers = payload.Headers;
-                        BodyText = payload.BodyText.EndsWith("\n\n")
-                                            ? payload.BodyText.Substring(0, payload.BodyText.Length - 2)
-                                            : payload.BodyText;
-                    }
+                    var body = basicMessage.BodyText.Substring(delimiterIndex + 2, contentLength);
+
+                    //remove any \n\n if any
+                    var index = body.IndexOf("\n\n", System.StringComparison.Ordinal);
+                    this.BodyText = index > 0 ? body.Substring(0, index) : body;
                 }
             }
             catch (Exception ex)
