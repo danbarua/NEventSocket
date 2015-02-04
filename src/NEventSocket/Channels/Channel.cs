@@ -163,7 +163,7 @@ namespace NEventSocket.Channels
             return eventSocket.ExecuteApplication(uuid, application, args);
         }
 
-        public Task Hold()
+        public Task HoldToggle()
         {
             return RunIfAnswered(() => eventSocket.SendApi("uuid_hold toggle " + UUID));
         }
