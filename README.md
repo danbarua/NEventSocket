@@ -46,6 +46,12 @@ Outbound Socket Server
 An ```OutboundListener``` listens on a TCP port for socket connections (outbound from the point of view of FreeSwitch) when the FreeSwitch dialplan is setup to route calls to the EventSocket.
 An ```OutboundSocket``` receives events for one particular channel, the API is the same as for an ```InboundSocket```, so you will need to pass in the channel UUID to issue commands for it.
 
+Don't forget to use the ```async``` and ```full``` flags in your dialplan.
+Async means that applications will not block (e.g. a bridge will block until the channel hangs up and completes the call) and full gives the socket access to the full EventSocket api.
+````xml
+<action application="socket" data="127.0.0.1:8084 async full"/>
+````
+
 ```csharp
 using System;
 using System.Reactive.Linq;
