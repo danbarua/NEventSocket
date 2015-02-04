@@ -47,7 +47,7 @@ An ```OutboundListener``` listens on a TCP port for socket connections (outbound
 An ```OutboundSocket``` receives events for one particular channel, the API is the same as for an ```InboundSocket```, so you will need to pass in the channel UUID to issue commands for it.
 
 Don't forget to use the ```async``` and ```full``` flags in your dialplan.
-Async means that applications will not block (e.g. a bridge will block until the channel hangs up and completes the call) and full gives the socket access to the full EventSocket api.
+````async```` means that applications will not block (e.g. a bridge will block until the channel hangs up and completes the call) and ````full```` gives the socket access to the full EventSocket api.
 ````xml
 <action application="socket" data="127.0.0.1:8084 async full"/>
 ````
