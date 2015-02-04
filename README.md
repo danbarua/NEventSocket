@@ -1,4 +1,4 @@
-NEventSocket
+NEventSocket  [![NuGet Status](http://img.shields.io/nuget/v/NEventSocket.svg?style=flat)](https://www.nuget.org/packages/NEventSocket/)
 ============
 
 | Windows / .NET | Linux / Mono
