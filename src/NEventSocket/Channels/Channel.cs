@@ -168,6 +168,16 @@ namespace NEventSocket.Channels
             return RunIfAnswered(() => eventSocket.SendApi("uuid_hold toggle " + UUID));
         }
 
+        public Task HoldOn()
+        {
+            return RunIfAnswered(() => eventSocket.SendApi("uuid_hold " + UUID));
+        }
+
+        public Task HoldOff()
+        {
+            return RunIfAnswered(() => eventSocket.SendApi("uuid_hold off " + UUID));
+        }
+
         public Task Park()
         {
             return RunIfAnswered(() => eventSocket.ExecuteApplication(UUID, "park"));
