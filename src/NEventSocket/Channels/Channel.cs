@@ -198,18 +198,6 @@ namespace NEventSocket.Channels
             return eventSocket.ExecuteApplication(UUID, "sleep", milliseconds.ToString());
         }
 
-        /// <summary>
-        /// Send DTMF digits to the channel
-        /// </summary>
-        /// <param name="digits">String with digits or characters</param>
-        /// <param name="duration">Duration of each symbol (default -- 2000ms)</param>
-        /// <returns></returns>
-        public Task SendDTMF(string digits, TimeSpan? duration = null)
-        {
-            var durationMs = duration.HasValue ? duration.Value.TotalMilliseconds : 2000; // default value in freeswitch
-            return eventSocket.ExecuteApplication(UUID, "send_dtmf", "{0}@{1}".Fmt(digits, durationMs));
-        }
-
         public async Task StartRecording(string file, int? maxSeconds = null)
         {
             if (!IsAnswered)
