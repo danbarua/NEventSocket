@@ -73,10 +73,37 @@ namespace NEventSocket
         /// See https://freeswitch.org/confluence/display/FREESWITCH/mod_commands#mod_commands-originate
         /// </remarks>
         /// <param name="endpoint">The destination to call.</param>
+        /// <param name="extension">Destination number to search in dialplan</param>
+        /// <param name="dialplan">(Optional) defaults to 'XML' if not specified</param>
+        /// <param name="context">(Optional) defaults to 'default' if not specified</param>
+        /// <param name="options">(Optional) <seealso cref="OriginateOptions"/> to configure the call.</param>
+        /// <returns>A Task of <seealso cref="OriginateResult"/>.</returns>
+        public Task<OriginateResult> Originate(
+            string endpoint,
+            string extension,
+            string dialplan = "XML",
+            string context = "default",
+            OriginateOptions options = null)
+        {
+            return this.InternalOriginate(endpoint, string.Format("{0} {1} {2}", extension, dialplan, context), options);
+        }
+
+        /// <summary>
+        /// Originate a new call.
+        /// </summary>
+        /// <remarks>
+        /// See https://freeswitch.org/confluence/display/FREESWITCH/mod_commands#mod_commands-originate
+        /// </remarks>
+        /// <param name="endpoint">The destination to call.</param>
         /// <param name="options">(Optional) <seealso cref="OriginateOptions"/> to configure the call.</param>
         /// <param name="application">(Default: park) The DialPlan application to execute on answer</param>
         /// <returns>A Task of <seealso cref="OriginateResult"/>.</returns>
         public Task<OriginateResult> Originate(string endpoint, OriginateOptions options = null, string application = "park")
+        {
+            return this.InternalOriginate(endpoint, "&" + application, options);
+        }
+
+        private Task<OriginateResult> InternalOriginate(string endpoint, string destination, OriginateOptions options = null)
         {
             if (options == null)
             {
@@ -91,7 +118,7 @@ namespace NEventSocket
                 options.UUID = Guid.NewGuid().ToString();
             }
 
-            var originateString = string.Format("{0}{1} &{2}", options, endpoint, application);
+            var originateString = string.Format("{0}{1} {2}", options, endpoint, destination);
 
             return
                 BackgroundJob("originate", originateString)
