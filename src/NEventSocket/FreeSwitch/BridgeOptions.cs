@@ -7,6 +7,7 @@ namespace NEventSocket.FreeSwitch
 {
     using System.Collections.Generic;
     using System.Diagnostics;
+    using System.Runtime.Serialization;
 
     using NEventSocket.Util;
     using NEventSocket.Util.ObjectPooling;
@@ -17,7 +18,7 @@ namespace NEventSocket.FreeSwitch
     /// <remarks>
     /// See https://wiki.freeswitch.org/wiki/Misc._Dialplan_Tools_bridge
     /// </remarks>
-    public class BridgeOptions
+    public class BridgeOptions : ISerializable
     {
         private readonly IDictionary<string, string> parameters = new Dictionary<string, string>();
 
@@ -27,6 +28,17 @@ namespace NEventSocket.FreeSwitch
         public BridgeOptions()
         {
             ChannelVariables = new Dictionary<string, string>();
+        }
+
+        /// <summary>
+        /// The special constructor is used to deserialize options
+        /// </summary>
+        public BridgeOptions(SerializationInfo info, StreamingContext context)
+        {
+            this.parameters =
+                (Dictionary<string, string>)info.GetValue("parameters", typeof(Dictionary<string, string>));
+            this.ChannelVariables =
+                (Dictionary<string, string>)info.GetValue("ChannelVariables", typeof(Dictionary<string, string>));
         }
 
         /// <summary>
@@ -309,6 +321,17 @@ namespace NEventSocket.FreeSwitch
             sb.Append("}");
 
             return StringBuilderPool.ReturnAndFree(sb);
+        }
+
+        /// <summary>
+        /// Implementation of ISerializable.GetObjectData
+        /// </summary>
+        /// <param name="info"></param>
+        /// <param name="context"></param>
+        public void GetObjectData(SerializationInfo info, StreamingContext context)
+        {
+            info.AddValue("parameters", this.parameters, typeof(Dictionary<string, string>));
+            info.AddValue("ChannelVariables", this.ChannelVariables, typeof(Dictionary<string, string>));
         }
     }
 }
