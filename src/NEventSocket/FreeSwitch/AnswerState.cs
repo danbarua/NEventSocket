@@ -12,6 +12,11 @@ namespace NEventSocket.FreeSwitch
     public enum AnswerState
     {
         /// <summary>
+        /// The Channel is pre answered
+        /// </summary>
+        Early,
+
+        /// <summary>
         /// The Channel is Answered
         /// </summary>
         Answered, 
