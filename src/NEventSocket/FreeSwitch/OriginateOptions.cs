@@ -6,7 +6,10 @@
 
 namespace NEventSocket.FreeSwitch
 {
+    using System;
     using System.Collections.Generic;
+    using System.Linq;
+    using System.Runtime.Serialization;
 
     using NEventSocket.Util;
     using NEventSocket.Util.ObjectPooling;
@@ -18,7 +21,8 @@ namespace NEventSocket.FreeSwitch
     /// See https://freeswitch.org/confluence/display/FREESWITCH/mod_commands#mod_commands-originate
     /// See https://wiki.freeswitch.org/wiki/Channel_Variables#Originate_related_variables
     /// </remarks>
-    public class OriginateOptions
+    [Serializable]
+    public class OriginateOptions : ISerializable
     {
         private readonly IDictionary<string, string> parameters = new Dictionary<string, string>();
 
@@ -28,6 +32,17 @@ namespace NEventSocket.FreeSwitch
         public OriginateOptions()
         {
             ChannelVariables = new Dictionary<string, string>();
+        }
+
+        /// <summary>
+        /// The special constructor is used to deserialize options
+        /// </summary>
+        public OriginateOptions(SerializationInfo info, StreamingContext context)
+        {
+            this.parameters =
+                (Dictionary<string, string>)info.GetValue("parameters", typeof(Dictionary<string, string>));
+            this.ChannelVariables =
+                (Dictionary<string, string>)info.GetValue("ChannelVariables", typeof(Dictionary<string, string>));
         }
 
         /// <summary>
@@ -225,6 +240,22 @@ namespace NEventSocket.FreeSwitch
         public IDictionary<string, string> ChannelVariables { get; set; }
 
         /// <summary>
+        /// Implements the operator ==.
+        /// </summary>
+        public static bool operator ==(OriginateOptions left, OriginateOptions right)
+        {
+            return Equals(left, right);
+        }
+
+        /// <summary>
+        /// Implements the operator !=.
+        /// </summary>
+        public static bool operator !=(OriginateOptions left, OriginateOptions right)
+        {
+            return !Equals(left, right);
+        }
+
+        /// <summary>
         /// Converts the <seealso cref="OriginateOptions"/> instance into an originate string.
         /// </summary>
         /// <returns>An originate string.</returns>
@@ -244,6 +275,48 @@ namespace NEventSocket.FreeSwitch
             sb.Append("}");
 
             return StringBuilderPool.ReturnAndFree(sb);
+        }
+
+        /// <summary>
+        /// Implementation of ISerializable.GetObjectData
+        /// </summary>
+        public void GetObjectData(SerializationInfo info, StreamingContext context)
+        {
+            info.AddValue("parameters", this.parameters, typeof(Dictionary<string, string>));
+            info.AddValue("ChannelVariables", this.ChannelVariables, typeof(Dictionary<string, string>));
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            if (obj.GetType() != this.GetType())
+            {
+                return false;
+            }
+
+            return Equals((OriginateOptions)obj);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                return ((this.ChannelVariables != null ? this.ChannelVariables.GetHashCode() : 0) * 397) ^ (this.parameters != null ? this.parameters.GetHashCode() : 0);
+            }
+        }
+
+        protected bool Equals(OriginateOptions other)
+        {
+            return this.ChannelVariables.SequenceEqual(other.ChannelVariables) && this.parameters.SequenceEqual(other.parameters);
         }
     }
 }

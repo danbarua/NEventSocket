@@ -67,6 +67,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Applications\Applications.cs" />
+    <Compile Include="Applications\BridgeTests.cs" />
     <Compile Include="Fakes\FakeFreeSwitchListener.cs" />
     <Compile Include="Fakes\FakeFreeSwitchSocket.cs" />
     <Compile Include="Applications\OriginateTests.cs" />

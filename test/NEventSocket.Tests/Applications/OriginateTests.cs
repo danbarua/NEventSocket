@@ -1,6 +1,7 @@
 ﻿namespace NEventSocket.Tests
 {
-    using System;
+    using System.IO;
+    using System.Runtime.Serialization.Formatters.Binary;
 
     using NEventSocket.FreeSwitch;
 
@@ -41,6 +42,35 @@
         {
             var options = new OriginateOptions() { OriginationPrivacy = OriginationPrivacy.HideName | OriginationPrivacy.HideNumber | OriginationPrivacy.Screen}.ToString();
             Assert.Contains("origination_privacy='hide_name:hide_number:screen'", options);
+        }
+
+        [Fact]
+        public void can_serialize_and_deserialize_OriginateOptions()
+        {
+            using (var ms = new MemoryStream())
+            {
+                var formatter = new BinaryFormatter();
+
+                var options = new OriginateOptions()
+                {
+                    CallerIdName = "Dan",
+                    CallerIdNumber = "0123457890",
+                    ExecuteOnOriginate = "my_app::my_arg",
+                    Retries = 5,
+                    RetrySleepMs = 200,
+                    ReturnRingReady = true,
+                    TimeoutSeconds = 60,
+                    UUID = "83fe4f3d-b957-4b26-b6bf-3879d7e21972",
+                    IgnoreEarlyMedia = true,
+                };
+
+                formatter.Serialize(ms, options);
+
+                ms.Seek(0, SeekOrigin.Begin);
+
+                var fromStream = formatter.Deserialize(ms) as OriginateOptions;
+                Assert.Equal(options, fromStream);
+            }
         }
     }
 }
