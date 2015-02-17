@@ -1,5 +1,6 @@
 param(
-  [int]$buildNumber = 0
+  [int]$buildNumber = 0,
+  [string]$task = "default"
   )
 
 if(Test-Path Env:\APPVEYOR_BUILD_NUMBER){
@@ -17,6 +18,6 @@ foreach($packageConfig in $packageConfigs){
 
 Import-Module .\packages\psake.4.4.1\tools\psake.psm1
 Import-Module .\BuildFunctions.psm1
-Invoke-Psake .\default.ps1 default -framework "4.0x64" -properties @{ buildNumber=$buildNumber }
+Invoke-Psake .\default.ps1 $task -framework "4.0x64" -properties @{ buildNumber=$buildNumber }
 Remove-Module BuildFunctions
 Remove-Module psake

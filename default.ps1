@@ -71,8 +71,9 @@ task CreateNuGetPackages -depends ILMerge {
 }
 
 task PublishNugetPackages -depends CreateNuGetPackages {
-  Get-ChildItem .\build\*.CreateNuGetPackages `
+  Get-ChildItem "$buildOutputDir\*.nupkg" | `
     ForEach-Object {
-      exec { .$rootDir\.nuget\nuget.exe push $_ }
+      Write-Host "Publishing $($_.FullName)"
+      exec { .$rootDir\.nuget\nuget.exe push $_.FullName }
     }
 }
