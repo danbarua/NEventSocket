@@ -234,31 +234,44 @@ namespace NEventSocket.Sockets
                 sb.AppendFormat("content-type: text/plain\ncontent-length: {0}\n\n{1}\n", applicationArguments.Length, applicationArguments);
             }
 
-            var query = from send in SendCommand(StringBuilderPool.ReturnAndFree(sb)).ToObservable()
-                        from e in
-                            Events.FirstOrDefaultAsync(
-                                x => x.EventName == EventName.ChannelExecuteComplete
-                                && x.Headers["Application-UUID"] == applicationUUID)
-                        select e;
+            var tcs = new TaskCompletionSource<EventMessage>();
+            var subscriptions = new CompositeDisposable();
 
-            return query.Do(
-                executeCompleteEvent =>
-                    {
-                        if (executeCompleteEvent != null)
-                        {
-                            Log.Debug(
-                                () =>
-                                "{0} ChannelExecuteComplete [{1} {2} {3}]".Fmt(
-                                    executeCompleteEvent.UUID,
-                                    executeCompleteEvent.AnswerState,
-                                    executeCompleteEvent.Headers[HeaderNames.Application],
-                                    executeCompleteEvent.Headers[HeaderNames.ApplicationResponse]));
-                        }
-                        else
-                        {
-                            Log.Trace(() => "No ChannelExecuteComplete event received for {0}".Fmt(application));
-                        }
-                    }).ToTask(); //cts.Token);
+            if (this.cts.Token.CanBeCanceled)
+            {
+                subscriptions.Add(this.cts.Token.Register(() => tcs.TrySetCanceled()));
+            }
+
+            subscriptions.Add(
+                this.Events.Where(
+                    x => x.EventName == EventName.ChannelExecuteComplete && x.Headers["Application-UUID"] == applicationUUID)
+                    .Take(1)
+                    .Subscribe(
+                        executeCompleteEvent =>
+                            {
+                                if (executeCompleteEvent != null)
+                                {
+                                    this.Log.Debug(
+                                        () =>
+                                        "{0} ChannelExecuteComplete [{1} {2} {3}]".Fmt(
+                                            executeCompleteEvent.UUID,
+                                            executeCompleteEvent.AnswerState,
+                                            executeCompleteEvent.Headers[HeaderNames.Application],
+                                            executeCompleteEvent.Headers[HeaderNames.ApplicationResponse]));
+                                }
+                                else
+                                {
+                                    this.Log.Trace(() => "No ChannelExecuteComplete event received for {0}".Fmt(application));
+                                }
+
+                                tcs.TrySetResult(executeCompleteEvent);
+                            },
+                            ex => tcs.TrySetException(ex),
+                            subscriptions.Dispose));
+
+            SendCommand(StringBuilderPool.ReturnAndFree(sb)).ContinueOnFaultedOrCancelled(tcs, subscriptions.Dispose);
+
+            return tcs.Task;
         }
 
         /// <summary>
