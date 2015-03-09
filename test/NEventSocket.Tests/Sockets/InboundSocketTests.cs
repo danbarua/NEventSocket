@@ -3,6 +3,7 @@
     using System;
     using System.Reactive.Linq;
     using System.Security;
+    using System.Text.RegularExpressions;
     using System.Threading.Tasks;
 
     using NEventSocket.Logging.LogProviders;
@@ -420,6 +421,92 @@
                     await Wait.Until(() => completed);
 
                     Assert.True(completed);
+                }
+            }
+        }
+
+        [Fact(Timeout = TimeOut.TestTimeOutMs)]
+        public async Task when_a_command_reply_error_is_received_in_response_to_an_application_request_it_should_return_a_failed_ApplicationResult()
+        {
+            using (var listener = new FakeFreeSwitchListener(0))
+            {
+                listener.Start();
+
+                listener.Connections.Subscribe(
+                    async socket =>
+                    {
+                        socket.MessagesReceived.Where(m => m.Equals("auth ClueCon"))
+                              .Take(1)
+                              .Subscribe(async m =>
+                              {
+                                  await socket.SendCommandReplyOk();
+                              });
+
+                        socket.MessagesReceived.Where(m => m.StartsWith("sendmsg"))
+                              .Take(1)
+                              .Subscribe(
+                                  async m =>
+                                  {
+                                      await socket.SendCommandReplyError("invalid session id [c1cdaeae-ebb0-4f3f-8f75-0f673bfbc046]");
+                                  });
+
+                        await socket.Send("Content-Type: auth/request");
+                    });
+
+                using (var client = await InboundSocket.Connect("127.0.0.1", listener.Port, "ClueCon"))
+                {
+                    var result = await client.Play("c1cdaeae-ebb0-4f3f-8f75-0f673bfbc046", "test.wav");
+                    Assert.False(result.Success);
+                }
+            }
+        }
+
+        [Fact(Timeout = TimeOut.TestTimeOutMs)]
+        public async Task when_a_CHANNEL_EXECUTE_COMPLETE_event_is_returned_it_should_complete_the_Application()
+        {
+            using (var listener = new FakeFreeSwitchListener(0))
+            {
+                listener.Start();
+
+                listener.Connections.Subscribe(
+                    async socket =>
+                    {
+                        socket.MessagesReceived.Where(m => m.Equals("auth ClueCon"))
+                              .Take(1)
+                              .Subscribe(async m =>
+                              {
+                                  await socket.SendCommandReplyOk();
+                              });
+
+                        socket.MessagesReceived.Where(m => m.StartsWith("sendmsg"))
+                              .Take(1)
+                              .Subscribe(
+                                  async m =>
+                                      {
+                                          var regex = new Regex(@"sendmsg (?<channelUUID>\S+)\nEvent-UUID: (?<applicationUUID>\S+)\n");
+                                          var matches = regex.Match(m);
+
+                                          var channelUUID = matches.Groups["channelUUID"].Value;
+                                          var applicationUUID = matches.Groups["applicationUUID"].Value;
+
+                                          var channelExecuteComplete =
+                                              TestMessages.PlaybackComplete
+                                              .Replace("Application-UUID: fd3ababd-ad60-4582-8c6c-609064d55fe7", "Application-UUID: " + applicationUUID)
+                                              .Replace("Unique-ID: 4e1cfa50-4c2f-44c9-aaf3-8ca590bed0e4", "Unique-ID: " + channelUUID)
+                                              .Replace("\r\n", "\n");
+
+                                          await socket.SendCommandReplyOk();
+                                          await socket.Send(channelExecuteComplete);
+                                        });
+
+                        await socket.Send("Content-Type: auth/request");
+                    });
+
+                using (var client = await InboundSocket.Connect("127.0.0.1", listener.Port, "ClueCon"))
+                {
+                    var result = await client.Play("4e1cfa50-4c2f-44c9-aaf3-8ca590bed0e4", "test.wav");
+                    Assert.True(result.Success);
+                    Assert.Equal("FILE PLAYED", result.ResponseText);
                 }
             }
         }
