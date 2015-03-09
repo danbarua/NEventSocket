@@ -194,7 +194,10 @@ namespace NEventSocket.Sockets
         /// (see https://wiki.freeswitch.org/wiki/Event_Socket_Outbound#Q:_Should_I_use_sync_mode_or_async_mode.3F)
         /// </param>
         /// <param name="loops">(Optional) How many times to repeat the application.</param>
-        /// <returns>A Task of <seealso cref="EventMessage"/> that wraps the ChannelExecuteComplete event if the application completes successfully.</returns>
+        /// <returns>
+        /// A Task of <seealso cref="EventMessage"/> that wraps the ChannelExecuteComplete event if the application completes successfully.
+        /// The Task result will be null if the application did not execute, for example, the socket disconnected or the channel was hung up.
+        /// </returns>
         public Task<EventMessage> ExecuteApplication(
             string uuid, string application, string applicationArguments = null, bool eventLock = false, bool async = false, int loops = 1)
         {
@@ -269,7 +272,16 @@ namespace NEventSocket.Sockets
                             ex => tcs.TrySetException(ex),
                             subscriptions.Dispose));
 
-            SendCommand(StringBuilderPool.ReturnAndFree(sb)).ContinueOnFaultedOrCancelled(tcs, subscriptions.Dispose);
+            SendCommand(StringBuilderPool.ReturnAndFree(sb))
+                .Then(reply =>
+                    {
+                        if (!reply.Success)
+                        {
+                            tcs.TrySetResult(null);
+                        }
+                    })
+                .ContinueOnFaultedOrCancelled(tcs, subscriptions.Dispose);
+                
 
             return tcs.Task;
         }
