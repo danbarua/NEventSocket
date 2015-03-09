@@ -423,5 +423,41 @@
                 }
             }
         }
+
+        [Fact(Timeout = TimeOut.TestTimeOutMs)]
+        public async Task when_a_command_reply_error_is_received_in_response_to_an_application_request_it_should_return_a_failed_ApplicationResult()
+        {
+            using (var listener = new FakeFreeSwitchListener(0))
+            {
+                listener.Start();
+
+                listener.Connections.Subscribe(
+                    async socket =>
+                    {
+                        socket.MessagesReceived.Where(m => m.Equals("auth ClueCon"))
+                              .Take(1)
+                              .Subscribe(async m =>
+                              {
+                                  await socket.SendCommandReplyOk();
+                              });
+
+                        socket.MessagesReceived.Where(m => m.StartsWith("sendmsg"))
+                              .Take(1)
+                              .Subscribe(
+                                  async m =>
+                                  {
+                                      await socket.SendCommandReplyError("invalid session id [c1cdaeae-ebb0-4f3f-8f75-0f673bfbc046]");
+                                  });
+
+                        await socket.Send("Content-Type: auth/request");
+                    });
+
+                using (var client = await InboundSocket.Connect("127.0.0.1", listener.Port, "ClueCon"))
+                {
+                    var result = await client.Play("c1cdaeae-ebb0-4f3f-8f75-0f673bfbc046", "test.wav");
+                    Assert.False(result.Success);
+                }
+            }
+        }
     }
 }
