@@ -149,7 +149,7 @@ namespace NEventSocket.Util
                     var name = line.Substring(0, index);
                     var value = line.Substring(index + delimiter.Length, line.Length - (index + delimiter.Length));
 
-                    if (value.IndexOf("%", StringComparison.Ordinal) <= 0)
+                    if (value.IndexOf("%", StringComparison.Ordinal) < 0)
                     {
                         dictionary[name] = value;
                     }
