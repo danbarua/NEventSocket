@@ -53,7 +53,7 @@ namespace NEventSocket
                       .Do(_ => Log.Trace(() => "Received Auth Request"), ex => Log.ErrorException("Error waiting for AuthRequest.", ex))
                       .ToTask();
 
-            var result = await socket.Auth(password);
+            var result = await socket.Auth(password).ConfigureAwait(false);
 
             if (!result.Success)
             {

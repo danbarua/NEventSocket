@@ -11,10 +11,8 @@ namespace NEventSocket.Sockets
     using System.IO;
     using System.Linq;
     using System.Net.Sockets;
-    using System.Reactive;
     using System.Reactive.Concurrency;
     using System.Reactive.Linq;
-    using System.Reactive.Subjects;
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
@@ -164,7 +162,7 @@ namespace NEventSocket.Sockets
             {
                 await syncLock.WaitAsync();
                 var stream = GetStream();
-                await stream.WriteAsync(bytes, 0, bytes.Length, cancellationToken);
+                await stream.WriteAsync(bytes, 0, bytes.Length, cancellationToken).ConfigureAwait(false);
             }
             catch (TaskCanceledException)
             {

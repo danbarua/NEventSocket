@@ -179,7 +179,7 @@ namespace NEventSocket.Channels
 
             if (leg == Leg.ALeg) //!this.IsBridged)
             {
-                await eventSocket.Play(UUID, file, new PlayOptions());
+                await eventSocket.Play(UUID, file, new PlayOptions()).ConfigureAwait(false);
                 return;
             }
 
@@ -193,10 +193,10 @@ namespace NEventSocket.Channels
                             eventSocket.ExecuteApplication(UUID, "displace_session", "{0} {1}{2}".Fmt(file, mix ? "m" : string.Empty, "r"), false, false));
                     break;
                 case Leg.ALeg:
-                    await eventSocket.ExecuteApplication(UUID, "displace_session", "{0} {1}{2}".Fmt(file, mix ? "m" : string.Empty, "w"), false, false);
+                    await eventSocket.ExecuteApplication(UUID, "displace_session", "{0} {1}{2}".Fmt(file, mix ? "m" : string.Empty, "w"), false, false).ConfigureAwait(false);
                     break;
                 case Leg.BLeg:
-                    await eventSocket.ExecuteApplication(UUID, "displace_session", "{0} {1}{2}".Fmt(file, mix ? "m" : string.Empty, "r"), false, false);
+                    await eventSocket.ExecuteApplication(UUID, "displace_session", "{0} {1}{2}".Fmt(file, mix ? "m" : string.Empty, "r"), false, false).ConfigureAwait(false);
                     break;
                 default:
                     throw new NotSupportedException("Leg {0} is not supported".Fmt(leg));
@@ -210,7 +210,7 @@ namespace NEventSocket.Channels
                 return string.Empty;
             }
 
-            var result = await eventSocket.PlayGetDigits(UUID, options);
+            var result = await eventSocket.PlayGetDigits(UUID, options).ConfigureAwait(false);
             return result.Digits;
         }
 
@@ -268,8 +268,8 @@ namespace NEventSocket.Channels
                 return;
             }
 
-            await eventSocket.SubscribeEvents(EventName.Dtmf);
-            await eventSocket.StartDtmf(UUID);
+            await eventSocket.SubscribeEvents(EventName.Dtmf).ConfigureAwait(false);
+            await eventSocket.StartDtmf(UUID).ConfigureAwait(false);
         }
 
         public Task StopDetectingInbandDtmf()

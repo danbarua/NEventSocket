@@ -104,7 +104,7 @@ namespace NEventSocket.Channels
                 throw new InvalidOperationException("At least one channel must be Answered to bridge them");
             }
 
-            var result = await eventSocket.SendApi("uuid_bridge {0} {1}".Fmt(UUID, other.UUID));
+            var result = await eventSocket.SendApi("uuid_bridge {0} {1}".Fmt(UUID, other.UUID)).ConfigureAwait(false);
 
             if (result.Success)
             {
@@ -145,7 +145,7 @@ namespace NEventSocket.Channels
                         .Subscribe(onProgress));
             }
 
-            var result = await eventSocket.Bridge(UUID, destination, options);
+            var result = await eventSocket.Bridge(UUID, destination, options).ConfigureAwait(false);
 
             Log.Debug(() => "Channel {0} bridge complete {1} {2}".Fmt(UUID, result.Success, result.ResponseText));
             subscriptions.Dispose();
@@ -220,7 +220,7 @@ namespace NEventSocket.Channels
             }
 
             recordingPath = file;
-            await eventSocket.SendApi("uuid_record {0} start {1} {2}".Fmt(UUID, recordingPath, maxSeconds));
+            await eventSocket.SendApi("uuid_record {0} start {1} {2}".Fmt(UUID, recordingPath, maxSeconds)).ConfigureAwait(false);
             Log.Debug(() => "Channel {0} is recording to {1}".Fmt(UUID, recordingPath));
         }
 
@@ -237,7 +237,7 @@ namespace NEventSocket.Channels
             }
             else
             {
-                await eventSocket.SendApi("uuid_record {0} mask {1}".Fmt(UUID, recordingPath));
+                await eventSocket.SendApi("uuid_record {0} mask {1}".Fmt(UUID, recordingPath)).ConfigureAwait(false);
                 Log.Debug(() => "Channel {0} has masked recording to {1}".Fmt(UUID, recordingPath));
             }
         }
@@ -255,7 +255,7 @@ namespace NEventSocket.Channels
             }
             else
             {
-                await eventSocket.SendApi("uuid_record {0} unmask {1}".Fmt(UUID, recordingPath));
+                await eventSocket.SendApi("uuid_record {0} unmask {1}".Fmt(UUID, recordingPath)).ConfigureAwait(false);
                 Log.Debug(() => "Channel {0} has unmasked recording to {1}".Fmt(UUID, recordingPath));
             }
         }
@@ -273,7 +273,7 @@ namespace NEventSocket.Channels
             }
             else
             {
-                await eventSocket.SendApi("uuid_record {0} stop {1}".Fmt(UUID, recordingPath));
+                await eventSocket.SendApi("uuid_record {0} stop {1}".Fmt(UUID, recordingPath)).ConfigureAwait(false);
                 recordingPath = null;
                 Log.Debug(() => "Channel {0} has stopped recording to {1}".Fmt(UUID, recordingPath));
             }
