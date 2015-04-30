@@ -99,7 +99,7 @@ namespace NEventSocket.Channels
                 throw new InvalidOperationException("Channel {0} is already bridged to {1}".Fmt(UUID, Bridge.Channel.UUID));
             }
 
-            if (Answered != AnswerState.Answered && other.Answered != AnswerState.Answered)
+            if (!(IsAnswered || IsPreAnswered) && !(other.IsAnswered || other.IsPreAnswered))
             {
                 throw new InvalidOperationException("At least one channel must be Answered to bridge them");
             }
@@ -118,7 +118,7 @@ namespace NEventSocket.Channels
 
         public async Task BridgeTo(string destination, BridgeOptions options, Action<EventMessage> onProgress = null)
         {
-            if (!IsAnswered)
+            if (!IsAnswered && !IsPreAnswered)
             {
                 return;
             }
@@ -191,6 +191,11 @@ namespace NEventSocket.Channels
         public Task Answer()
         {
             return eventSocket.ExecuteApplication(UUID, "answer");
+        }
+
+        public Task PreAnswer()
+        {
+            return eventSocket.ExecuteApplication(UUID, "pre_answer");
         }
 
         public Task Sleep(int milliseconds)

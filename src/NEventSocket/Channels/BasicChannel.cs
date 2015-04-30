@@ -140,6 +140,14 @@ namespace NEventSocket.Channels
             }
         }
 
+        public bool IsPreAnswered
+        {
+            get
+            {
+                return Answered.HasValue && Answered.Value == AnswerState.Early;
+            }
+        }
+
         public IObservable<string> FeatureCodes(string prefix = "#")
         {
             return eventSocket
@@ -162,7 +170,11 @@ namespace NEventSocket.Channels
 
         public Task Hangup(HangupCause hangupCause = FreeSwitch.HangupCause.NormalClearing)
         {
-            return RunIfAnswered(() => eventSocket.SendApi("uuid_kill {0} {1}".Fmt(UUID, hangupCause.ToString().ToUpperWithUnderscores())));
+            return
+                RunIfAnswered(
+                    () =>
+                    eventSocket.SendApi("uuid_kill {0} {1}".Fmt(UUID, hangupCause.ToString().ToUpperWithUnderscores())),
+                    true);
         }
 
         public async Task PlayFile(string file, Leg leg = Leg.ALeg, bool mix = false, string terminator = null)
@@ -331,9 +343,10 @@ namespace NEventSocket.Channels
         /// Runs the given async function if the Channel is still connected, otherwise a completed Task.
         /// </summary>
         /// <param name="toRun">An Async function.</param>
-        protected Task RunIfAnswered(Func<Task> toRun)
+        /// <param name="orPreAnswered">Function also run in pre answer state</param>
+        protected Task RunIfAnswered(Func<Task> toRun, bool orPreAnswered = false)
         {
-            if (!IsAnswered)
+            if (!IsAnswered && (!orPreAnswered || !IsPreAnswered))
             {
                 return TaskHelper.Completed;
             }
