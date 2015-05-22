@@ -13,6 +13,7 @@ namespace NEventSocket.Sockets
     using System.Reactive;
     using System.Reactive.Disposables;
     using System.Reactive.Linq;
+    using System.Reactive.PlatformServices;
     using System.Reactive.Subjects;
 
     using NEventSocket.Logging;
@@ -43,6 +44,12 @@ namespace NEventSocket.Sockets
         private IDisposable subscription;
 
         private TcpListener tcpListener;
+        
+        static ObservableListener()
+        {
+            //we need this to work around issues ilmerging rx assemblies
+            PlatformEnlightenmentProvider.Current = new CurrentPlatformEnlightenmentProvider();
+        }
 
         /// <summary>
         /// Starts the Listener on the given port

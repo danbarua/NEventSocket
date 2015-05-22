@@ -13,6 +13,7 @@ namespace NEventSocket.Sockets
     using System.Net.Sockets;
     using System.Reactive.Concurrency;
     using System.Reactive.Linq;
+    using System.Reactive.PlatformServices;
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
@@ -39,6 +40,12 @@ namespace NEventSocket.Sockets
         private BlockingCollection<byte[]> received = new BlockingCollection<byte[]>(16);
 
         private bool disposed;
+
+        static ObservableSocket()
+        {
+            //we need this to work around issues ilmerging rx assemblies
+            PlatformEnlightenmentProvider.Current = new CurrentPlatformEnlightenmentProvider();
+        }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ObservableSocket"/> class.

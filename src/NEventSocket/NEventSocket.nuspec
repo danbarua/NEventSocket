@@ -10,10 +10,14 @@
     <projectUrl>https://github.com/danbarua/NEventSocket</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>An async reactive EventSocket driver for FreeSwitch</description>
-    <releaseNotes />
     <dependencies />
     <copyright>Copyright (C) Dan Barua 2014</copyright>
     <tags>FreeSwitch EventSocket ESL Reactive</tags>
+    <releaseNotes>
+        0.5.1 - Fix issues with initializing Rx when run in scriptcs
+        0.5.0 - Fix uri decoding issue on message parsing
+                Allow operations on Channels in Pre-Answer state
+    </releaseNotes>
   </metadata>
     <files>
         <file src="..\..\build\merged\NEventSocket.dll" target="lib\net45" />

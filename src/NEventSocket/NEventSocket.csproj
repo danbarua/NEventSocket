@@ -98,7 +98,6 @@
     <Compile Include="Logging\LibLog.cs" />
     <Compile Include="OutboundListener.cs" />
     <Compile Include="OutboundSocketExtensions.cs" />
-    <Compile Include="Rx.cs" />
     <Compile Include="Sockets\EventSocket.cs" />
     <Compile Include="InboundSocket.cs" />
     <Compile Include="Sockets\ObservableSocket.cs" />
