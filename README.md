@@ -29,6 +29,8 @@ using (var socket = await InboundSocket.Connect("localhost", 8021, "ClueCon"))
   var apiResponse = await socket.SendApi("status");
   Console.WriteLine(apiResponse.BodyText);
 
+  await socket.SubscribeEvents();
+
   socket.Events.Where(x => x.EventName == EventName.ChannelAnswer)
               .Subscribe(async x =>
                   {
@@ -80,7 +82,8 @@ using (var listener = new OutboundListener(8084))
                           Console.WriteLine("Hangup Detected on " + x.UUID);
                           socket.Exit();
                       });
-
+                      
+      await await socket.SubscribeEvents();
       await socket.Linger(); //we'll need to exit after hangup if we do this
       await socket.ExecuteApplication(uuid, "answer");
       await socket.Play(uuid, "misc/8000/misc-freeswitch_is_state_of_the_art.wav");
