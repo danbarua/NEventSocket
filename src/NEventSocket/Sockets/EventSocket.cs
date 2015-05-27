@@ -358,7 +358,7 @@ namespace NEventSocket.Sockets
             {
                 await
                     this.SetMultipleChannelVariables(
-                        uuid, options.ChannelVariables.Select(kvp => kvp.Key + "='" + kvp.Value + "'").ToArray());
+                        uuid, options.ChannelVariables.Select(kvp => kvp.Key + "='" + kvp.Value + "'").ToArray()).ConfigureAwait(false);
             }
 
             /* If the bridge fails to connect we'll get a CHANNEL_EXECUTE_COMPLETE event with a failure message and the Execute task will complete.
@@ -392,7 +392,8 @@ namespace NEventSocket.Sockets
                     .ToObservable()
                     .Amb(bridgedOrHungupEvent)
                     .Select(x => new BridgeResult(x))
-                    .ToTask();
+                    .ToTask()
+                    .ConfigureAwait(false);
         }
 
         /// <summary>
@@ -474,7 +475,8 @@ namespace NEventSocket.Sockets
                 await
                     SendCommand(
                         "event plain {0} CUSTOM {1}".Fmt(
-                            string.Join(" ", this.events.Select(x => x.ToString().ToUpperWithUnderscores())), string.Join(" ", customEvents)));
+                            string.Join(" ", this.events.Select(x => x.ToString().ToUpperWithUnderscores())), string.Join(" ", customEvents)))
+                        .ConfigureAwait(false);
             }
         }
 
@@ -488,7 +490,7 @@ namespace NEventSocket.Sockets
             if (!customEvents.SequenceEqual(events))
             {
                 customEvents.UnionWith(events); // ensures we are always at least using the default minimum events
-                await SubscribeEvents();
+                await SubscribeEvents().ConfigureAwait(false);
             }
         }
 

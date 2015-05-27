@@ -186,7 +186,7 @@ namespace NEventSocket.Channels
 
             if (terminator != null)
             {
-                await SetChannelVariable("playback_terminators", terminator);
+                await SetChannelVariable("playback_terminators", terminator).ConfigureAwait(false);
             }
 
             if (leg == Leg.ALeg) //!this.IsBridged)
@@ -201,8 +201,9 @@ namespace NEventSocket.Channels
                 case Leg.Both:
                     await
                         Task.WhenAll(
-                        eventSocket.ExecuteApplication(UUID, "displace_session", "{0} {1}{2}".Fmt(file, mix ? "m" : string.Empty, "w"), false, false),
-                            eventSocket.ExecuteApplication(UUID, "displace_session", "{0} {1}{2}".Fmt(file, mix ? "m" : string.Empty, "r"), false, false));
+                            eventSocket.ExecuteApplication(UUID, "displace_session", "{0} {1}{2}".Fmt(file, mix ? "m" : string.Empty, "w"), false, false),
+                            eventSocket.ExecuteApplication(UUID, "displace_session", "{0} {1}{2}".Fmt(file, mix ? "m" : string.Empty, "r"), false, false))
+                            .ConfigureAwait(false);
                     break;
                 case Leg.ALeg:
                     await eventSocket.ExecuteApplication(UUID, "displace_session", "{0} {1}{2}".Fmt(file, mix ? "m" : string.Empty, "w"), false, false).ConfigureAwait(false);

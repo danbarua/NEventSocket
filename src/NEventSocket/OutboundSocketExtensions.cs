@@ -51,7 +51,7 @@ namespace NEventSocket
         /// <returns>A Task of <seealso cref="Channel"/>.</returns>
         public static async Task<Channel> GetChannel(this OutboundSocket eventSocket)
         {
-            await eventSocket.Connect();
+            await eventSocket.Connect().ConfigureAwait(false);
             return new Channel(eventSocket);
         }
     }

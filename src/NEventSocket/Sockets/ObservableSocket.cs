@@ -167,7 +167,7 @@ namespace NEventSocket.Sockets
 
             try
             {
-                await syncLock.WaitAsync();
+                await syncLock.WaitAsync().ConfigureAwait(false);
                 var stream = GetStream();
                 await stream.WriteAsync(bytes, 0, bytes.Length, cancellationToken).ConfigureAwait(false);
             }

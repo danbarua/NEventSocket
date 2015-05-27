@@ -74,7 +74,7 @@ namespace NEventSocket.Channels
                                    {
                                        if (ExitOnHangup)
                                        {
-                                           await eventSocket.Exit();
+                                           await eventSocket.Exit().ConfigureAwait(false);
                                            Log.Info(() => "Channel [{0}] exited".Fmt(UUID));
                                        }
                                    }));
@@ -221,7 +221,7 @@ namespace NEventSocket.Channels
                     () =>
                     "Channel {0} received a request to record to file {1} while currently recording to file {2}. Channel will stop recording and start recording to the new file."
                         .Fmt(UUID, file, recordingPath));
-                await StopRecording();
+                await StopRecording().ConfigureAwait(false);
             }
 
             recordingPath = file;
