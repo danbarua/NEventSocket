@@ -97,6 +97,53 @@ using (var listener = new OutboundListener(8084))
 }
 ```
 
+Error Handling
+--------------
+NEventSocket makes a best effort to handle errors gracefully, there is one scenario that you do need to handle in your application code. In a realtime async application, there may be a situation where we are trying to write to a socket when FreeSwitch has already hung up and disconnected the socket. In this case, NEventSocket will throw a ```TaskCanceledException``` (Note incorrect spelling of ```Cancelled```) which you can catch in order to do any clean up.
+
+It's a good idea to wrap any ```IObservable.Subscribe(() => {})``` callbacks in a try/catch block.
+
+```csharp
+  listener.Connections.Subscribe(
+    async socket => {
+        try {
+          await socket.Connect();
+
+          var uuid = socket.ChannelData.Headers[HeaderNames.UniqueId];
+          Console.WriteLine("OutboundSocket connected for channel " + uuid);
+
+          client.Events.Where(x => x.UUID == uuid && x.EventName == EventName.Dtmf)
+              .Subscribe(async e => {
+                  try {
+                    Console.WriteLine(e.Headers[HeaderNames.DtmfDigit]);
+                   //speak the number to the caller
+                    await client.Say(
+                          uuid,
+                          new SayOptions()
+                          {
+                            Text = e.Headers[HeaderNames.DtmfDigit],
+                            Type = SayType.Number,
+                            Method = SayMethod.Iterated
+                            });
+                   }
+                   catch(TaskCanceledException ex){
+                    //channel hungup
+                   }
+              ));
+                      
+          await await socket.SubscribeEvents();
+          await socket.Linger(); //we'll need to exit after hangup if we do this
+          await socket.ExecuteApplication(uuid, "answer");
+          await socket.Play(uuid, "misc/8000/misc-freeswitch_is_state_of_the_art.wav");
+          await socket.Hangup(uuid, HangupCause.NormalClearing);
+        }
+        catch (TaskCanceledException ex){
+          //FreeSwitch disconnected, do any clean up here.
+        }
+    });
+
+```
+
 Channel API
 ---------------
 Whilst the ```InboundSocket``` and ```OutboundSocket``` give you a close-to-the-metal experience with the EventSocket interface, the Channel API is a high level abstraction built on top of these.
@@ -228,7 +275,7 @@ using (var listener = new OutboundListener(8084))
               }
             });
       }
-      catch(TaskCancelledException)
+      catch(TaskCanceledException)
       {
           Console.WriteLine("Channel {0} hungup".Fmt(channel.UUID));
       }
