@@ -26,13 +26,13 @@ namespace NEventSocket
         }
 
         /// <summary>
-        /// Gets an observable sequence of incoming calls wrapped as <seealso cref="IChannel"/> abstractions.
+        /// Gets an observable sequence of incoming calls wrapped as <seealso cref="Channel"/> abstractions.
         /// </summary>
         public IObservable<Channel> Channels
         {
             get
             {
-                return Connections.Select(c => c.GetChannel().Result);
+                return Connections.Select(c => c.GetChannel().Result).AsObservable();
             }
         }
     }

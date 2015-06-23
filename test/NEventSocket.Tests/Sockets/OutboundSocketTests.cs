@@ -181,6 +181,28 @@ namespace NEventSocket.Tests.Sockets
         }
 
         [Fact(Timeout = TimeOut.TestTimeOutMs)]
+        public async Task Channel_listener_should_handle_where_FS_disconnects_before_channelData_event_received()
+        {
+            using (var listener = new OutboundListener(0))
+            {
+                listener.Start();
+                Exception ex = null;
+                bool channelCallbackCalled = false;
+
+                listener.Channels.Subscribe(channel => { channelCallbackCalled = true;  }, err => { ex = err; }, () => { });
+
+                using (var freeSwitch = new FakeFreeSwitchSocket(listener.Port))
+                {
+                    freeSwitch.MessagesReceived.FirstAsync(m => m.StartsWith("connect")).Subscribe(_ => freeSwitch.Dispose());
+
+                    await Wait.Until(() => ex != null);
+                    Assert.IsType<TaskCanceledException>(ex.InnerException);
+                    Assert.False(channelCallbackCalled);
+                }
+            }
+        }
+
+        [Fact(Timeout = TimeOut.TestTimeOutMs)]
         public async Task can_send_api()
         {
             using (var listener = new OutboundListener(0))
