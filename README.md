@@ -76,14 +76,14 @@ using (var listener = new OutboundListener(8084))
       var uuid = socket.ChannelData.Headers[HeaderNames.UniqueId];
       Console.WriteLine("OutboundSocket connected for channel " + uuid);
 
-      socket.Events.Where(x => x.EventName == EventName.ChannelHangup)
+      socket.Events.Where(x => x.EventName == EventName.ChannelHangup && x.UUID == uuid)
                     .Take(1)
                     .Subscribe(x => {
                           Console.WriteLine("Hangup Detected on " + x.UUID);
                           socket.Exit();
                       });
                       
-      await await socket.SubscribeEvents();
+      await socket.SubscribeEvents();
       await socket.Linger(); //we'll need to exit after hangup if we do this
       await socket.ExecuteApplication(uuid, "answer");
       await socket.Play(uuid, "misc/8000/misc-freeswitch_is_state_of_the_art.wav");
