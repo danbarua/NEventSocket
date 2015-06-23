@@ -126,6 +126,61 @@ namespace NEventSocket.Tests.Sockets
         }
 
         [Fact(Timeout = TimeOut.TestTimeOutMs)]
+        public async Task Calling_Exit_on_a_disconnected_OutboundSocket_should_close_gracefully()
+        {
+            using (var listener = new OutboundListener(0))
+            {
+                listener.Start();
+                EventMessage channelData = null;
+                bool exited = false;
+
+                listener.Connections.Subscribe(
+                    async (socket) =>
+                    {
+                        channelData = await socket.Connect();
+                        await socket.Exit();
+                        exited = true;
+                    });
+
+                using (var freeSwitch = new FakeFreeSwitchSocket(listener.Port))
+                {
+                    freeSwitch.MessagesReceived.FirstAsync(m => m.StartsWith("connect"))
+                          .Subscribe(async _ =>
+                              { 
+                                  await freeSwitch.SendChannelDataEvent();
+                                  await Task.Delay(500);
+                                  freeSwitch.Dispose();
+                              });
+
+                    await Wait.Until(() => channelData != null);
+                    await Wait.Until(() => exited);
+
+                    Assert.True(exited);
+                }
+            }
+        }
+
+        [Fact(Timeout = TimeOut.TestTimeOutMs)]
+        public async Task Calling_Connect_on_a_OutboundSocket_that_was_disconnected_should_throw_OperationCanceledException()
+        {
+            using (var listener = new OutboundListener(0))
+            {
+                listener.Start();
+                Exception ex = null;
+
+                listener.Connections.Subscribe((socket) => ex = Record.Exception(() => socket.Connect().Wait()));
+
+                using (var freeSwitch = new FakeFreeSwitchSocket(listener.Port))
+                {
+                    freeSwitch.MessagesReceived.FirstAsync(m => m.StartsWith("connect")).Subscribe(_ => freeSwitch.Dispose());
+
+                    await Wait.Until(() => ex != null);
+                    Assert.IsType<TaskCanceledException>(ex.InnerException);
+                }
+            }
+        }
+
+        [Fact(Timeout = TimeOut.TestTimeOutMs)]
         public async Task can_send_api()
         {
             using (var listener = new OutboundListener(0))
