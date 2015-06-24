@@ -87,6 +87,17 @@ namespace NEventSocket.Sockets
         public TimeSpan ResponseTimeOut { get; set; }
 
         /// <summary>
+        /// Gets an observable sequence of <seealso cref="BasicMessage"/>.
+        /// </summary>
+        public IObservable<BasicMessage> Messages
+        {
+            get
+            {
+                return messages.AsObservable();
+            }
+        }
+
+        /// <summary>
         /// Gets an observable sequence of <seealso cref="EventMessage"/>.
         /// </summary>
         public IObservable<EventMessage> Events
@@ -99,14 +110,13 @@ namespace NEventSocket.Sockets
             }
         }
 
-        /// <summary>
-        /// Gets an observable sequence of <seealso cref="BasicMessage"/>.
-        /// </summary>
-        public IObservable<BasicMessage> Messages
+        public IObservable<ConferenceEvent> ConferenceEvents
         {
             get
             {
-                return messages.AsObservable();
+                return
+                    Events.Where(x => x.EventName == EventName.Custom && x.Headers[HeaderNames.EventSubclass] == "conference::maintenance")
+                          .Select(x => new ConferenceEvent(x));
             }
         }
 

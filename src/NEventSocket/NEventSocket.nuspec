@@ -14,6 +14,7 @@
     <copyright>Copyright (C) Dan Barua 2014</copyright>
     <tags>FreeSwitch EventSocket ESL Reactive</tags>
     <releaseNotes>
+0.6.1 - Added events and helpers for conferences
 0.6.0 - Channels: move channel variables, event headers, underlying socket to Channel.Advanced.
 0.5.3 - Channels: fix channel init bug
 0.5.2 - Channels: Filter events so underlying socket does not receive events for all channels

@@ -24,7 +24,13 @@ namespace NEventSocket.FreeSwitch
 
         internal EventMessage(BasicMessage basicMessage)
         {
-            if (basicMessage.ContentType != ContentTypes.EventPlain)
+            if (basicMessage is EventMessage)
+            {
+                Headers = basicMessage.Headers;
+                BodyText = basicMessage.BodyText;
+                return;
+            }
+            else if (basicMessage.ContentType != ContentTypes.EventPlain)
             {
                 /* 
                  * Special Case:

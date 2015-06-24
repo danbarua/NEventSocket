@@ -1,10 +1,12 @@
 ﻿namespace Channels
 {
     using System;
+    using System.Reactive.Linq;
 
     using ColoredConsole;
 
     using NEventSocket;
+    using NEventSocket.FreeSwitch;
     using NEventSocket.Util;
 
     internal class ConferenceExample
@@ -64,8 +66,23 @@
                                 conferenceServerIp = serverIpAddress;
                             }
 
+                            channel.Advanced.Socket.ConferenceEvents
+                                .Subscribe(x =>
+                                    {
+                                        ColorConsole.WriteLine("Got conf event ".DarkYellow(), x.Action.ToString().Yellow());
+                                        if (x.Action == ConferenceAction.StartTalking)
+                                        {
+                                            ColorConsole.WriteLine("Channel ".DarkGreen(), x.UUID.Green(), " started talking".DarkGreen());
+                                        }
+
+                                        if (x.Action == ConferenceAction.StopTalking)
+                                        {
+                                            ColorConsole.WriteLine("Channel ".DarkRed(), x.UUID.Red(), " stopped talking".DarkRed());
+                                        }
+                                    });
+
                             //if we await the result of this, we'll get OperationCanceledException on hangup
-                            await channel.Advanced.Socket.ExecuteApplication(channel.UUID, "conference", ConferenceArgs, true, true);
+                            await channel.Advanced.Socket.ExecuteApplication(channel.UUID, "conference", ConferenceArgs);
                         }
                     }
                     catch (OperationCanceledException ex)
