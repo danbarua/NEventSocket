@@ -290,7 +290,7 @@ namespace NEventSocket.Channels
         
         private void InitializeSubscriptions()
         {
-            if (!initialized.EnsureCalledOnce())
+            if (initialized.EnsureCalledOnce())
             {
                 Log.Warn(() => "Channel already initialized");
                 return;
