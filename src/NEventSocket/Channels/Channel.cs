@@ -6,6 +6,7 @@
 namespace NEventSocket.Channels
 {
     using System;
+    using System.Collections.Generic;
     using System.Reactive.Disposables;
     using System.Reactive.Linq;
     using System.Threading.Tasks;
@@ -17,6 +18,8 @@ namespace NEventSocket.Channels
 
     public class Channel : BasicChannel
     {
+        private InterlockedBoolean initialized = new InterlockedBoolean();
+        
         private bool disposed;
 
         private string recordingPath;
@@ -28,61 +31,27 @@ namespace NEventSocket.Channels
 
         protected Channel(EventMessage eventMessage, EventSocket eventSocket) : base(eventMessage, eventSocket)
         {
-            eventSocket.SubscribeEvents(EventName.ChannelCreate).Wait();
-
-            Disposables.Add(
-                eventSocket.Events.Where(x => x.UUID == UUID && x.EventName == EventName.ChannelBridge).Subscribe(
-                    x =>
-                        {
-                            Log.Trace(() => "Channel [{0}] Bridged to [{1}]".Fmt(UUID, x.GetHeader(HeaderNames.OtherLegUniqueId)));
-
-                            if (Bridge.Channel != null && x.GetHeader(HeaderNames.OtherLegUniqueId) != Bridge.Channel.UUID)
-                            {
-                                //possibly changed bridge partner as part of att_xfer
-                                Log.Warn(() => "Channel [{0}] was Bridged to [{1}] but now changed to [{2}]".Fmt(UUID, Bridge.Channel.UUID, x.UUID));
-
-                                Bridge.Channel.Dispose();
-                                Bridge = new BridgeStatus(true, "TRANSFERRED", new BridgedChannel(x, eventSocket));
-                            }
-                        }));
-
-            Disposables.Add(
-                eventSocket.Events.Where(x => x.UUID == UUID && x.EventName == EventName.ChannelUnbridge).Subscribe(
-                    x => Log.Trace(() => "Channel [{0}] Unbridged from [{1}] {2}".Fmt(UUID, Bridge.Channel.UUID, x.GetVariable("bridge_hangup_cause")))));
-
-            Disposables.Add(
-                eventSocket.Events.Where(x => x.EventName == EventName.ChannelBridge 
-                                                && x.UUID != UUID
-                                                && x.GetHeader(HeaderNames.OtherLegUniqueId) == UUID
-                                                && (Bridge.Channel != null && x.UUID != Bridge.Channel.UUID))
-                    .Subscribe(x =>
-                        {
-                            //there is another channel out there that has bridged to us but we didn't get the CHANNEL_BRIDGE event on this channel
-                            //possibly an attended transfer. We'll swap our bridge partner so we can get its events
-
-                            Log.Warn(() => "Channel [{0}] was Bridged to [{1}] but now changed to [{2}]".Fmt(UUID, Bridge.Channel.UUID, x.UUID));
-
-                            Bridge.Channel.Dispose();
-                            Bridge = new BridgeStatus(true, "TRANSFERRED", new BridgedChannel(x, eventSocket));
-                        }));
-
-            if (this.eventSocket is OutboundSocket)
-            {
-                Disposables.Add(
-                    eventSocket.Events.Where(x => x.UUID == UUID && x.EventName == EventName.ChannelHangup)
-                               .Subscribe(async e =>
-                                   {
-                                       if (ExitOnHangup)
-                                       {
-                                           await eventSocket.Exit().ConfigureAwait(false);
-                                           Log.Info(() => "Channel [{0}] exited".Fmt(UUID));
-                                       }
-                                   }));
-             }
-
             //populate empty bridge status
             Bridge = new BridgeStatus(false, null);
             ExitOnHangup = true;
+
+            Task.WhenAll(
+                new[]
+                    {
+                        eventSocket.SubscribeEvents(), //subscribe to minimum events
+                        eventSocket.Filter(HeaderNames.UniqueId, UUID), //filter for our unique id (in case using full socket mode)
+                        eventSocket.Filter(HeaderNames.OtherLegUniqueId, UUID) //filter for channels bridging to our unique id
+                    }).ContinueWith(
+                        t =>
+                            {
+                                if (t.IsFaulted && t.Exception != null)
+                                {
+                                    Log.ErrorException("Channel [{0}] - failed to configure outbound socket for Channel usage".Fmt(UUID), t.Exception.InnerException);
+                                    return;
+                                }
+
+                                this.InitializeSubscriptions();
+                            });
         }
 
         ~Channel()
@@ -317,6 +286,83 @@ namespace NEventSocket.Channels
 
                 disposed = true;
             }
+        }
+        
+        private void InitializeSubscriptions()
+        {
+            if (!initialized.EnsureCalledOnce())
+            {
+                Log.Warn(() => "Channel already initialized");
+                return;
+            }
+
+            Disposables.Add(
+                    eventSocket.Events.Where(x => x.UUID == UUID && x.EventName == EventName.ChannelBridge).Subscribe(
+                        x =>
+                        {
+                            Log.Trace(
+                                () =>
+                                "Channel [{0}] Bridged to [{1}]".Fmt(UUID, x.GetHeader(HeaderNames.OtherLegUniqueId)));
+
+                            if (Bridge.Channel != null
+                                && x.GetHeader(HeaderNames.OtherLegUniqueId) != Bridge.Channel.UUID)
+                            {
+                                //possibly changed bridge partner as part of att_xfer
+                                Log.Warn(
+                                    () =>
+                                    "Channel [{0}] was Bridged to [{1}] but now changed to [{2}]".Fmt(
+                                        UUID, Bridge.Channel.UUID, x.UUID));
+
+                                Bridge.Channel.Dispose();
+                                Bridge = new BridgeStatus(true, "TRANSFERRED", new BridgedChannel(x, eventSocket));
+                            }
+                        }));
+
+            Disposables.Add(
+                eventSocket.Events.Where(x => x.UUID == UUID && x.EventName == EventName.ChannelUnbridge)
+                           .Subscribe(
+                               x =>
+                               Log.Trace(
+                                   () =>
+                                   "Channel [{0}] Unbridged from [{1}] {2}".Fmt(
+                                       UUID, Bridge.Channel.UUID, x.GetVariable("bridge_hangup_cause")))));
+
+            Disposables.Add(
+                eventSocket.Events.Where(
+                    x =>
+                    x.EventName == EventName.ChannelBridge && x.UUID != UUID
+                    && x.GetHeader(HeaderNames.OtherLegUniqueId) == UUID
+                    && (Bridge.Channel != null && x.UUID != Bridge.Channel.UUID)).Subscribe(
+                        x =>
+                        {
+                            //there is another channel out there that has bridged to us but we didn't get the CHANNEL_BRIDGE event on this channel
+                            //possibly an attended transfer. We'll swap our bridge partner so we can get its events
+
+                            Log.Warn(
+                                () =>
+                                "Channel [{0}] was Bridged to [{1}] but now changed to [{2}]".Fmt(
+                                    UUID, Bridge.Channel.UUID, x.UUID));
+
+                            Bridge.Channel.Dispose();
+                            Bridge = new BridgeStatus(true, "TRANSFERRED", new BridgedChannel(x, eventSocket));
+                        }));
+
+            if (this.eventSocket is OutboundSocket)
+            {
+                Disposables.Add(
+                    eventSocket.Events.Where(x => x.UUID == UUID && x.EventName == EventName.ChannelHangup)
+                               .Subscribe(
+                                   e =>
+                                   {
+                                       if (ExitOnHangup)
+                                       {
+                                           Log.Info(() => "Channel [{0}] exiting".Fmt(UUID));
+                                           eventSocket.Exit(); //don't care about the result, no need to wait
+                                       }
+                                   }));
+            }
+
+            Log.Trace(() => "Channel [{0}] subscriptions initialized".Fmt(UUID));
         }
 
         public bool ExitOnHangup { get; set; }

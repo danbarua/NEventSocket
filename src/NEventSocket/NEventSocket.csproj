@@ -139,6 +139,7 @@
     <Compile Include="Sockets\Parser.cs" />
     <Compile Include="Util\AsyncLock.cs" />
     <Compile Include="Util\EnumExtensions.cs" />
+    <Compile Include="Util\InterlockedBoolean.cs" />
     <Compile Include="Util\ObjectPooling\ObjectPool.cs" />
     <Compile Include="Util\ObservableExtensions.cs" />
     <Compile Include="Util\ObjectPooling\SharedPoolExtensions.cs" />

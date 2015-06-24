@@ -5,4 +5,4 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyCompany("Dan Barua")]
 [assembly: AssemblyProduct("NEventSocket")]
 [assembly: AssemblyCopyright("Copyright (C) 2014 Dan Barua and contributers. All rights reserved.")]
-[assembly: AssemblyVersion("0.5.1.0")]
+[assembly: AssemblyVersion("0.5.2.0")]
