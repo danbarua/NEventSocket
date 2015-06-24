@@ -55,7 +55,7 @@
                                 await channel.Advanced.Socket.ExecuteApplication(channel.UUID, "record", nameFile + " 10 200 1");
                                 await
                                     channel.Advanced.Socket.Api(
-                                        "sched_api +1 none conference {0} play file_string://{1}!conference/conf-has-joined.wav".Fmt(ConferenceId, nameFile));
+                                        "sched_api +1 none conference {0} play file_string://{1}!conference/conf-has_joined.wav".Fmt(ConferenceId, nameFile));
                             }
                             else
                             {
