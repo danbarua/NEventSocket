@@ -14,7 +14,7 @@
             const string TempFolder = "C:/temp/";
             const string ConferenceId = "my-test-conference";
             const string ConferencePin = "1234";
-            const string ConferenceArgs = ConferenceId + "+" + ConferencePin;
+            const string ConferenceArgs = ConferenceId;// +"+" + ConferencePin;
 
             var listener = new OutboundListener(8084);
             string conferenceServerIp = null;
@@ -33,7 +33,7 @@
                         if (conferenceServerIp != null && conferenceServerIp != serverIpAddress)
                         {
                             //the conference has started on a different server, redirect to that server
-                            await channel.Execute("redirect", "sip:" + destinationNumber + "@" + serverIpAddress);
+                            await channel.Execute("redirect", "sip:" + destinationNumber + "@" + conferenceServerIp);
                         }
                         else
                         {
@@ -48,6 +48,7 @@
 
                                 var nameFile = string.Concat(TempFolder, channel.UUID, ".wav");
                                 ColorConsole.WriteLine("Recording name file to ", nameFile.Blue());
+
 
                                 await channel.PlayFile("ivr/ivr-say_name.wav");
                                 await channel.PlayFile("tone_stream://%(500,0,500)");
@@ -64,7 +65,7 @@
                             }
 
                             //if we await the result of this, we'll get OperationCanceledException on hangup
-                            channel.Advanced.Socket.ExecuteApplication(channel.UUID, "conference", ConferenceArgs);
+                            await channel.Advanced.Socket.ExecuteApplication(channel.UUID, "conference", ConferenceArgs, true, true);
                         }
                     }
                     catch (OperationCanceledException ex)
