@@ -29,6 +29,9 @@ using (var socket = await InboundSocket.Connect("localhost", 8021, "ClueCon"))
   var apiResponse = await socket.SendApi("status");
   Console.WriteLine(apiResponse.BodyText);
 
+  //you can make basic api and command calls without subscribing to any events,
+  //but this is necessary if you want to execute any Bgapi jobs, originations, dialplan applications
+  //as we will be waiting for an event message to notify us of completion
   await socket.SubscribeEvents();
 
   socket.Events.Where(x => x.EventName == EventName.ChannelAnswer)
@@ -82,7 +85,8 @@ using (var listener = new OutboundListener(8084))
                           Console.WriteLine("Hangup Detected on " + x.UUID);
                           socket.Exit();
                       });
-                      
+      
+      //we need to subscribe to a few events in order to be useful
       await socket.SubscribeEvents();
       
       //if we use 'full' in our FS dialplan, we'll get events for ALL channels in FreeSwitch
@@ -91,7 +95,9 @@ using (var listener = new OutboundListener(8084))
       //note: fs wiki says "full" gives access to the full api - todo: investigate if really necessary
       await socket.Filter(HeaderNames.UniqueId, uuid);
       
-      await socket.Linger(); //we'll need to exit after hangup if we do this
+      //tell FreeSwitch not to end the socket on hangup, we'll catch the hangup event and .Exit() ourselves
+      await socket.Linger();
+      
       await socket.ExecuteApplication(uuid, "answer");
       await socket.Play(uuid, "misc/8000/misc-freeswitch_is_state_of_the_art.wav");
       await socket.Hangup(uuid, HangupCause.NormalClearing);
@@ -139,7 +145,7 @@ It's a good idea to wrap any ```IObservable.Subscribe(() => {})``` callbacks in 
               ));
                       
           await await socket.SubscribeEvents();
-          await socket.Linger(); //we'll need to exit after hangup if we do this
+          await socket.Linger();
           await socket.ExecuteApplication(uuid, "answer");
           await socket.Play(uuid, "misc/8000/misc-freeswitch_is_state_of_the_art.wav");
           await socket.Hangup(uuid, HangupCause.NormalClearing);
