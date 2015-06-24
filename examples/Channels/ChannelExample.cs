@@ -40,8 +40,8 @@
                                                         ContinueOnFail = true,
                                                         HangupAfterBridge = true,
                                                         TimeoutSeconds = 60,
-                                                        CallerIdName = channel["effective_caller_id_name"],
-                                                        CallerIdNumber = channel["effective_caller_id_number"],
+                                                        CallerIdName = channel.Advanced.GetVariable("effective_caller_id_name"),
+                                                        CallerIdNumber = channel.Advanced.GetVariable("effective_caller_id_number"),
                                                     };
 
                             bridgeOptions.ChannelVariables.Add("bridge_filter_dtmf", "true");

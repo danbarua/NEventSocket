@@ -67,15 +67,12 @@ namespace NEventSocket.Channels
                                    }));
         }
 
-        public string UUID { get; protected set; }
+        /// <summary>
+        /// Provides access to the underlying <see cref="EventSocket"/> for low-level operations
+        /// </summary>
+        public AdvancedProperties Advanced { get { return new AdvancedProperties(this); } }
 
-        public string this[string variableName]
-        {
-            get
-            {
-                return lastEvent.GetVariable(variableName);
-            }
-        }
+        public string UUID { get; protected set; }
 
         public ChannelState ChannelState
         {
@@ -156,16 +153,6 @@ namespace NEventSocket.Channels
                        .Where(x => x.Count == 2 && x[0] == prefix)
                        .Select(x => string.Concat(x))
                        .Do(x => Log.Debug(() => "Channel {0} detected Feature Code {1}".Fmt(UUID, x)));
-        }
-
-        public Task<ApiResponse> SendApi(string command)
-        {
-            return eventSocket.SendApi(command);
-        }
-
-        public Task<CommandReply> SendCommand(string command)
-        {
-            return eventSocket.SendCommand(command);
         }
 
         public Task Hangup(HangupCause hangupCause = FreeSwitch.HangupCause.NormalClearing)
@@ -353,6 +340,28 @@ namespace NEventSocket.Channels
             }
 
             return toRun();
+        }
+
+        public class AdvancedProperties
+        {
+            private BasicChannel channel;
+
+            public AdvancedProperties(BasicChannel channel)
+            {
+                this.channel = channel;
+            }
+
+            public EventSocket Socket { get { return channel.eventSocket; } }
+
+            public string GetHeader(string headerName)
+            {
+                return channel.lastEvent.GetHeader(headerName);
+            }
+
+            public string GetVariable(string variableName)
+            {
+                return channel.lastEvent.GetVariable(variableName);
+            }
         }
     }
 }
