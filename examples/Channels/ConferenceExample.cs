@@ -55,9 +55,12 @@
                                 await channel.PlayFile("ivr/ivr-say_name.wav");
                                 await channel.PlayFile("tone_stream://%(500,0,500)");
                                 await channel.Advanced.Socket.ExecuteApplication(channel.UUID, "record", nameFile + " 10 200 1");
-                                await
-                                    channel.Advanced.Socket.Api(
-                                        "sched_api +1 none conference {0} play file_string://{1}!conference/conf-has_joined.wav".Fmt(ConferenceId, nameFile));
+
+                                //when this member enters the conference, play the announcement
+                                channel.Advanced.Socket.ConferenceEvents.FirstAsync(x => x.Action == ConferenceAction.AddMember)
+                                       .Subscribe(
+                                           _ => channel.Advanced.Socket.Api("conference {0} play file_string://{1}!conference/conf-has_joined.wav"
+                                                    .Fmt(ConferenceId, nameFile)));
                             }
                             else
                             {
@@ -70,14 +73,15 @@
                                 .Subscribe(x =>
                                     {
                                         ColorConsole.WriteLine("Got conf event ".DarkYellow(), x.Action.ToString().Yellow());
-                                        if (x.Action == ConferenceAction.StartTalking)
+                                        switch (x.Action)
                                         {
-                                            ColorConsole.WriteLine("Channel ".DarkGreen(), x.UUID.Green(), " started talking".DarkGreen());
-                                        }
-
-                                        if (x.Action == ConferenceAction.StopTalking)
-                                        {
-                                            ColorConsole.WriteLine("Channel ".DarkRed(), x.UUID.Red(), " stopped talking".DarkRed());
+                                            case ConferenceAction.StartTalking:
+                                                ColorConsole.WriteLine(
+                                                    "Channel ".DarkGreen(), x.UUID.Green(), " started talking".DarkGreen());
+                                                break;
+                                            case ConferenceAction.StopTalking:
+                                                ColorConsole.WriteLine("Channel ".DarkRed(), x.UUID.Red(), " stopped talking".DarkRed());
+                                                break;
                                         }
                                     });
 
