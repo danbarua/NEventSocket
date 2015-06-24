@@ -84,6 +84,13 @@ using (var listener = new OutboundListener(8084))
                       });
                       
       await socket.SubscribeEvents();
+      
+      //if we use 'full' in our FS dialplan, we'll get events for ALL channels in FreeSwitch
+      //this is not desirable here - so we'll filter in for our unique id only
+      //cases where this is desirable is in the channel api where we want to catch other channels bridging to us
+      //note: fs wiki says "full" gives access to the full api - todo: investigate if really necessary
+      await socket.Filter(HeaderNames.UniqueId, uuid);
+      
       await socket.Linger(); //we'll need to exit after hangup if we do this
       await socket.ExecuteApplication(uuid, "answer");
       await socket.Play(uuid, "misc/8000/misc-freeswitch_is_state_of_the_art.wav");
