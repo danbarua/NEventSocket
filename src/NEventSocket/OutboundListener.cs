@@ -9,6 +9,7 @@ namespace NEventSocket
     using System.Reactive.Linq;
 
     using NEventSocket.Channels;
+    using NEventSocket.Logging;
     using NEventSocket.Sockets;
 
     /// <summary>
@@ -16,6 +17,10 @@ namespace NEventSocket
     /// </summary>
     public class OutboundListener : ObservableListener<OutboundSocket>
     {
+        private static readonly ILog Log = LogProvider.GetCurrentClassLogger();
+
+        private IObservable<Channel> channels;
+
         /// <summary>
         /// Initializes a new OutboundListener on the given port.
         /// Pass 0 as the port to auto-assign a dynamic port. Usually used for testing.
@@ -23,6 +28,12 @@ namespace NEventSocket
         /// <param name="port">The Tcp port to listen on.</param>
         public OutboundListener(int port) : base(port, tcpClient => new OutboundSocket(tcpClient))
         {
+            channels = Connections.SelectMany(
+                    async socket =>
+                    {
+                        await socket.Connect().ConfigureAwait(false);
+                        return new Channel(socket);
+                    });
         }
 
         /// <summary>
@@ -32,7 +43,12 @@ namespace NEventSocket
         {
             get
             {
-                return Connections.Select(c => c.GetChannel().Result).AsObservable();
+                //if there is an error connecting the channel, eg. FS hangs up and goes away
+                //before we can do the connect/channel_data handshake
+                //then carry on allowing new connections
+                return channels
+                    .Do(_ => { }, ex  => Log.ErrorException("Unable to connect Channel", ex))
+                    .OnErrorResumeNext(channels);
             }
         }
     }
