@@ -180,7 +180,7 @@ namespace NEventSocket.Tests.Sockets
             }
         }
 
-        [Fact(Timeout = TimeOut.TestTimeOutMs)]
+        [Fact(Timeout = TimeOut.TestTimeOutMs, Skip = "Not valid since #15")]
         public async Task Channel_listener_should_handle_where_FS_disconnects_before_channelData_event_received()
         {
             using (var listener = new OutboundListener(0))
