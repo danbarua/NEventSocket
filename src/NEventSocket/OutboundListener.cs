@@ -47,8 +47,8 @@ namespace NEventSocket
                 //before we can do the connect/channel_data handshake
                 //then carry on allowing new connections
                 return channels
-                    .Do(_ => { }, ex  => Log.ErrorException("Unable to connect Channel", ex))
-                    .OnErrorResumeNext(channels);
+                    .Do(_ => { }, ex => Log.ErrorException("Unable to connect Channel", ex))
+                    .Retry();
             }
         }
     }
