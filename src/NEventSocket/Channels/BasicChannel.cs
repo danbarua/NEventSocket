@@ -351,6 +351,8 @@ namespace NEventSocket.Channels
                 this.channel = channel;
             }
 
+            public EventMessage LastEvent { get { return channel.lastEvent; } }
+
             public EventSocket Socket { get { return channel.eventSocket; } }
 
             public string GetHeader(string headerName)
