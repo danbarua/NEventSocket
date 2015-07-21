@@ -18,7 +18,7 @@
         }
 
         [Fact(Timeout = 2000)]
-        public async Task Disposing_the_listener_completes_the_connections_observable()
+        public void Disposing_the_listener_completes_the_connections_observable()
         {
             using (var listener = new OutboundListener(0))
             {

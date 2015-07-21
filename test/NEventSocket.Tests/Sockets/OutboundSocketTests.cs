@@ -180,23 +180,30 @@ namespace NEventSocket.Tests.Sockets
             }
         }
 
-        [Fact(Timeout = TimeOut.TestTimeOutMs, Skip = "Not valid since #15")]
+        [Fact(Timeout = TimeOut.TestTimeOutMs)]
         public async Task Channel_listener_should_handle_where_FS_disconnects_before_channelData_event_received()
         {
             using (var listener = new OutboundListener(0))
             {
                 listener.Start();
-                Exception ex = null;
                 bool channelCallbackCalled = false;
+                bool firstConnectionReceived = false;
 
-                listener.Channels.Subscribe(channel => { channelCallbackCalled = true;  }, err => { ex = err; }, () => { });
+                listener.Channels.Subscribe(channel => { channelCallbackCalled = true; });
 
                 using (var freeSwitch = new FakeFreeSwitchSocket(listener.Port))
                 {
-                    freeSwitch.MessagesReceived.FirstAsync(m => m.StartsWith("connect")).Subscribe(_ => freeSwitch.Dispose());
+                    freeSwitch.MessagesReceived.FirstAsync(m => m.StartsWith("connect")).Subscribe(_ =>
+                        { 
+                            firstConnectionReceived = true;
+                            freeSwitch.Dispose();
+                        });
 
-                    await Wait.Until(() => ex != null);
-                    Assert.IsType<TaskCanceledException>(ex.InnerException);
+                    await Wait.Until(() => firstConnectionReceived);
+                    Assert.False(channelCallbackCalled);
+                }
+            }
+        }
                     Assert.False(channelCallbackCalled);
                 }
             }
