@@ -15,6 +15,7 @@
         public OutboundListenerTests()
         {
             LogProvider.SetCurrentLogProvider(new ColouredConsoleLogProvider());
+            PreventThreadPoolStarvation.Init();
         }
 
         [Fact(Timeout = 2000)]

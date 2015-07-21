@@ -1,14 +1,20 @@
 ﻿namespace NEventSocket.Tests.TestSupport
 {
+    using System;
+
     using NEventSocket.Util;
 
     public static class TimeOut
     {
         public const int TestTimeOutMs = 10000;
+        
+    }
 
+    public static class PreventThreadPoolStarvation
+    {
         private static readonly InterlockedBoolean Initialized = new InterlockedBoolean(false);
 
-        static TimeOut()
+        public static void Init()
         {
             PreventThreadPoolStarvationWhenRunningTestsInParallel();
         }
@@ -21,7 +27,6 @@
             }
 
             // doing this to avoid thread starvation when running tests in parallel eg. nCrunch, AppVeyor
-
             int maxThreads;
             int maxIoPorts;
             System.Threading.ThreadPool.GetMaxThreads(out maxThreads, out maxIoPorts);

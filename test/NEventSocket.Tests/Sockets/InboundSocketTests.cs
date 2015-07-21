@@ -17,6 +17,7 @@
         public InboundSocketTests()
         {
             Logging.LogProvider.SetCurrentLogProvider(new ColouredConsoleLogProvider());
+            PreventThreadPoolStarvation.Init();
         }
 
         [Fact(Timeout = TimeOut.TestTimeOutMs)]

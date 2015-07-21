@@ -18,6 +18,7 @@ namespace NEventSocket.Tests.Sockets
         public OutboundSocketTests()
         {
             LogProvider.SetCurrentLogProvider(new ColouredConsoleLogProvider());
+            PreventThreadPoolStarvation.Init();
         }
 
         [Fact(Timeout = TimeOut.TestTimeOutMs)]
@@ -73,7 +74,7 @@ namespace NEventSocket.Tests.Sockets
                 bool messagesObservableCompleted = false;
                 bool eventsObservableCompleted = false;
 
-                listener.Connections.Subscribe(async (connection) =>
+                listener.Connections.Subscribe(connection =>
                 {
                     connected = true;
                     connection.Messages.Subscribe(_ => { }, () => messagesObservableCompleted = true);
