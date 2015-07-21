@@ -204,7 +204,48 @@ namespace NEventSocket.Tests.Sockets
                 }
             }
         }
+
+        [Fact(Timeout = TimeOut.TestTimeOutMs)]
+        public async Task Channel_connect_errors_should_not_cause_subsequent_connections_to_fail()
+        {
+            using (var listener = new OutboundListener(0))
+            {
+                listener.Start();
+                bool channelCallbackCalled = false;
+                bool firstConnectionReceived = false;
+                bool secondConnectionReceived = false;
+
+                listener.Channels.Subscribe(channel => { channelCallbackCalled = true; });
+
+                using (var freeSwitch = new FakeFreeSwitchSocket(listener.Port))
+                {
+                    freeSwitch.MessagesReceived.FirstAsync(m => m.StartsWith("connect")).Subscribe(_ =>
+                        {
+                            freeSwitch.Dispose();
+                            firstConnectionReceived = true;
+                        });
+
+                    await Wait.Until(() => firstConnectionReceived);
                     Assert.False(channelCallbackCalled);
+                }
+
+                using (var freeSwitch = new FakeFreeSwitchSocket(listener.Port))
+                {
+                    freeSwitch.MessagesReceived.FirstAsync(m => m.StartsWith("connect")).Subscribe(async _ =>
+                        {
+                            await freeSwitch.SendChannelDataEvent();
+                            secondConnectionReceived = true;
+                        });
+
+                    freeSwitch.MessagesReceived.FirstAsync(m => m.StartsWith("linger") || m.StartsWith("event") || m.StartsWith("filter"))
+                        .Subscribe(async _ =>
+                        {
+                            await freeSwitch.SendCommandReplyOk("sending OK for linger, event and filter commands");
+                        });
+
+
+                    await Wait.Until(() => secondConnectionReceived);
+                    Assert.True(channelCallbackCalled);
                 }
             }
         }
