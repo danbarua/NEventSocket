@@ -17,7 +17,11 @@ namespace NEventSocket.Tests.Sockets
     {
         public OutboundSocketTests()
         {
-            LogProvider.SetCurrentLogProvider(new ColouredConsoleLogProvider());
+            if (System.Environment.GetEnvironmentVariable("APPVEYOR_BUILD_NUMBER") == null)
+            {
+                Logging.LogProvider.SetCurrentLogProvider(new ColouredConsoleLogProvider());
+            }
+
             PreventThreadPoolStarvation.Init();
         }
 

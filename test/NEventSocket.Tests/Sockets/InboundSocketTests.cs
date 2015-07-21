@@ -16,7 +16,11 @@
     {
         public InboundSocketTests()
         {
-            Logging.LogProvider.SetCurrentLogProvider(new ColouredConsoleLogProvider());
+            if (System.Environment.GetEnvironmentVariable("APPVEYOR_BUILD_NUMBER") == null)
+            {
+                Logging.LogProvider.SetCurrentLogProvider(new ColouredConsoleLogProvider());
+            }
+
             PreventThreadPoolStarvation.Init();
         }
 
