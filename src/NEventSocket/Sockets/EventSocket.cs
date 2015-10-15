@@ -33,7 +33,7 @@ namespace NEventSocket.Sockets
         private readonly ILog Log;
 
         // minimum events required for this class to do its job
-        private readonly HashSet<EventName> events = new HashSet<EventName>()
+        private readonly HashSet<EventName> subscribedEvents = new HashSet<EventName>()
                                                          {
                                                              EventName.ChannelExecuteComplete, 
                                                              EventName.BackgroundJob, 
@@ -53,6 +53,8 @@ namespace NEventSocket.Sockets
 
         private readonly IObservable<BasicMessage> messages;
 
+        private readonly IObservable<EventMessage> eventMessages; 
+
         private bool disposed;
 
         /// <summary>
@@ -67,13 +69,24 @@ namespace NEventSocket.Sockets
             ResponseTimeOut = responseTimeOut ?? TimeSpan.FromSeconds(5);
 
             messages =
-                Receiver.SelectMany(x => Encoding.UTF8.GetString(x))
+                Receiver.SelectMany(x => Encoding.ASCII.GetString(x))
                         .AggregateUntil(() => new Parser(), (builder, ch) => builder.Append(ch), builder => builder.Completed)
                         .Select(builder => builder.ExtractMessage())
-                        .SubscribeOn(TaskPoolScheduler.Default)
+                        .Do(x => 
+                            Log.Trace("Builder completed with " + x.ContentType)
+                            )
+                        .ObserveOn(Scheduler.Default)
                         .Do(x => Log.Trace("Messages Received [{0}].".Fmt(x.ContentType)), ex => { }, () => Log.Info(() => "Messages Observable completed."))
                         .Publish()
                         .RefCount();
+
+            eventMessages =
+                messages.Where(x => x.ContentType == ContentTypes.EventPlain)
+                        .Select(x => new EventMessage(x))
+                        .ObserveOn(Scheduler.Default)
+                        .Publish()
+                        .RefCount();
+
 
             Events.Subscribe(x => Log.Trace(() => "Events Received [{0}] [{1}]".Fmt(x.UUID, x.EventName)), ex => { }, () => Log.Info(() => "Events Observable Completed."));
 
@@ -104,9 +117,7 @@ namespace NEventSocket.Sockets
         {
             get
             {
-                return Messages
-                                .Where(x => x.ContentType == ContentTypes.EventPlain)
-                                .Select(x => new EventMessage(x));
+                return eventMessages.AsObservable();
             }
         }
 
@@ -479,13 +490,13 @@ namespace NEventSocket.Sockets
         /// <returns>A Task.</returns>
         public async Task SubscribeEvents(params EventName[] events)
         {
-            if (!this.events.SequenceEqual(events))
+            if (!this.subscribedEvents.SequenceEqual(events))
             {
-                this.events.UnionWith(events); // ensures we are always at least using the default minimum events
+                this.subscribedEvents.UnionWith(events); // ensures we are always at least using the default minimum events
                 await
                     SendCommand(
                         "event plain {0} CUSTOM {1}".Fmt(
-                            string.Join(" ", this.events.Select(x => x.ToString().ToUpperWithUnderscores())), string.Join(" ", customEvents)))
+                            string.Join(" ", this.subscribedEvents.Select(x => x.ToString().ToUpperWithUnderscores())), string.Join(" ", customEvents)))
                         .ConfigureAwait(false);
             }
         }
