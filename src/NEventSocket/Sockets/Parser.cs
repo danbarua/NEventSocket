@@ -158,6 +158,7 @@ namespace NEventSocket.Sockets
 
             var result = HasBody ? new BasicMessage(headers, buffer.ToString()) : new BasicMessage(headers);
             Dispose();
+            Log.Trace(() => "Parser completed parsing " + result.ContentType);
             return result;
         }
 

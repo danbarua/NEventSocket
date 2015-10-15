@@ -41,6 +41,10 @@ namespace NEventSocket.Sockets
 
         private bool disposed;
 
+        private string logFileName;
+
+        private FileStream logFile;
+
         static ObservableSocket()
         {
             //we need this to work around issues ilmerging rx assemblies
@@ -56,6 +60,11 @@ namespace NEventSocket.Sockets
             Log = LogProvider.GetLogger(GetType());
 
             this.tcpClient = tcpClient;
+
+            this.logFileName = Path.GetTempFileName();
+            this.logFile = File.OpenWrite(logFileName);
+
+            Log.Debug(() => "Logging to {0}".Fmt(logFileName));
 
             receiver = received
                 .GetConsumingEnumerable()
@@ -76,7 +85,13 @@ namespace NEventSocket.Sockets
                         return
                             Observable.FromAsync(() => stream.ReadAsync(buffer, 0, buffer.Length))
                                       .Select(x => buffer.Take(x).ToArray())
-                                      .Finally(() => SharedPools.ByteArray.Free(buffer));
+                                      .Do(
+                                          x =>
+                                              {
+                                                  logFile.Write(x, 0, x.Length);
+                                                  Log.Trace(() => "Received\n---\n{0}\n---\n".Fmt(Encoding.UTF8.GetString(x)));
+                                              })
+                                          .Finally(() => SharedPools.ByteArray.Free(buffer));
                     })
                     .Repeat()
                     .TakeWhile(x => x.Any())
@@ -84,6 +99,7 @@ namespace NEventSocket.Sockets
                         (bytes) => received.Add(bytes), 
                         ex =>
                             {
+
                                 Log.ErrorException("Read Failed", ex);
                                 Dispose();
                             }, 

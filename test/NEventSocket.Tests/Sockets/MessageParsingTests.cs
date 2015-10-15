@@ -286,6 +286,7 @@ See you at ClueCon! http://www.cluecon.com/
                 yield return new object[] { Resources.Example4 };
                 yield return new object[] { Resources.Example5 };
                 yield return new object[] { Resources.Example6 };
+                yield return new object[] { Resources.issue_20_log };
             }
         } 
     }
