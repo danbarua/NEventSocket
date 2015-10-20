@@ -46,7 +46,7 @@
                             await channel.Sleep(400);
                             await channel.PlayFile("ivr/ivr-welcome_to_freeswitch.wav");
                             
-                            await channel.Advanced.Socket.SubscribeCustomEvents("conference::maintenance");
+                            await channel.Advanced.Socket.SubscribeCustomEvents(CustomEvents.Conference.Maintainence);
 
                             if (conferenceIsStarted)
                             {
