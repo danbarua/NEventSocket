@@ -75,8 +75,6 @@ namespace NEventSocket.Sockets
                         .Publish()
                         .RefCount();
 
-            Events.Subscribe(x => Log.Trace(() => "Events Received [{0}] [{1}]".Fmt(x.UUID, x.EventName)), ex => { }, () => Log.Info(() => "Events Observable Completed."));
-
             Log.Trace(() => "EventSocket initialized");
         }
 
@@ -106,7 +104,8 @@ namespace NEventSocket.Sockets
             {
                 return Messages
                                 .Where(x => x.ContentType == ContentTypes.EventPlain)
-                                .Select(x => new EventMessage(x));
+                                .Select(x => new EventMessage(x))
+                                .Do(x => Log.Trace(() => "Events Received [{0}] [{1}]".Fmt(x.UUID, x.EventName)), ex => { }, () => Log.Info(() => "Events Observable Completed."));
             }
         }
 
@@ -171,7 +170,7 @@ namespace NEventSocket.Sockets
             {
                 var tcs = new TaskCompletionSource<CommandReply>();
                 var subscriptions = new CompositeDisposable { cts.Token.Register(() => tcs.TrySetCanceled()) };
-               
+
                 subscriptions.Add(
                     Messages.Where(x => x.ContentType == ContentTypes.CommandReply)
                             .Take(1)
@@ -291,7 +290,7 @@ namespace NEventSocket.Sockets
                         }
                     })
                 .ContinueOnFaultedOrCancelled(tcs, subscriptions.Dispose);
-                
+
 
             return tcs.Task;
         }
@@ -387,10 +386,10 @@ namespace NEventSocket.Sockets
                                     switch (e.EventName)
                                     {
                                         case EventName.ChannelBridge:
-                                        Log.Debug(() => "Bridge [{0} - {1}] complete - {2}".Fmt(uuid, options.UUID, e.Headers[HeaderNames.OtherLegUniqueId]));
+                                            Log.Debug(() => "Bridge [{0} - {1}] complete - {2}".Fmt(uuid, options.UUID, e.Headers[HeaderNames.OtherLegUniqueId]));
                                             break;
                                         case EventName.ChannelHangup:
-                                        Log.Debug(() => "Bridge [{0} - {1}]  aborted, channel hangup [{2}]".Fmt(uuid, options.UUID, e.Headers[HeaderNames.HangupCause]));
+                                            Log.Debug(() => "Bridge [{0} - {1}]  aborted, channel hangup [{2}]".Fmt(uuid, options.UUID, e.Headers[HeaderNames.HangupCause]));
                                             break;
                                     }
                                 }
@@ -460,7 +459,7 @@ namespace NEventSocket.Sockets
                                         }
                                     },
                                 () =>
-                                    { 
+                                    {
                                         subscriptions.Dispose();
                                         tcs.TrySetResult(null);
                                     }));
@@ -514,7 +513,7 @@ namespace NEventSocket.Sockets
             Events.Where(x => x.UUID == uuid && x.EventName == EventName.ChannelHangup).Take(1).Subscribe(action);
         }
 
-        [SuppressMessage("Microsoft.Usage", "CA2213:DisposableFieldsShouldBeDisposed", MessageId = "cts", 
+        [SuppressMessage("Microsoft.Usage", "CA2213:DisposableFieldsShouldBeDisposed", MessageId = "cts",
             Justification =
                 "Need to keep hold of the CancellationTokenSource in case callers try to use the socket after it has been disposed.")]
         protected override void Dispose(bool disposing)
