@@ -14,6 +14,7 @@
     <copyright>Copyright (C) Dan Barua 2014</copyright>
     <tags>FreeSwitch EventSocket ESL Reactive</tags>
     <releaseNotes>
+0.6.6 - Bugfix: remove superfluous logging
 0.6.5 - Bugfix: ensure Message/Event pumps are not blocked
 0.6.4 - Channels: expose Channel.Advanded.LastEvent property
 0.6.3 - Bugfix - Replace .OnErrorResumeNext() with .Retry() on Channel connection error
