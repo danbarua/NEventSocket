@@ -34,18 +34,8 @@ namespace NEventSocket.Sockets
 
         // minimum events required for this class to do its job
         private readonly HashSet<EventName> subscribedEvents = new HashSet<EventName>();
-                                                         //{
-                                                         //    EventName.ChannelExecuteComplete,
-                                                         //    EventName.BackgroundJob,
-                                                         //    EventName.ChannelHangup,
-                                                         //    EventName.ChannelAnswer,
-                                                         //    EventName.ChannelProgress,
-                                                         //    EventName.ChannelProgressMedia,
-                                                         //    EventName.ChannelBridge,
-                                                         //    EventName.ChannelUnbridge
-                                                         //};
 
-        private readonly HashSet<string> customEvents = new HashSet<string>(); // { "conference::maintenance" };
+        private readonly HashSet<string> customEvents = new HashSet<string>();;
 
         private readonly CancellationTokenSource cts = new CancellationTokenSource();
 
