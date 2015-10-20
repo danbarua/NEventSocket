@@ -441,6 +441,10 @@
                                   await socket.SendCommandReplyOk();
                               });
 
+                        socket.MessagesReceived.Where(m => m.StartsWith("event"))
+                              .Take(1)
+                              .Subscribe(async m => await socket.SendCommandReplyOk());
+
                         socket.MessagesReceived.Where(m => m.StartsWith("sendmsg"))
                               .Take(1)
                               .Subscribe(
@@ -476,6 +480,10 @@
                               {
                                   await socket.SendCommandReplyOk();
                               });
+
+                        socket.MessagesReceived.Where(m => m.StartsWith("event"))
+                              .Take(1)
+                              .Subscribe(async m => await socket.SendCommandReplyOk());
 
                         socket.MessagesReceived.Where(m => m.StartsWith("sendmsg"))
                               .Take(1)
