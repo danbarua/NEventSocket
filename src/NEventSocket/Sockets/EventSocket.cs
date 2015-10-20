@@ -104,8 +104,7 @@ namespace NEventSocket.Sockets
             {
                 return Messages
                                 .Where(x => x.ContentType == ContentTypes.EventPlain)
-                                .Select(x => new EventMessage(x))
-                                .Do(x => Log.Trace(() => "Events Received [{0}] [{1}]".Fmt(x.UUID, x.EventName)), ex => { }, () => Log.Info(() => "Events Observable Completed."));
+                                .Select(x => new EventMessage(x));
             }
         }
 
