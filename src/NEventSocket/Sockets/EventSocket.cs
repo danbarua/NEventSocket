@@ -103,7 +103,7 @@ namespace NEventSocket.Sockets
             get
             {
                 return
-                    Events.Where(x => x.EventName == EventName.Custom && x.Headers[HeaderNames.EventSubclass] == "conference::maintenance")
+                    Events.Where(x => x.EventName == EventName.Custom && x.Headers[HeaderNames.EventSubclass] == CustomEvents.Conference.Maintainence)
                           .Select(x => new ConferenceEvent(x));
             }
         }
@@ -487,7 +487,7 @@ namespace NEventSocket.Sockets
         /// <returns>A Task.</returns>
         public async Task SubscribeEvents(params EventName[] events)
         {
-            if (!subscribedEvents.Overlaps(events))
+            if (!events.All(@event => subscribedEvents.Contains(@event)))
             {
                 subscribedEvents.UnionWith(events);
 
@@ -524,7 +524,7 @@ namespace NEventSocket.Sockets
         /// <returns>A Task.</returns>
         public async Task SubscribeCustomEvents(params string[] events)
         {
-            if (!customEvents.Overlaps(events))
+            if (!events.All(@event => customEvents.Contains(@event)))
             {
                 customEvents.UnionWith(events);
                 await SubscribeEvents().ConfigureAwait(false);
