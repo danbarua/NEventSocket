@@ -5,9 +5,11 @@
 // --------------------------------------------------------------------------------------------------------------------
 namespace NEventSocket
 {
+    using System;
     using System.Net.Sockets;
     using System.Reactive.Linq;
     using System.Reactive.Threading.Tasks;
+    using System.Security;
     using System.Threading.Tasks;
 
     using NEventSocket.FreeSwitch;
@@ -42,15 +44,15 @@ namespace NEventSocket
         /// <summary>
         /// Sends the connect command to FreeSwitch, populating the <see cref="ChannelData"/> property on reply.
         /// </summary>
-        public Task<EventMessage> Connect()
+        public async Task<EventMessage> Connect()
         {
-            return SendCommand("connect").ToObservable().Select(reply => new EventMessage(reply)).Do(
-                x =>
-                    {
-                        ChannelData = x;
-                        Messages.FirstAsync(m => m.ContentType == ContentTypes.DisconnectNotice)
-                            .Do(dn => Log.Trace(() => "Channel {0} Disconnect Notice {1} received.".Fmt(ChannelData.UUID, dn.BodyText)));
-                    }).ToTask();
+            var response = await SendCommand("connect");
+            ChannelData = new EventMessage(response);
+
+            Messages.FirstAsync(m => m.ContentType == ContentTypes.DisconnectNotice)
+                            .Subscribe(dn => Log.Trace(() => "Channel {0} Disconnect Notice {1} received.".Fmt(ChannelData.UUID, dn.BodyText)));
+
+            return ChannelData;
         }
     }
 }

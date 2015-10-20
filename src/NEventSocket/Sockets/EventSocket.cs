@@ -70,10 +70,10 @@ namespace NEventSocket.Sockets
                 Receiver.SelectMany(x => Encoding.UTF8.GetString(x))
                         .AggregateUntil(() => new Parser(), (builder, ch) => builder.Append(ch), builder => builder.Completed)
                         .Select(builder => builder.ExtractMessage())
-                        .SubscribeOn(TaskPoolScheduler.Default)
                         .Do(x => Log.Trace("Messages Received [{0}].".Fmt(x.ContentType)), ex => { }, () => Log.Info(() => "Messages Observable completed."))
                         .Publish()
-                        .RefCount();
+                        .RefCount()
+                        .ObserveOn(TaskPoolScheduler.Default);
 
             Log.Trace(() => "EventSocket initialized");
         }
