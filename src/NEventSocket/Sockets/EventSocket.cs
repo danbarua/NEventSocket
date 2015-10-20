@@ -35,7 +35,7 @@ namespace NEventSocket.Sockets
         // minimum events required for this class to do its job
         private readonly HashSet<EventName> subscribedEvents = new HashSet<EventName>();
 
-        private readonly HashSet<string> customEvents = new HashSet<string>();;
+        private readonly HashSet<string> customEvents = new HashSet<string>();
 
         private readonly CancellationTokenSource cts = new CancellationTokenSource();
 
