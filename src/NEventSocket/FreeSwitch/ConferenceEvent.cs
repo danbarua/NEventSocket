@@ -17,7 +17,7 @@ namespace NEventSocket.FreeSwitch
     {
         protected internal ConferenceEvent(EventMessage other) : base(other)
         {
-            if (other.EventName != EventName.Custom && other.Headers[HeaderNames.EventSubclass] != "conference::maintenance")
+            if (other.EventName != EventName.Custom && other.Headers[HeaderNames.EventSubclass] != CustomEvents.Conference.Maintainence)
             {
                 throw new InvalidOperationException(
                     "Expected event of type Custom with SubClass conference::maintainance, got {0} instead".Fmt(other.EventName));
