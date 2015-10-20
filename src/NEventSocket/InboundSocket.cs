@@ -17,6 +17,7 @@ namespace NEventSocket
     using NEventSocket.Logging;
     using NEventSocket.Sockets;
     using NEventSocket.Util;
+    using System.Reactive.Concurrency;
 
     /// <summary>
     /// Wraps an EventSocket connecting inbound to FreeSwitch
@@ -51,6 +52,7 @@ namespace NEventSocket
                               new TimeoutException(
                                   "No Auth Request received within the specified timeout of {0}.".Fmt(socket.ResponseTimeOut))))
                       .Do(_ => Log.Trace(() => "Received Auth Request"), ex => Log.ErrorException("Error waiting for AuthRequest.", ex))
+                      //.ObserveOn(TaskPoolScheduler.Default)
                       .ToTask()
                       .ConfigureAwait(false);
 
@@ -104,7 +106,7 @@ namespace NEventSocket
             return this.InternalOriginate(endpoint, "&" + application, options);
         }
 
-        private Task<OriginateResult> InternalOriginate(string endpoint, string destination, OriginateOptions options = null)
+        private async Task<OriginateResult> InternalOriginate(string endpoint, string destination, OriginateOptions options = null)
         {
             if (options == null)
             {
@@ -119,9 +121,11 @@ namespace NEventSocket
                 options.UUID = Guid.NewGuid().ToString();
             }
 
+            await SubscribeEvents(EventName.ChannelAnswer, EventName.ChannelHangup, EventName.ChannelProgress);
+
             var originateString = string.Format("{0}{1} {2}", options, endpoint, destination);
 
-            return
+            return await
                 BackgroundJob("originate", originateString)
                     .ToObservable()
                     .Merge(
@@ -132,7 +136,8 @@ namespace NEventSocket
                                 || (options.ReturnRingReady && x.EventName == EventName.ChannelProgress))).Cast<BasicMessage>())
                     .FirstAsync(x => ((x is BackgroundJobResult) && !((BackgroundJobResult)x).Success) || (x is EventMessage))
                     .Select(OriginateResult.FromBackgroundJobResultOrChannelEvent)
-                    .ToTask();
+                    .ToTask()
+                    .ConfigureAwait(false);
         }
     }
 }
