@@ -61,8 +61,6 @@ namespace NEventSocket.Sockets
                         .AggregateUntil(() => new Parser(), (builder, ch) => builder.Append(ch), builder => builder.Completed)
                         .Select(builder => builder.ExtractMessage())
                         .Do(x => Log.Trace("Messages Received [{0}].".Fmt(x.ContentType)), ex => { }, () => Log.Info(() => "Messages Observable completed."))
-                        .ObserveOn(TaskPoolScheduler.Default)
-                        .SubscribeOn(TaskPoolScheduler.Default)
                         .Publish()
                         .RefCount()
                         .ObserveOn(TaskPoolScheduler.Default);
