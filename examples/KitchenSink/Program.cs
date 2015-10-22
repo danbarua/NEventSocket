@@ -3,6 +3,7 @@
     using System;
     using System.Globalization;
     using System.Reactive.Linq;
+    using System.Reactive.Threading.Tasks;
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
@@ -52,7 +53,9 @@
 
             ColorConsole.WriteLine("Starting...".Green());
 
-            ApiTest();
+            LoadTest();
+
+            //ApiTest().Wait();
 
             //InboundSocketTest();
 
@@ -70,6 +73,47 @@
                 ColorConsole.WriteLine((await client.SendApi("blah")).BodyText.DarkBlue());
                 ColorConsole.WriteLine((await client.SendApi("status")).BodyText.DarkBlue());
             }
+        }
+
+        private static void LoadTest()
+        {
+            int authFailures = 0;
+            int activeClients = 0;
+            int heartbeatsReceived = 0;
+
+            Parallel.For(
+                0,
+                    400,
+                async (_) =>
+                    {
+                        //ColorConsole.WriteLine("Using thread {0}".Fmt(Thread.CurrentThread.ManagedThreadId).Yellow());
+                        int clientId = Interlocked.Increment(ref activeClients);
+                        try
+                        {
+                            using (
+                                InboundSocket client = await InboundSocket.Connect("localhost", 8021, "ClueCon", TimeSpan.FromSeconds(5)))
+                            {
+                                await client.SubscribeEvents(EventName.Heartbeat);
+
+                                EventMessage heartbeat = await client.Events.FirstAsync(x => x.EventName == EventName.Heartbeat).ToTask();
+                                Interlocked.Increment(ref heartbeatsReceived);
+                                ColorConsole.WriteLine("Client ".DarkCyan(), clientId.ToString(), " reporting in ".DarkCyan());
+                                //ColorConsole.WriteLine(heartbeat.ToString().DarkCyan());
+                                //await client.Exit();
+                            }
+                        }
+                        catch (TimeoutException)
+                        {
+                            ColorConsole.WriteLine("Auth timeout Client id:".OnDarkRed(),clientId.ToString().Red());
+                            Interlocked.Increment(ref authFailures);
+                        }
+                    });
+
+            ColorConsole.WriteLine("Press [Enter] to exit.".Green());
+            Console.ReadLine();
+
+            ColorConsole.WriteLine("THere were {0} heartbeats".Fmt(heartbeatsReceived).Green());
+            ColorConsole.WriteLine("THere were {0} failures".Fmt(authFailures).Red());
         }
 
         private static async void CallTracking()
