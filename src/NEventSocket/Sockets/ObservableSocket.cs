@@ -39,8 +39,8 @@ namespace NEventSocket.Sockets
 
         private BlockingCollection<byte[]> received = new BlockingCollection<byte[]>(16);
 
-        private bool disposed;
-
+        private InterlockedBoolean disposed = new InterlockedBoolean(false);
+                                                         
         static ObservableSocket()
         {
             //we need this to work around issues ilmerging rx assemblies
@@ -155,7 +155,7 @@ namespace NEventSocket.Sockets
         /// <exception cref="InvalidOperationException">If not connected.</exception>
         public async Task SendAsync(byte[] bytes, CancellationToken cancellationToken)
         {
-            if (disposed)
+            if (disposed.Value)
             {
                 throw new ObjectDisposedException(ToString());
             }
@@ -236,14 +236,12 @@ namespace NEventSocket.Sockets
         /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
         protected virtual void Dispose(bool disposing)
         {
-            if (!disposed)
+            if (disposed.CompareExchange(true, false))
             {
-                disposed = true;
-
                 // https://github.com/danbarua/NEventSocket/issues/26
                 // it looks like Log may have been garbage collected at this point?
                 // to investigate - this workaround will do for now
-                
+
                 var log = Log ?? LogProvider.GetLogger(GetType());
                 log.Trace(() => "Disposing {0} (disposing:{1})".Fmt(GetType(), disposing));
 
@@ -271,7 +269,11 @@ namespace NEventSocket.Sockets
                     }
                 }
 
-                Disposed(this, EventArgs.Empty);
+                var disposedHandler = Disposed;
+                if (disposedHandler != null)
+                {
+                    disposedHandler(this, EventArgs.Empty);
+                }
 
                 log.Trace(() => "{0} Disposed".Fmt(GetType()));
             }
