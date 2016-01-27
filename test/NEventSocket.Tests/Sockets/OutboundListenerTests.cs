@@ -3,8 +3,6 @@
     using System;
     using System.Threading.Tasks;
 
-    using NEventSocket.Logging;
-    using NEventSocket.Logging.LogProviders;
     using NEventSocket.Tests.Fakes;
     using NEventSocket.Tests.TestSupport;
 
@@ -14,11 +12,6 @@
     {
         public OutboundListenerTests()
         {
-            if (System.Environment.GetEnvironmentVariable("APPVEYOR_BUILD_NUMBER") == null)
-            {
-                Logging.LogProvider.SetCurrentLogProvider(new ColouredConsoleLogProvider());
-            }
-
             PreventThreadPoolStarvation.Init();
         }
 

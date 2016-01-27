@@ -81,6 +81,7 @@
     <Compile Include="Sockets\OutboundSocketTests.cs" />
     <Compile Include="Sockets\OutboundListenerTests.cs" />
     <Compile Include="Sockets\MessageParsingTests.cs" />
+    <Compile Include="TestSupport\TestEnvironmentSupport.cs" />
     <Compile Include="TestSupport\TestMessages.cs" />
     <Compile Include="TestSupport\Wait.cs" />
     <Compile Include="TestSupport\TimeOut.cs" />

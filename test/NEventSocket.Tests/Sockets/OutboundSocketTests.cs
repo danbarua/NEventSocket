@@ -6,8 +6,6 @@ namespace NEventSocket.Tests.Sockets
     using System.Threading.Tasks;
 
     using NEventSocket.FreeSwitch;
-    using NEventSocket.Logging;
-    using NEventSocket.Logging.LogProviders;
     using NEventSocket.Tests.Fakes;
     using NEventSocket.Tests.TestSupport;
 
@@ -17,11 +15,6 @@ namespace NEventSocket.Tests.Sockets
     {
         public OutboundSocketTests()
         {
-            if (System.Environment.GetEnvironmentVariable("APPVEYOR_BUILD_NUMBER") == null)
-            {
-                Logging.LogProvider.SetCurrentLogProvider(new ColouredConsoleLogProvider());
-            }
-
             PreventThreadPoolStarvation.Init();
         }
 
