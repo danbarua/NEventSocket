@@ -239,7 +239,13 @@ namespace NEventSocket.Sockets
             if (!disposed)
             {
                 disposed = true;
-                Log.Trace(() => "Disposing {0} (disposing:{1})".Fmt(GetType(), disposing));
+
+                // https://github.com/danbarua/NEventSocket/issues/26
+                // it looks like Log may have been garbage collected at this point?
+                // to investigate - this workaround will do for now
+                
+                var log = Log ?? LogProvider.GetLogger(GetType());
+                log.Trace(() => "Disposing {0} (disposing:{1})".Fmt(GetType(), disposing));
 
                 if (disposing)
                 {
@@ -261,13 +267,13 @@ namespace NEventSocket.Sockets
                     {
                         tcpClient.Close();
                         tcpClient = null;
-                        Log.Trace(() => "TcpClient closed");
+                        log.Trace(() => "TcpClient closed");
                     }
                 }
 
                 Disposed(this, EventArgs.Empty);
 
-                Log.Trace(() => "{0} Disposed".Fmt(GetType()));
+                log.Trace(() => "{0} Disposed".Fmt(GetType()));
             }
         }
     }
