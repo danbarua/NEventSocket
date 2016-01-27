@@ -39,7 +39,7 @@ namespace NEventSocket.Sockets
 
         private BlockingCollection<byte[]> received = new BlockingCollection<byte[]>(16);
 
-        private InterlockedBoolean disposed = new InterlockedBoolean(false);
+        private readonly InterlockedBoolean disposed = new InterlockedBoolean();
                                                          
         static ObservableSocket()
         {
@@ -236,14 +236,9 @@ namespace NEventSocket.Sockets
         /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
         protected virtual void Dispose(bool disposing)
         {
-            if (disposed.CompareExchange(true, false))
+            if (!disposed.EnsureCalledOnce())
             {
-                // https://github.com/danbarua/NEventSocket/issues/26
-                // it looks like Log may have been garbage collected at this point?
-                // to investigate - this workaround will do for now
-
-                var log = Log ?? LogProvider.GetLogger(GetType());
-                log.Trace(() => "Disposing {0} (disposing:{1})".Fmt(GetType(), disposing));
+                Log.Trace(() => "Disposing {0} (disposing:{1})".Fmt(GetType(), disposing));
 
                 if (disposing)
                 {
@@ -265,17 +260,13 @@ namespace NEventSocket.Sockets
                     {
                         tcpClient.Close();
                         tcpClient = null;
-                        log.Trace(() => "TcpClient closed");
+                        Log.Trace(() => "TcpClient closed");
                     }
                 }
 
-                var disposedHandler = Disposed;
-                if (disposedHandler != null)
-                {
-                    disposedHandler(this, EventArgs.Empty);
-                }
+                Disposed(this, EventArgs.Empty);
 
-                log.Trace(() => "{0} Disposed".Fmt(GetType()));
+                Log.Trace(() => "{0} Disposed".Fmt(GetType()));
             }
         }
     }

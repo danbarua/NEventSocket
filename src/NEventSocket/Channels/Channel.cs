@@ -20,7 +20,7 @@ namespace NEventSocket.Channels
     {
         private InterlockedBoolean initialized = new InterlockedBoolean();
         
-        private bool disposed;
+        private readonly InterlockedBoolean disposed = new InterlockedBoolean();
 
         private string recordingPath;
 
@@ -261,7 +261,7 @@ namespace NEventSocket.Channels
 
         protected virtual void Dispose(bool disposing)
         {
-            if (!disposed)
+            if (!disposed.EnsureCalledOnce())
             {
                 if (disposing)
                 {
@@ -283,8 +283,6 @@ namespace NEventSocket.Channels
                 }
 
                 eventSocket = null;
-
-                disposed = true;
             }
         }
         

@@ -286,6 +286,7 @@ namespace NEventSocket.Tests.Sockets
                             });
 
                     await Wait.Until(() => apiRequestReceived);
+                    await Wait.Until(() => apiResponse != null);
 
                     Assert.True(apiRequestReceived);
                     Assert.NotNull(apiResponse);

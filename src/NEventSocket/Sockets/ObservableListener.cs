@@ -39,7 +39,7 @@ namespace NEventSocket.Sockets
 
         private readonly Func<TcpClient, T> observableSocketFactory;
 
-        private bool disposed;
+        private readonly InterlockedBoolean disposed = new InterlockedBoolean();
 
         private IDisposable subscription;
 
@@ -98,7 +98,7 @@ namespace NEventSocket.Sockets
         /// </summary>
         public void Start()
         {
-            if (disposed)
+            if (disposed.Value)
             {
                 throw new ObjectDisposedException(ToString());
             }
@@ -148,7 +148,7 @@ namespace NEventSocket.Sockets
         /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
         protected virtual void Dispose(bool disposing)
         {
-            if (!disposed)
+            if (!disposed.EnsureCalledOnce())
             {
                 Log.Trace(() => "Disposing (disposing:{0})".Fmt(disposing));
 
@@ -177,7 +177,6 @@ namespace NEventSocket.Sockets
                 }
 
                 Log.Trace(() => "Disposed");
-                disposed = true;
             }
         }
     }

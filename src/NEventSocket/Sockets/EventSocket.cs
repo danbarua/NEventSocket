@@ -53,7 +53,7 @@ namespace NEventSocket.Sockets
 
         private readonly IObservable<BasicMessage> messages;
 
-        private bool disposed;
+        private readonly InterlockedBoolean disposed = new InterlockedBoolean();
 
         /// <summary>
         /// Instantiates an <see cref="EventSocket"/> instance wrapping the provided <seealso cref="TcpClient"/>
@@ -517,7 +517,7 @@ namespace NEventSocket.Sockets
                 "Need to keep hold of the CancellationTokenSource in case callers try to use the socket after it has been disposed.")]
         protected override void Dispose(bool disposing)
         {
-            if (!disposed)
+            if (!disposed.EnsureCalledOnce())
             {
                 if (disposing)
                 {
@@ -527,8 +527,6 @@ namespace NEventSocket.Sockets
                         cts.Cancel();
                     }
                 }
-
-                disposed = true;
             }
 
             base.Dispose(disposing);

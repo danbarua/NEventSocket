@@ -30,7 +30,7 @@ namespace NEventSocket.Sockets
 
         private IDictionary<string, string> headers;
 
-        private bool disposed;
+        private readonly InterlockedBoolean disposed = new InterlockedBoolean();
 
         ~Parser()
         {
@@ -139,7 +139,7 @@ namespace NEventSocket.Sockets
         /// </exception>
         public BasicMessage ExtractMessage()
         {
-            if (disposed)
+            if (disposed.Value)
             {
                 throw new ObjectDisposedException(GetType().Name, "Should only call ExtractMessage() once per parser.");
             }
@@ -169,15 +169,13 @@ namespace NEventSocket.Sockets
 
         protected virtual void Dispose(bool disposing)
         {
-            if (!disposed)
+            if (!disposed.EnsureCalledOnce())
             {
                 if (buffer != null)
                 {
                     StringBuilderPool.Free(buffer);
                     buffer = null;
                 }
-
-                disposed = true;
             }
         }
     }

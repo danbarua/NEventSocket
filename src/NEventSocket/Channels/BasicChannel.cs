@@ -31,7 +31,7 @@ namespace NEventSocket.Channels
 
         private Action<EventMessage> hangupCallback = (e) => { };
 
-        private bool disposed;
+        private readonly InterlockedBoolean disposed = new InterlockedBoolean(false);
 
         ~BasicChannel()
         {
@@ -313,7 +313,7 @@ namespace NEventSocket.Channels
 
         protected virtual void Dispose(bool disposing)
         {
-            if (!disposed)
+            if (disposed.EnsureCalledOnce())
             {
                 if (disposing)
                 {
@@ -322,8 +322,6 @@ namespace NEventSocket.Channels
                         Disposables.Dispose();
                     }
                 }
-
-                disposed = true;
             }
         }
 
