@@ -264,7 +264,11 @@ namespace NEventSocket.Sockets
                     }
                 }
 
-                Disposed(this, EventArgs.Empty);
+                var localCopy = Disposed;
+                if (localCopy != null)
+                {
+                    localCopy(this, EventArgs.Empty);
+                }
 
                 Log.Trace(() => "{0} Disposed".Fmt(GetType()));
             }
