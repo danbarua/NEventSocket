@@ -38,7 +38,12 @@ namespace NEventSocket.Channels
             Task.WhenAll(
                 new[]
                     {
-                        eventSocket.SubscribeEvents(EventName.ChannelProgress, EventName.ChannelBridge, EventName.ChannelUnbridge, EventName.ChannelHangup, EventName.Dtmf), //subscribe to minimum events
+                        eventSocket.SubscribeEvents(EventName.ChannelProgress,
+                                                    EventName.ChannelBridge,
+                                                    EventName.ChannelUnbridge,
+                                                    EventName.ChannelAnswer,
+                                                    EventName.ChannelHangup,
+                                                    EventName.Dtmf), //subscribe to minimum events
                         eventSocket.Filter(HeaderNames.UniqueId, UUID), //filter for our unique id (in case using full socket mode)
                         eventSocket.Filter(HeaderNames.OtherLegUniqueId, UUID) //filter for channels bridging to our unique id
                     }).ContinueWith(
