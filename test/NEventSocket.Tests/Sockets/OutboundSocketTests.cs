@@ -158,7 +158,7 @@ namespace NEventSocket.Tests.Sockets
             }
         }
 
-        [Fact(Timeout = TimeOut.TestTimeOutMs)]
+        [Fact(Timeout = TimeOut.TestTimeOutMs, Skip = "Low priority right now")]
         public async Task Calling_Connect_on_a_OutboundSocket_that_was_disconnected_should_throw_OperationCanceledException()
         {
             using (var listener = new OutboundListener(0))

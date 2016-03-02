@@ -7,13 +7,12 @@
 namespace NEventSocket.Sockets
 {
     using System;
-    using System.Collections.Concurrent;
     using System.IO;
     using System.Linq;
     using System.Net.Sockets;
-    using System.Reactive.Concurrency;
     using System.Reactive.Linq;
     using System.Reactive.PlatformServices;
+    using System.Reactive.Subjects;
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
@@ -27,20 +26,24 @@ namespace NEventSocket.Sockets
     /// </summary>
     public abstract class ObservableSocket : IDisposable
     {
+        private static long IdCounter = 0;
+
+        private readonly long id;
+
         private readonly ILog Log;
 
         private readonly SemaphoreSlim syncLock = new SemaphoreSlim(1);
 
-        private readonly IObservable<byte[]> receiver;
+        private readonly InterlockedBoolean disposed = new InterlockedBoolean();
 
         private TcpClient tcpClient;
 
-        private IDisposable readSubscription;
+        private Subject<byte[]> subject;
 
-        private BlockingCollection<byte[]> received = new BlockingCollection<byte[]>(16);
+        private IObservable<byte[]> receiver;
+        
+        private CancellationTokenSource cancellation;
 
-        private readonly InterlockedBoolean disposed = new InterlockedBoolean();
-                                                         
         static ObservableSocket()
         {
             //we need this to work around issues ilmerging rx assemblies
@@ -55,43 +58,74 @@ namespace NEventSocket.Sockets
         {
             Log = LogProvider.GetLogger(GetType());
 
+            id = Interlocked.Increment(ref IdCounter);
+
             this.tcpClient = tcpClient;
 
-            receiver = received
-                .GetConsumingEnumerable()
-                .ToObservable(TaskPoolScheduler.Default)
-                        .Finally(
-                            () =>
-                                {
-                                    Log.Trace(() => "Buffer Read Observable Completed {0} chunks left.".Fmt(received.Count));
-                                    received.Dispose();
-                                    received = null;
-                                });
+            subject = new Subject<byte[]>();
 
-            readSubscription = Observable.Defer(
+            cancellation = new CancellationTokenSource();
+
+            receiver = Observable.Defer(
                 () =>
-                    {
-                        var stream = tcpClient.GetStream();
-                        var buffer = SharedPools.ByteArray.Allocate();
-                        return
-                            Observable.FromAsync(() => stream.ReadAsync(buffer, 0, buffer.Length))
-                                      .Select(x => buffer.Take(x).ToArray())
-                                      .Finally(() => SharedPools.ByteArray.Free(buffer));
-                    })
-                    .Repeat()
-                    .TakeWhile(x => x.Any())
-                    .Subscribe(
-                        (bytes) => received.Add(bytes), 
-                        ex =>
+                {
+                    Task.Run(
+                        async () =>
+                        {
+                            Log.Trace(() => "Observable Socket Worker Thread {0} started".Fmt(id));
+
+                            int bytesRead = 1;
+                            var stream = tcpClient.GetStream();
+                            byte[] buffer = SharedPools.ByteArray.Allocate();
+                            try
                             {
-                                Log.ErrorException("Read Failed", ex);
-                                Dispose();
-                            }, 
-                        () =>
+                                while (bytesRead > 0)
+                                {
+                                    bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, cancellation.Token);
+                                    if (bytesRead > 0)
+                                    {
+                                        subject.OnNext(buffer.Take(bytesRead).ToArray());
+                                    }
+                                    else
+                                    {
+                                        subject.OnCompleted();
+                                    }
+                                }
+                            }
+                            catch (ObjectDisposedException)
                             {
-                                Log.Trace(() => "Socket Read Observable Completed");
-                                Dispose();
-                            });
+                                //expected - normal shutdown
+                                subject.OnCompleted();
+                            }
+                            catch (TaskCanceledException)
+                            {
+                                //expected - normal shutdown
+                                subject.OnCompleted();
+                            }
+                            catch (SocketException ex)
+                            {
+                                //socket comms interrupted - propogate the error up the layers
+                                Log.WarnException("Error reading from stream", ex);
+                                subject.OnError(ex);
+                            }
+                            catch (Exception ex)
+                            {
+                                //unexpected error
+                                Log.ErrorException("Error reading from stream", ex);
+                                subject.OnError(ex);
+                            }
+                            finally
+                            {
+                                SharedPools.ByteArray.Free(buffer);
+                            }
+
+                            Log.Trace(() => "Observable Socket Worker Thread {0} completed".Fmt(id));
+
+                            Dispose();
+                        });
+
+                    return subject.AsObservable();
+                });
         }
 
         /// <summary>
@@ -228,30 +262,24 @@ namespace NEventSocket.Sockets
             return tcpClient.GetStream();
         }
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2213:DisposableFieldsShouldBeDisposed", MessageId = "received"
-            ,Justification = "received is disposed of asynchronously, when the buffer has been flushed out by the consumers")]
+        
         /// <summary>
         /// Releases unmanaged and - optionally - managed resources.
         /// </summary>
         /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage(
+            "Microsoft.Usage", "CA2213:DisposableFieldsShouldBeDisposed",
+            MessageId = "received", 
+            Justification = "received is disposed of asynchronously, when the buffer has been flushed out by the consumers")]
         protected virtual void Dispose(bool disposing)
         {
             if (!disposed.EnsureCalledOnce())
             {
                 Log.Trace(() => "Disposing {0} (disposing:{1})".Fmt(GetType(), disposing));
 
-                if (disposing)
+                if (cancellation.Token.CanBeCanceled)
                 {
-                    if (readSubscription != null)
-                    {
-                        readSubscription.Dispose();
-                        readSubscription = null;
-                    }
-
-                    if (received != null)
-                    {
-                        received.CompleteAdding();
-                    }
+                    cancellation.Cancel();
                 }
 
                 if (IsConnected)
@@ -263,7 +291,7 @@ namespace NEventSocket.Sockets
                         Log.Trace(() => "TcpClient closed");
                     }
                 }
-
+                
                 var localCopy = Disposed;
                 if (localCopy != null)
                 {
