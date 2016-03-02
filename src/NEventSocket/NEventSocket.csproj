@@ -22,7 +22,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;DETECT_LEAKS;TRACE_LEAKS</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;DETECT_LEAKS;TRACE_LEAKS;LIBLOG_PUBLIC</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>bin\Debug\NEventSocket.XML</DocumentationFile>
@@ -31,7 +31,7 @@
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
+    <DefineConstants>TRACE;LIBLOG_PUBLIC</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>bin\Release\NEventSocket.XML</DocumentationFile>
@@ -65,6 +65,7 @@
     <Compile Include="..\..\SharedAssemblyInfo.cs">
       <Link>Properties\SharedAssemblyInfo.cs</Link>
     </Compile>
+    <Compile Include="App_Packages\LibLog.4.2\LibLog.cs" />
     <Compile Include="Channels\BasicChannel.cs" />
     <Compile Include="Channels\BridgedChannel.cs" />
     <Compile Include="Channels\BridgeStatus.cs" />
@@ -98,7 +99,7 @@
     <Compile Include="FreeSwitch\HangupCause.cs" />
     <Compile Include="FreeSwitch\SipCallerIdType.cs" />
     <Compile Include="InboundSocketExtensions.cs" />
-    <Compile Include="Logging\LibLog.cs" />
+    <Compile Include="Logging\ColouredConsoleLogger.cs" />
     <Compile Include="OutboundListener.cs" />
     <Compile Include="OutboundSocketExtensions.cs" />
     <Compile Include="Sockets\EventSocket.cs" />

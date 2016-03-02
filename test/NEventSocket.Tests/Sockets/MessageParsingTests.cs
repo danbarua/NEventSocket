@@ -5,7 +5,7 @@
     using System.Reactive.Linq;
 
     using NEventSocket.FreeSwitch;
-    using NEventSocket.Logging.LogProviders;
+    using NEventSocket.Logging;
     using NEventSocket.Sockets;
     using NEventSocket.Tests.Properties;
     using NEventSocket.Tests.TestSupport;

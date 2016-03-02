@@ -21,35 +21,7 @@
         private static void Main(string[] args)
         {
             // set logger factory
-            LogProvider.SetCurrentLogProvider(new ColouredConsoleLogProvider());
-            ColouredConsoleLogProvider.MessageFormatter = (loggerName, level, message, e) =>
-                {
-                    var stringBuilder = new StringBuilder();
-
-                    stringBuilder.Append(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss", CultureInfo.InvariantCulture));
-
-                    stringBuilder.Append(" ");
-
-                    stringBuilder.Append("TID[" + Thread.CurrentThread.ManagedThreadId + "] ");
-
-                    // Append a readable representation of the log level
-                    stringBuilder.Append(("[" + level.ToString().ToUpper() + "]").PadRight(8));
-
-                    stringBuilder.Append("(" + loggerName + ") ");
-
-                    // Append the message
-                    stringBuilder.Append(message);
-
-                    // Append stack trace if there is an exception
-                    if (e != null)
-                    {
-                        stringBuilder.Append(Environment.NewLine).Append(e.GetType());
-                        stringBuilder.Append(Environment.NewLine).Append(e.Message);
-                        stringBuilder.Append(Environment.NewLine).Append(e.StackTrace);
-                    }
-
-                    return stringBuilder.ToString();
-                };
+            LogProvider.SetCurrentLogProvider(new ColouredConsoleLogProvider(LogLevel.Info));
 
             ColorConsole.WriteLine("Starting...".Green());
 
