@@ -33,19 +33,9 @@ namespace NEventSocket.Sockets
         private readonly ILog Log;
 
         // minimum events required for this class to do its job
-        private readonly HashSet<EventName> events = new HashSet<EventName>()
-                                                         {
-                                                             EventName.ChannelExecuteComplete, 
-                                                             EventName.BackgroundJob, 
-                                                             EventName.ChannelHangup, 
-                                                             EventName.ChannelAnswer, 
-                                                             EventName.ChannelProgress, 
-                                                             EventName.ChannelProgressMedia, 
-                                                             EventName.ChannelBridge, 
-                                                             EventName.ChannelUnbridge
-                                                         };
+        private readonly HashSet<EventName> subscribedEvents = new HashSet<EventName>();
 
-        private readonly HashSet<string> customEvents = new HashSet<string>() { "conference::maintenance" };
+        private readonly HashSet<string> customEvents = new HashSet<string>();
 
         private readonly CancellationTokenSource cts = new CancellationTokenSource();
 
@@ -113,7 +103,7 @@ namespace NEventSocket.Sockets
             get
             {
                 return
-                    Events.Where(x => x.EventName == EventName.Custom && x.Headers[HeaderNames.EventSubclass] == "conference::maintenance")
+                    Events.Where(x => x.EventName == EventName.Custom && x.Headers[HeaderNames.EventSubclass] == CustomEvents.Conference.Maintainence)
                           .Select(x => new ConferenceEvent(x));
             }
         }
@@ -280,16 +270,25 @@ namespace NEventSocket.Sockets
                             ex => tcs.TrySetException(ex),
                             subscriptions.Dispose));
 
-            SendCommand(StringBuilderPool.ReturnAndFree(sb))
-                .Then(reply =>
-                    {
-                        if (!reply.Success)
+            SubscribeEvents(EventName.ChannelExecuteComplete).ContinueWith(t =>
+            {
+                if (t.IsCompleted)
+                {
+                    SendCommand(StringBuilderPool.ReturnAndFree(sb))
+                        .Then(reply =>
                         {
-                            tcs.TrySetResult(null);
-                        }
-                    })
-                .ContinueOnFaultedOrCancelled(tcs, subscriptions.Dispose);
-
+                            if (!reply.Success)
+                            {
+                                tcs.TrySetResult(null);
+                            }
+                        })
+                        .ContinueOnFaultedOrCancelled(tcs, subscriptions.Dispose);
+                }
+                else
+                {
+                    tcs.TrySetException(t.Exception);
+                }
+            });
 
             return tcs.Task;
         }
@@ -332,7 +331,17 @@ namespace NEventSocket.Sockets
                             ex => Log.ErrorException("Error waiting for BackgroundJobResult Reply to [{0}].".Fmt(command), ex))
                         .Subscribe(x => tcs.TrySetResult(x), ex => tcs.TrySetException(ex), subscriptions.Dispose));
 
-            SendCommand(backgroundApiCommand).ContinueOnFaultedOrCancelled(tcs, subscriptions.Dispose);
+            SubscribeEvents(EventName.ChannelExecuteComplete).ContinueWith(t =>
+            {
+                if (t.IsCompleted)
+                {
+                    SendCommand(backgroundApiCommand).ContinueOnFaultedOrCancelled(tcs, subscriptions.Dispose);
+                }
+                else
+                {
+                    tcs.TrySetException(t.Exception);
+                }
+            });
 
             return tcs.Task;
         }
@@ -374,6 +383,7 @@ namespace NEventSocket.Sockets
              * In this case, we want to return a result as soon as the b-leg picks up and connects so we'll merge with the CHANNEL_BRIDGE event
              * observable.Amb(otherObservable) will propogate the first sequence to produce a result. */
 
+            await SubscribeEvents(EventName.ChannelBridge, EventName.ChannelHangup);
 
             var bridgedOrHungupEvent =
                 Events.FirstOrDefaultAsync(x => x.UUID == uuid && (x.EventName == EventName.ChannelBridge || x.EventName == EventName.ChannelHangup))
@@ -477,13 +487,32 @@ namespace NEventSocket.Sockets
         /// <returns>A Task.</returns>
         public async Task SubscribeEvents(params EventName[] events)
         {
-            if (!this.events.SequenceEqual(events))
+            if (!events.All(@event => subscribedEvents.Contains(@event)))
             {
-                this.events.UnionWith(events); // ensures we are always at least using the default minimum events
+                subscribedEvents.UnionWith(events);
+
+                var sb = StringBuilderPool.Allocate();
+                sb.Append("event plain");
+
+                foreach(var @event in subscribedEvents)
+                {
+                    sb.Append(" ");
+                    sb.Append(@event.ToString().ToUpperWithUnderscores());
+                }
+
+                if (customEvents.Any())
+                {
+                    sb.Append(" CUSTOM ");
+
+                    foreach(var @event in customEvents)
+                    {
+                        sb.Append(" ");
+                        sb.Append(@event);
+                    }
+                }
+
                 await
-                    SendCommand(
-                        "event plain {0} CUSTOM {1}".Fmt(
-                            string.Join(" ", this.events.Select(x => x.ToString().ToUpperWithUnderscores())), string.Join(" ", customEvents)))
+                    SendCommand(StringBuilderPool.ReturnAndFree(sb))
                         .ConfigureAwait(false);
             }
         }
@@ -495,9 +524,9 @@ namespace NEventSocket.Sockets
         /// <returns>A Task.</returns>
         public async Task SubscribeCustomEvents(params string[] events)
         {
-            if (!customEvents.SequenceEqual(events))
+            if (!events.All(@event => customEvents.Contains(@event)))
             {
-                customEvents.UnionWith(events); // ensures we are always at least using the default minimum events
+                customEvents.UnionWith(events);
                 await SubscribeEvents().ConfigureAwait(false);
             }
         }

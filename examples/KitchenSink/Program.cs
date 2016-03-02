@@ -3,6 +3,7 @@
     using System;
     using System.Globalization;
     using System.Reactive.Linq;
+    using System.Reactive.Threading.Tasks;
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
@@ -52,7 +53,9 @@
 
             ColorConsole.WriteLine("Starting...".Green());
 
-            ApiTest();
+            LoadTest();
+
+            //ApiTest().Wait();
 
             //InboundSocketTest();
 
@@ -72,12 +75,54 @@
             }
         }
 
+        private static void LoadTest()
+        {
+            int authFailures = 0;
+            int activeClients = 0;
+            int heartbeatsReceived = 0;
+
+            Parallel.For(
+                0,
+                    400,
+                async (_) =>
+                    {
+                        //ColorConsole.WriteLine("Using thread {0}".Fmt(Thread.CurrentThread.ManagedThreadId).Yellow());
+                        int clientId = Interlocked.Increment(ref activeClients);
+                        try
+                        {
+                            using (
+                                InboundSocket client = await InboundSocket.Connect("localhost", 8021, "ClueCon", TimeSpan.FromSeconds(5)))
+                            {
+                                await client.SubscribeEvents(EventName.Heartbeat);
+
+                                EventMessage heartbeat = await client.Events.FirstAsync(x => x.EventName == EventName.Heartbeat).ToTask();
+                                Interlocked.Increment(ref heartbeatsReceived);
+                                ColorConsole.WriteLine("Client ".DarkCyan(), clientId.ToString(), " reporting in ".DarkCyan());
+                                //ColorConsole.WriteLine(heartbeat.ToString().DarkCyan());
+                                //await client.Exit();
+                            }
+                        }
+                        catch (TimeoutException)
+                        {
+                            ColorConsole.WriteLine("Auth timeout Client id:".OnDarkRed(),clientId.ToString().Red());
+                            Interlocked.Increment(ref authFailures);
+                        }
+                    });
+
+            ColorConsole.WriteLine("Press [Enter] to exit.".Green());
+            Console.ReadLine();
+
+            ColorConsole.WriteLine("THere were {0} heartbeats".Fmt(heartbeatsReceived).Green());
+            ColorConsole.WriteLine("THere were {0} failures".Fmt(authFailures).Red());
+        }
+
         private static async void CallTracking()
         {
             var client = await InboundSocket.Connect("10.10.10.36", 8021, "ClueCon");
 
             string uuid = null;
 
+            await client.SubscribeEvents(EventName.ChannelAnswer, EventName.ChannelHangup);
             client.Events.Where(x => x.EventName == EventName.ChannelAnswer)
                   .Subscribe(x =>
                       {
@@ -102,13 +147,13 @@
                 await client.Hangup(uuid, HangupCause.CallRejected);
             }
 
-            client.Exit();
+            await client.Exit();
         }
 
         private static async Task PlayGetDigitsTest()
         {
             var client = await InboundSocket.Connect("10.10.10.36", 8021, "ClueCon");
-            await client.SubscribeEvents(EventName.Dtmf);
+            await client.SubscribeEvents(EventName.Dtmf, EventName.ChannelHangup);
 
             var originate =
                 await
@@ -125,7 +170,7 @@
             if (!originate.Success)
             {
                 ColorConsole.WriteLine("Originate Failed ".Blue(), originate.HangupCause.ToString());
-                client.Exit();
+                await client.Exit();
             }
             else
             {
@@ -255,7 +300,7 @@
                 if (!originate.Success)
                 {
                     ColorConsole.WriteLine("Originate Failed ".Red(), originate.HangupCause.ToString());
-                    client.Exit();
+                    await client.Exit();
                 }
                 else
                 {
@@ -422,9 +467,7 @@
 
                         var uuid = connection.ChannelData.Headers[HeaderNames.UniqueId];
 
-                        await
-                            connection.SubscribeEvents(
-                                EventName.Dtmf);
+                        await connection.SubscribeEvents(EventName.Dtmf, EventName.ChannelHangup);
 
                         await connection.Linger();
                         await connection.ExecuteApplication(uuid, "answer", null, true, false);

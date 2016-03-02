@@ -29,19 +29,18 @@ using (var socket = await InboundSocket.Connect("localhost", 8021, "ClueCon"))
   var apiResponse = await socket.SendApi("status");
   Console.WriteLine(apiResponse.BodyText);
 
-  //you can make basic api and command calls without subscribing to any events,
-  //but this is necessary if you want to execute any Bgapi jobs, originations, dialplan applications
-  //as we will be waiting for an event message to notify us of completion
-  await socket.SubscribeEvents();
+  //Tell FreeSwitch which events we are interested in
+  await socket.SubscribeEvents(EventName.ChannelAnswer);
 
+  //Handle events as they come in using Rx
   socket.Events.Where(x => x.EventName == EventName.ChannelAnswer)
-              .Subscribe(async x =>
-                  {
-                      Console.WriteLine("Channel Answer Event " +  x.UUID);
+        .Subscribe(async x =>
+            {
+                Console.WriteLine("Channel Answer Event " +  x.UUID);
 
-                      //we have a channel, now we can do stuff with it
-                      await socket.Play(x.UUID, "misc/8000/misc-freeswitch_is_state_of_the_art.wav");
-                  });
+                //we have a channel id, now we can control it
+                await socket.Play(x.UUID, "misc/8000/misc-freeswitch_is_state_of_the_art.wav");
+            });
 
   Console.WriteLine("Press [Enter] to exit.");
   Console.ReadLine();
@@ -54,7 +53,7 @@ An ```OutboundListener``` listens on a TCP port for socket connections (outbound
 An ```OutboundSocket``` receives events for one particular channel, the API is the same as for an ```InboundSocket```, so you will need to pass in the channel UUID to issue commands for it.
 
 Don't forget to use the ```async``` and ```full``` flags in your dialplan.
-````async```` means that applications will not block (e.g. a bridge will block until the channel hangs up and completes the call) and ````full```` gives the socket access to the full EventSocket api.
+````async```` means that applications will not block (e.g. a bridge will block until the channel hangs up and completes the call) and ````full```` gives the socket access to the full EventSocket api (without this you will see `-ERR Unknown Command` responses)
 ````xml
 <action application="socket" data="127.0.0.1:8084 async full"/>
 ````
@@ -79,20 +78,20 @@ using (var listener = new OutboundListener(8084))
       var uuid = socket.ChannelData.Headers[HeaderNames.UniqueId];
       Console.WriteLine("OutboundSocket connected for channel " + uuid);
 
-      socket.Events.Where(x => x.EventName == EventName.ChannelHangup && x.UUID == uuid)
-                    .Take(1)
-                    .Subscribe(x => {
-                          Console.WriteLine("Hangup Detected on " + x.UUID);
-                          socket.Exit();
-                      });
+      await socket.SubscribeEvents(EventName.ChannelHangup);
+
+      socket.Events
+            .Where(x => x.EventName == EventName.ChannelHangup && x.UUID == uuid)
+            .Take(1)
+            .Subscribe(async x => {
+                  Console.WriteLine("Hangup Detected on " + x.UUID);
+                  await socket.Exit();
+            });
       
-      //we need to subscribe to a few events in order to be useful
-      await socket.SubscribeEvents();
       
       //if we use 'full' in our FS dialplan, we'll get events for ALL channels in FreeSwitch
       //this is not desirable here - so we'll filter in for our unique id only
       //cases where this is desirable is in the channel api where we want to catch other channels bridging to us
-      //note: fs wiki says "full" gives access to the full api - todo: investigate if really necessary
       await socket.Filter(HeaderNames.UniqueId, uuid);
       
       //tell FreeSwitch not to end the socket on hangup, we'll catch the hangup event and .Exit() ourselves
@@ -117,43 +116,36 @@ NEventSocket makes a best effort to handle errors gracefully, there is one scena
 It's a good idea to wrap any ```IObservable.Subscribe(() => {})``` callbacks in a try/catch block.
 
 ```csharp
-  listener.Connections.Subscribe(
-    async socket => {
-        try {
-          await socket.Connect();
+try {
+  await socket.Connect();
 
-          var uuid = socket.ChannelData.Headers[HeaderNames.UniqueId];
-          Console.WriteLine("OutboundSocket connected for channel " + uuid);
+  var uuid = socket.ChannelData.Headers[HeaderNames.UniqueId];
+  Console.WriteLine("OutboundSocket connected for channel " + uuid);
 
-          client.Events.Where(x => x.UUID == uuid && x.EventName == EventName.Dtmf)
-              .Subscribe(async e => {
-                  try {
-                    Console.WriteLine(e.Headers[HeaderNames.DtmfDigit]);
-                   //speak the number to the caller
-                    await client.Say(
-                          uuid,
-                          new SayOptions()
-                          {
-                            Text = e.Headers[HeaderNames.DtmfDigit],
-                            Type = SayType.Number,
-                            Method = SayMethod.Iterated
-                            });
-                   }
-                   catch(TaskCanceledException ex){
-                    //channel hungup
-                   }
-              ));
-                      
-          await await socket.SubscribeEvents();
-          await socket.Linger();
-          await socket.ExecuteApplication(uuid, "answer");
-          await socket.Play(uuid, "misc/8000/misc-freeswitch_is_state_of_the_art.wav");
-          await socket.Hangup(uuid, HangupCause.NormalClearing);
-        }
-        catch (TaskCanceledException ex){
-          //FreeSwitch disconnected, do any clean up here.
-        }
-    });
+  await socket.SubscribeEvents(EventName.Dtmf);
+
+  socket.Events.Where(x => x.UUID == uuid && x.EventName == EventName.Dtmf)
+        .Subscribe(async e => {
+          try {
+            Console.WriteLine(e.Headers[HeaderNames.DtmfDigit]);
+           //speak the number to the caller
+            await client.Say(
+                  uuid,
+                  new SayOptions()
+                  {
+                    Text = e.Headers[HeaderNames.DtmfDigit],
+                    Type = SayType.Number,
+                    Method = SayMethod.Iterated
+                    });
+           }
+           catch(TaskCanceledException ex){
+            //channel hungup
+           }
+      ));
+}
+catch (TaskCanceledException ex) {
+  //FreeSwitch disconnected, do any clean up here.
+}
 
 ```
 
@@ -186,18 +178,19 @@ using (var listener = new OutboundListener(8084))
           await channel.PlayFile("ivr/8000/ivr-call_being_transferred.wav");
           await channel.StartDetectingInbandDtmf();
 
-          var bridgeOptions = new BridgeOptions()
-                                  {
-                                      IgnoreEarlyMedia = true,
-                                      RingBack =
-                                          "tone_stream://%(400,200,400,450);%(400,2000,400,450);loops=-1",
-                                      ContinueOnFail = true,
-                                      HangupAfterBridge = true,
-                                      TimeoutSeconds = 60,
-                                      //can get variables from a channel using the indexer
-                                      CallerIdName = channel["effective_caller_id_name"], 
-                                      CallerIdNumber = channel["effective_caller_id_number"],
-                                  };
+          var bridgeOptions = 
+                  new BridgeOptions()
+                      {
+                        IgnoreEarlyMedia = true,
+                        RingBack =
+                            "tone_stream://%(400,200,400,450);%(400,2000,400,450);loops=-1",
+                        ContinueOnFail = true,
+                        HangupAfterBridge = true,
+                        TimeoutSeconds = 60,
+                        //can get variables from a channel using the indexer
+                        CallerIdName = channel["effective_caller_id_name"], 
+                        CallerIdNumber = channel["effective_caller_id_number"],
+                      };
 
           //attempt a bridge to user/1001, write to the console when it starts ringing
           await channel.BridgeTo("user/1001", 

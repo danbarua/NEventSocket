@@ -14,6 +14,7 @@
     <copyright>Copyright (C) Dan Barua 2014</copyright>
     <tags>FreeSwitch EventSocket ESL Reactive</tags>
     <releaseNotes>
+1.0.0 - BREAKING CHANGE: Affects behaviour of socket.SubscribeEvents() - see https://github.com/danbarua/NEventSocket/blob/master/BREAKING%20CHANGES.md
 0.6.10 - Bugfix: handle garbage collected event handler in Dispose();
 0.6.9 - Bugfix: make all Dispose() calls thread safe
 0.6.8 - Bugfix: properly handle multiple Dispose() calls

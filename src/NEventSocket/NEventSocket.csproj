@@ -75,6 +75,7 @@
     <Compile Include="FreeSwitch\BridgeResult.cs" />
     <Compile Include="FreeSwitch\ConferenceAction.cs" />
     <Compile Include="FreeSwitch\ConferenceEvent.cs" />
+    <Compile Include="FreeSwitch\CustomEvents.cs" />
     <Compile Include="FreeSwitch\Leg.cs" />
     <Compile Include="FreeSwitch\OriginationPrivacy.cs" />
     <Compile Include="FreeSwitch\PlayGetDigitsOptions.cs" />
