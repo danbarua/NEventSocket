@@ -148,7 +148,7 @@ namespace NEventSocket.Sockets
         /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
         protected virtual void Dispose(bool disposing)
         {
-            if (!disposed.EnsureCalledOnce())
+            if (disposed != null && !disposed.EnsureCalledOnce())
             {
                 Log.Trace(() => "Disposing (disposing:{0})".Fmt(disposing));
 

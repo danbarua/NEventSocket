@@ -264,7 +264,7 @@ namespace NEventSocket.Channels
 
         protected virtual void Dispose(bool disposing)
         {
-            if (!disposed.EnsureCalledOnce())
+            if (disposed != null && !disposed.EnsureCalledOnce())
             {
                 if (disposing)
                 {
@@ -279,7 +279,7 @@ namespace NEventSocket.Channels
                     }
                 }
 
-                if (eventSocket is OutboundSocket)
+                if (eventSocket != null && eventSocket is OutboundSocket)
                 {
                     // todo: should we close the socket associated with the channel here?
                     eventSocket.Dispose();

@@ -169,7 +169,7 @@ namespace NEventSocket.Sockets
 
         protected virtual void Dispose(bool disposing)
         {
-            if (!disposed.EnsureCalledOnce())
+            if (disposed != null && !disposed.EnsureCalledOnce())
             {
                 if (buffer != null)
                 {

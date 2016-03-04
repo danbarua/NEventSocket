@@ -51,7 +51,7 @@ namespace NEventSocket.Sockets
         /// <param name="responseTimeOut">(Optional) The response timeout.</param>
         protected EventSocket(TcpClient tcpClient, TimeSpan? responseTimeOut = null) : base(tcpClient)
         {
-            Log = LogProvider.GetLogger(GetType());
+            Log = LogProvider.GetLogger("{0} ({1})".Fmt(this.GetType(), this.Id));
 
             ResponseTimeOut = responseTimeOut ?? TimeSpan.FromSeconds(5);
 
@@ -568,7 +568,7 @@ namespace NEventSocket.Sockets
                 "Need to keep hold of the CancellationTokenSource in case callers try to use the socket after it has been disposed.")]
         protected override void Dispose(bool disposing)
         {
-            if (!disposed.EnsureCalledOnce())
+            if (disposed != null && !disposed.EnsureCalledOnce())
             {
                 if (disposing)
                 {
