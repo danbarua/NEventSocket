@@ -24,39 +24,37 @@ namespace NEventSocket.Channels
 
         private string recordingPath;
 
-        public Channel(OutboundSocket outboundSocket) : this(outboundSocket.ChannelData, outboundSocket)
+        protected internal Channel(OutboundSocket outboundSocket) : this(outboundSocket.ChannelData, outboundSocket)
         {
-            outboundSocket.Linger().Wait();
         }
 
-        protected Channel(EventMessage eventMessage, EventSocket eventSocket) : base(eventMessage, eventSocket)
+        protected internal Channel(EventMessage eventMessage, EventSocket eventSocket) : base(eventMessage, eventSocket)
         {
+        }
+
+        internal static async Task<Channel> Create(OutboundSocket outboundSocket)
+        {
+            var channel = new Channel(outboundSocket);
+
             //populate empty bridge status
-            Bridge = new BridgeStatus(false, null);
-            ExitOnHangup = true;
+            channel.Bridge = new BridgeStatus(false, null);
+            channel.ExitOnHangup = true;
 
-            Task.WhenAll(
-                new[]
-                    {
-                        eventSocket.SubscribeEvents(EventName.ChannelProgress,
-                                                    EventName.ChannelBridge,
-                                                    EventName.ChannelUnbridge,
-                                                    EventName.ChannelAnswer,
-                                                    EventName.ChannelHangup,
-                                                    EventName.Dtmf), //subscribe to minimum events
-                        eventSocket.Filter(HeaderNames.UniqueId, UUID), //filter for our unique id (in case using full socket mode)
-                        eventSocket.Filter(HeaderNames.OtherLegUniqueId, UUID) //filter for channels bridging to our unique id
-                    }).ContinueWith(
-                        t =>
-                            {
-                                if (t.IsFaulted && t.Exception != null)
-                                {
-                                    Log.ErrorException("Channel [{0}] - failed to configure outbound socket for Channel usage".Fmt(UUID), t.Exception.InnerException);
-                                    return;
-                                }
+            await outboundSocket.Linger();
 
-                                this.InitializeSubscriptions();
-                            });
+            await outboundSocket.SubscribeEvents(
+               EventName.ChannelProgress,
+               EventName.ChannelBridge,
+               EventName.ChannelUnbridge,
+               EventName.ChannelAnswer,
+               EventName.ChannelHangup,
+               EventName.Dtmf); //subscribe to minimum events
+
+            await outboundSocket.Filter(HeaderNames.UniqueId, outboundSocket.ChannelData.UUID); //filter for our unique id (in case using full socket mode)
+            await outboundSocket.Filter(HeaderNames.OtherLegUniqueId, outboundSocket.ChannelData.UUID); //filter for channels bridging to our unique id
+
+            channel.InitializeSubscriptions();
+            return channel;
         }
 
         ~Channel()
@@ -355,12 +353,12 @@ namespace NEventSocket.Channels
                 Disposables.Add(
                     eventSocket.Events.Where(x => x.UUID == UUID && x.EventName == EventName.ChannelHangup)
                                .Subscribe(
-                                   e =>
+                                   async e =>
                                    {
                                        if (ExitOnHangup)
                                        {
                                            Log.Info(() => "Channel [{0}] exiting".Fmt(UUID));
-                                           eventSocket.Exit(); //don't care about the result, no need to wait
+                                           await eventSocket.Exit(); //don't care about the result, no need to wait
                                        }
                                    }));
             }
