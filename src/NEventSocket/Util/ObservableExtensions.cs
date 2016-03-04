@@ -47,10 +47,8 @@ namespace NEventSocket.Util
                             observer.OnCompleted);
                     });
         }
-
-        private static readonly ILog Log = LogProvider.GetCurrentClassLogger();
-
-        public static IObservable<TSource> Trace<TSource>(this IObservable<TSource> source, string name)
+        
+        public static IObservable<TSource> Trace<TSource>(this IObservable<TSource> source, ILog log, string name)
         {
             var id = 0;
             return Observable.Create<TSource>(observer => {
@@ -58,8 +56,8 @@ namespace NEventSocket.Util
                 var itemId = ++id;
                 Action<string, object> trace =
                     (m, v) =>
-                        Log.Info(
-                            () => $"{name}{id}: {m}({v})".Fmt(name, itemId, m, v));
+                        log.Info(
+                            () => "{0}{1}: {2}({3})".Fmt(name, itemId, m, v));
 
                 trace("Subscribe", null);
                 IDisposable disposable = source.Subscribe(
