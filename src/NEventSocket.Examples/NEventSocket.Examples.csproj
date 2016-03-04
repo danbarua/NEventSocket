@@ -89,6 +89,7 @@
     <Compile Include="Examples\ChannelExample.cs" />
     <Compile Include="Examples\ConferenceExample.cs" />
     <Compile Include="Examples\LoadTest.cs" />
+    <Compile Include="Examples\OutboundSocketTest.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
