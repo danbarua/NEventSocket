@@ -282,11 +282,14 @@ namespace NEventSocket.Sockets
         {
             if (!disposed.EnsureCalledOnce())
             {
-                Log.Trace(() => "Disposing {0} (disposing:{1})".Fmt(GetType(), disposing));
-
-                if (cancellation.Token.CanBeCanceled)
+                if (disposing)
                 {
-                    cancellation.Cancel();
+                    Log.Trace(() => "Disposing {0} (disposing:{1})".Fmt(GetType(), disposing));
+
+                    if (cancellation.Token.CanBeCanceled)
+                    {
+                        cancellation.Cancel();
+                    }
                 }
 
                 if (IsConnected)
@@ -295,17 +298,24 @@ namespace NEventSocket.Sockets
                     {
                         tcpClient.Close();
                         tcpClient = null;
-                        Log.Trace(() => "TcpClient closed");
+
+                        if (Log != null) //could be running from finalizer
+                        {
+                            Log.Trace(() => "TcpClient closed");
+                        }
                     }
                 }
-                
+
                 var localCopy = Disposed;
                 if (localCopy != null)
                 {
                     localCopy(this, EventArgs.Empty);
                 }
 
-                Log.Trace(() => "{0} Disposed".Fmt(GetType()));
+                if (Log != null) //could be running from finalizer
+                {
+                    Log.Trace(() => "{0} Disposed".Fmt(GetType()));
+                }
             }
         }
     }
