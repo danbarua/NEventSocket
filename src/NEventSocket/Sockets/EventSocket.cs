@@ -14,7 +14,6 @@ namespace NEventSocket.Sockets
     using System.Reactive.Concurrency;
     using System.Reactive.Disposables;
     using System.Reactive.Linq;
-    using System.Reactive.Subjects;
     using System.Reactive.Threading.Tasks;
     using System.Text;
     using System.Threading;
@@ -58,12 +57,24 @@ namespace NEventSocket.Sockets
 
             messages =
                 Receiver.SelectMany(x => Encoding.UTF8.GetString(x))
-                        .AggregateUntil(() => new Parser(), (builder, ch) => builder.Append(ch), builder => builder.Completed)
-                        .Select(builder => builder.ExtractMessage())
-                        .Do(x => Log.Trace("Messages Received [{0}].".Fmt(x.ContentType)), ex => { }, () => Log.Info(() => "Messages Observable completed."))
-                        .Publish()
-                        .RefCount()
-                        .ObserveOn(TaskPoolScheduler.Default);
+                    .AggregateUntil(() => new Parser(), (builder, ch) => builder.Append(ch), builder => builder.Completed)
+                    .Select(builder => builder.ExtractMessage())
+                    //if we shut down teh socket, we might be in the middle of a read.
+                    //the parser will throw an exception as it will have an incorrectly formatted message
+                    //we'll just ignore this and complete the observable
+                    .Catch(Observable.Empty<BasicMessage>()) 
+                    .Do(
+                        x => Log.Trace("Messages Received [{0}].".Fmt(x.ContentType)),
+                        ex => { },
+                        () =>
+                        {
+                            Log.Debug(() => "Messages Observable completed.");
+                            Dispose();
+                        })
+                    .ObserveOn(Scheduler.Immediate)
+                    .Publish()
+                    .RefCount();
+                        
 
             Log.Trace(() => "EventSocket initialized");
         }
@@ -72,6 +83,7 @@ namespace NEventSocket.Sockets
         {
             get { return this.id; }
         }
+
         /// <summary>
         /// Gets or sets the TimeOut after which the socket will throw a <seealso cref="TimeoutException"/>.
         /// </summary>

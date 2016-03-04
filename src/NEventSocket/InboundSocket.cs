@@ -51,7 +51,6 @@ namespace NEventSocket
                               new TimeoutException(
                                   "No Auth Request received within the specified timeout of {0}.".Fmt(socket.ResponseTimeOut))))
                       .Do(_ => Log.Trace(() => "Received Auth Request"), ex => Log.ErrorException("Error waiting for AuthRequest.", ex))
-                      //.ObserveOn(TaskPoolScheduler.Default)
                       .ToTask()
                       .ConfigureAwait(false);
 

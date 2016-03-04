@@ -13,6 +13,7 @@
 
     using Serilog;
     using Serilog.Debugging;
+    using Serilog.Enrichers;
     using Serilog.Events;
 
     public class CommandLineTaskRunner : IDisposable
@@ -55,11 +56,12 @@
         {
             SelfLog.Out = Console.Out;
 
-            var logger = new LoggerConfiguration()
+            Log.Logger = new LoggerConfiguration()
+                .Enrich.With(new ThreadIdEnricher())
                 .WriteTo.ColoredConsole(LogEventLevel.Debug)
                 .CreateLogger();
 
-            builder.RegisterInstance(logger);
+            builder.RegisterInstance(Log.Logger);
         }
 
         private CancellationToken CreateCancellationToken()

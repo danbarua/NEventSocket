@@ -84,7 +84,14 @@ namespace NEventSocket.Sockets
                                     bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, cancellation.Token);
                                     if (bytesRead > 0)
                                     {
-                                        subject.OnNext(buffer.Take(bytesRead).ToArray());
+                                        if (bytesRead == buffer.Length)
+                                        {
+                                            this.subject.OnNext(buffer);
+                                        }
+                                        else
+                                        {
+                                            subject.OnNext(buffer.Take(bytesRead).ToArray());
+                                        }
                                     }
                                     else
                                     {

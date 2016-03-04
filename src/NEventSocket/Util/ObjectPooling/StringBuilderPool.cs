@@ -18,17 +18,17 @@ namespace NEventSocket.Util.ObjectPooling
     {
         public static StringBuilder Allocate()
         {
-            return SharedPools.Default<StringBuilder>().AllocateAndClear();
+            return SharedPools.BigDefault<StringBuilder>().AllocateAndClear();
         }
 
         public static void Free(StringBuilder builder)
         {
-            SharedPools.Default<StringBuilder>().ClearAndFree(builder);
+            SharedPools.BigDefault<StringBuilder>().ClearAndFree(builder);
         }
 
         public static string ReturnAndFree(StringBuilder builder)
         {
-            return SharedPools.Default<StringBuilder>().ReturnAndFree(builder);
+            return SharedPools.BigDefault<StringBuilder>().ReturnAndFree(builder);
         }
     }
 }

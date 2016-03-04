@@ -18,7 +18,7 @@ namespace NEventSocket.Tests.TestSupport
             //issues logging to stdout in AppVeyor and Travis environments, best to turn it off
             if (System.Environment.GetEnvironmentVariable("APPVEYOR_BUILD_NUMBER") == null && Environment.GetEnvironmentVariable("TRAVIS") == null)
             {
-                Logging.LogProvider.SetCurrentLogProvider(new ColouredConsoleLogProvider());
+                Logging.LogProvider.SetCurrentLogProvider(new ColouredConsoleLogProvider(LogLevel.Trace));
             }
         }
 

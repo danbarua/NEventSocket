@@ -8,6 +8,8 @@ namespace NEventSocket.Util
     using System;
     using System.Reactive.Linq;
 
+    using NEventSocket.Logging;
+
     /// <summary>The observable extensions.</summary>
     public static class ObservableExtensions
     {
@@ -44,6 +46,29 @@ namespace NEventSocket.Util
                             observer.OnError, 
                             observer.OnCompleted);
                     });
+        }
+
+        private static readonly ILog Log = LogProvider.GetCurrentClassLogger();
+
+        public static IObservable<TSource> Trace<TSource>(this IObservable<TSource> source, string name)
+        {
+            var id = 0;
+            return Observable.Create<TSource>(observer => {
+
+                var itemId = ++id;
+                Action<string, object> trace =
+                    (m, v) =>
+                        Log.Info(
+                            () => $"{name}{id}: {m}({v})".Fmt(name, itemId, m, v));
+
+                trace("Subscribe", null);
+                IDisposable disposable = source.Subscribe(
+                    v => { trace("OnNext", v); observer.OnNext(v); },
+                    e => { trace("OnError", e); observer.OnError(e); },
+                    () => { trace("OnCompleted", null); observer.OnCompleted(); });
+
+                return () => { trace("Dispose", null); disposable.Dispose(); };
+            });
         }
     }
 }

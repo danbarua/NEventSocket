@@ -9,7 +9,6 @@
     using ColoredConsole;
 
     using Net.CommandLine;
-    using Net.System;
 
     using NEventSocket.FreeSwitch;
     using NEventSocket.Util;
@@ -25,11 +24,6 @@
 
         public Task Run(CancellationToken cancellationToken)
         {
-            int maxThreads;
-            int maxIoPorts;
-            //System.Threading.ThreadPool.GetMaxThreads(out maxThreads, out maxIoPorts);
-            //System.Threading.ThreadPool.SetMaxThreads(maxThreads * 2, maxIoPorts * 2);
-
             int authFailures = 0;
             int activeClients = 0;
             int heartbeatsReceived = 0;
@@ -37,6 +31,8 @@
             
             maxClients = commandLineReader.ReadObject<int>(cancellationToken);
             
+            ColorConsole.WriteLine("Spinning up ".Green(), maxClients.ToString().DarkGreen(), " InboundSockets");
+            ColorConsole.WriteLine("They will connect and subscribe to HeartBeat events and wait until the user presses Enter.");
             Parallel.For(0, maxClients,
                 async (_) =>
                 {
@@ -64,7 +60,7 @@
                     }
                     catch (TimeoutException)
                     {
-                        ColorConsole.WriteLine("Auth timeout Client id:".OnDarkRed(), clientId.ToString().Red());
+                        ColorConsole.WriteLine("Auth timeout Client".OnDarkRed());
                         Interlocked.Increment(ref authFailures);
                     }
                     catch (TaskCanceledException)
@@ -77,7 +73,7 @@
             Console.ReadLine();
 
             ColorConsole.WriteLine("THere were {0} heartbeats".Fmt(heartbeatsReceived).Green());
-            ColorConsole.WriteLine("THere were {0} failures".Fmt(authFailures).Red());
+            ColorConsole.WriteLine("THere were {0} auth timeout failures".Fmt(authFailures).Red());
 
             return Task.FromResult(0);
         }
