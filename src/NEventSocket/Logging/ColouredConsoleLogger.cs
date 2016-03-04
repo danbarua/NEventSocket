@@ -100,12 +100,12 @@
 
             public bool Log(LogLevel logLevel, Func<string> messageFunc)
             {
-                if (messageFunc == null)
+                if (logLevel < this.minLogLevel)
                 {
-                    return true;
+                    return false;
                 }
 
-                if (logLevel < this.minLogLevel)
+                if (messageFunc == null)
                 {
                     return true;
                 }
@@ -116,12 +116,12 @@
 
             public bool Log(LogLevel logLevel, Func<string> messageFunc, Exception exception = null, params object[] formatParameters)
             {
-                if (messageFunc == null)
+                if (logLevel < this.minLogLevel)
                 {
-                    return true;
+                    return false;
                 }
 
-                if (logLevel < this.minLogLevel)
+                if (messageFunc == null)
                 {
                     return true;
                 }
