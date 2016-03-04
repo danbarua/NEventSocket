@@ -95,7 +95,7 @@ namespace NEventSocket.Sockets
                                     }
                                     else
                                     {
-                                        subject.OnCompleted();
+                                        Dispose();
                                     }
                                 }
                             }
@@ -110,6 +110,12 @@ namespace NEventSocket.Sockets
                                 subject.OnCompleted();
                             }
                             catch (SocketException ex)
+                            {
+                                //socket comms interrupted - propogate the error up the layers
+                                Log.WarnException("Error reading from stream", ex);
+                                subject.OnError(ex);
+                            }
+                            catch (IOException ex)
                             {
                                 //socket comms interrupted - propogate the error up the layers
                                 Log.WarnException("Error reading from stream", ex);
@@ -289,6 +295,12 @@ namespace NEventSocket.Sockets
                     if (cancellation.Token.CanBeCanceled)
                     {
                         cancellation.Cancel();
+                    }
+
+                    if (subject != null)
+                    {
+                        subject.Dispose();
+                        subject = null;
                     }
                 }
 
