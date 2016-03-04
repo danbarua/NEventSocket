@@ -501,36 +501,15 @@ namespace NEventSocket.Sockets
         /// </summary>
         /// <param name="events">The <seealso cref="EventName"/>s to subscribe to.</param>
         /// <returns>A Task.</returns>
-        public async Task SubscribeEvents(params EventName[] events)
+        public Task SubscribeEvents(params EventName[] events)
         {
             if (!events.All(@event => subscribedEvents.Contains(@event)))
             {
                 subscribedEvents.UnionWith(events);
-
-                var sb = StringBuilderPool.Allocate();
-                sb.Append("event plain");
-
-                foreach(var @event in subscribedEvents)
-                {
-                    sb.Append(" ");
-                    sb.Append(@event.ToString().ToUpperWithUnderscores());
-                }
-
-                if (customEvents.Any())
-                {
-                    sb.Append(" CUSTOM ");
-
-                    foreach(var @event in customEvents)
-                    {
-                        sb.Append(" ");
-                        sb.Append(@event);
-                    }
-                }
-
-                await
-                    SendCommand(StringBuilderPool.ReturnAndFree(sb))
-                        .ConfigureAwait(false);
+                return EnsureEventsSubscribed();
             }
+
+            return TaskHelper.Completed;
         }
 
         /// <summary>
@@ -538,13 +517,15 @@ namespace NEventSocket.Sockets
         /// </summary>
         /// <param name="events">The custom event names to subscribe to.</param>
         /// <returns>A Task.</returns>
-        public async Task SubscribeCustomEvents(params string[] events)
+        public Task SubscribeCustomEvents(params string[] events)
         {
             if (!events.All(@event => customEvents.Contains(@event)))
             {
                 customEvents.UnionWith(events);
-                await SubscribeEvents().ConfigureAwait(false);
+                return EnsureEventsSubscribed();
             }
+
+            return TaskHelper.Completed;
         }
 
         /// <summary>
@@ -555,6 +536,31 @@ namespace NEventSocket.Sockets
         public void OnHangup(string uuid, Action<EventMessage> action)
         {
             Events.Where(x => x.UUID == uuid && x.EventName == EventName.ChannelHangup).Take(1).Subscribe(action);
+        }
+
+        protected Task EnsureEventsSubscribed()
+        {
+            var sb = StringBuilderPool.Allocate();
+            sb.Append("event plain");
+
+            foreach (var @event in subscribedEvents)
+            {
+                sb.Append(" ");
+                sb.Append(@event.ToString().ToUpperWithUnderscores());
+            }
+
+            if (customEvents.Any())
+            {
+                sb.Append(" CUSTOM ");
+
+                foreach (var @event in customEvents)
+                {
+                    sb.Append(" ");
+                    sb.Append(@event);
+                }
+            }
+
+            return SendCommand(StringBuilderPool.ReturnAndFree(sb));
         }
 
         [SuppressMessage("Microsoft.Usage", "CA2213:DisposableFieldsShouldBeDisposed", MessageId = "cts",
