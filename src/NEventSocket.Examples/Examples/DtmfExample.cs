@@ -57,14 +57,16 @@
                     e =>
                     {
                         ColorConsole.WriteLine(
-                            "Hangup Detected on A-Leg {0} {1}".Red(),
+                            "Hangup Detected on A-Leg".Red(),
                             e.Headers[HeaderNames.CallerUniqueId],
                             e.Headers[HeaderNames.HangupCause]);
 
                         client.Exit();
                     });
 
-                client.Events.Where(x => x.EventName == EventName.Dtmf).Subscribe(
+                client.Events.Where(x => 
+                    x.UUID == uuid&& 
+                    x.EventName == EventName.Dtmf).Subscribe(
                     e =>
                     {
                         Console.WriteLine("Got DTMF");
