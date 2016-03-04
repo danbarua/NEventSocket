@@ -1,6 +1,7 @@
 ﻿namespace NEventSocket.Examples.Examples
 {
     using System;
+    using System.Net.Sockets;
     using System.Reactive.Linq;
     using System.Reactive.Threading.Tasks;
     using System.Threading;
@@ -58,9 +59,14 @@
                             }
                         }
                     }
+                    catch (SocketException)
+                    {
+                        ColorConsole.WriteLine("Connection failure".OnDarkRed());
+                        Interlocked.Increment(ref authFailures);
+                    }
                     catch (TimeoutException)
                     {
-                        ColorConsole.WriteLine("Auth timeout Client".OnDarkRed());
+                        ColorConsole.WriteLine("Auth timeout".OnDarkRed());
                         Interlocked.Increment(ref authFailures);
                     }
                     catch (TaskCanceledException)

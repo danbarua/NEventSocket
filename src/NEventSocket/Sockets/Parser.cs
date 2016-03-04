@@ -7,6 +7,7 @@ namespace NEventSocket.Sockets
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Text;
 
     using NEventSocket.FreeSwitch;
@@ -157,6 +158,12 @@ namespace NEventSocket.Sockets
             }
 
             var result = HasBody ? new BasicMessage(headers, buffer.ToString()) : new BasicMessage(headers);
+
+            if (HasBody)
+            {
+                Debug.Assert(result.BodyText.Length == result.ContentLength);
+            }
+
             Dispose();
             return result;
         }
