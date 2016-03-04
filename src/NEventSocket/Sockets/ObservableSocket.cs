@@ -326,7 +326,7 @@ namespace NEventSocket.Sockets
 
                 if (Log != null) //could be running from finalizer
                 {
-                    Log.Trace(() => "{0} Disposed".Fmt(GetType()));
+                    Log.Debug(() => "{0} ({1}) Disposed".Fmt(GetType(), id));
                 }
             }
         }
