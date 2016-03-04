@@ -26,10 +26,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{8A973BD1
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NEventSocket.Tests", "test\NEventSocket.Tests\NEventSocket.Tests.csproj", "{731A678B-6827-468A-BFA1-AB2533947D61}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Examples", "Examples", "{5755C001-7B02-45D2-81D6-ADF9AD698706}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KitchenSink", "examples\KitchenSink\KitchenSink.csproj", "{0486B4C4-BD02-4DF1-99C8-1188400B08E1}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NEventSocket.Examples", "src\NEventSocket.Examples\NEventSocket.Examples.csproj", "{D64BAE1E-EB6C-4149-91DC-8EB7A06C8374}"
 EndProject
 Global
@@ -46,10 +42,6 @@ Global
 		{731A678B-6827-468A-BFA1-AB2533947D61}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{731A678B-6827-468A-BFA1-AB2533947D61}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{731A678B-6827-468A-BFA1-AB2533947D61}.Release|Any CPU.Build.0 = Release|Any CPU
-		{0486B4C4-BD02-4DF1-99C8-1188400B08E1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{0486B4C4-BD02-4DF1-99C8-1188400B08E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{0486B4C4-BD02-4DF1-99C8-1188400B08E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{0486B4C4-BD02-4DF1-99C8-1188400B08E1}.Release|Any CPU.Build.0 = Release|Any CPU
 		{D64BAE1E-EB6C-4149-91DC-8EB7A06C8374}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{D64BAE1E-EB6C-4149-91DC-8EB7A06C8374}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D64BAE1E-EB6C-4149-91DC-8EB7A06C8374}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -60,6 +52,5 @@ Global
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{731A678B-6827-468A-BFA1-AB2533947D61} = {8A973BD1-83E8-4794-A81A-538CC7069BDC}
-		{0486B4C4-BD02-4DF1-99C8-1188400B08E1} = {5755C001-7B02-45D2-81D6-ADF9AD698706}
 	EndGlobalSection
 EndGlobal

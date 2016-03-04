@@ -88,6 +88,9 @@
     <Compile Include="Examples\ApiTest.cs" />
     <Compile Include="Examples\ChannelExample.cs" />
     <Compile Include="Examples\ConferenceExample.cs" />
+    <Compile Include="Examples\PlayGetDigitsExample.cs" />
+    <Compile Include="Examples\DtmfExample.cs" />
+    <Compile Include="Examples\InboundSocket.cs" />
     <Compile Include="Examples\LoadTest.cs" />
     <Compile Include="Examples\OutboundSocketTest.cs" />
     <Compile Include="Program.cs" />

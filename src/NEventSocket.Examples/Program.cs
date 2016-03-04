@@ -12,7 +12,7 @@ namespace NEventSocket.Examples
             {
                 try
                 {
-                    //LogProvider.SetCurrentLogProvider(new ColouredConsoleLogProvider(LogLevel.Info));
+                    LogProvider.SetCurrentLogProvider(new ColouredConsoleLogProvider(LogLevel.Trace));
 
                     var main = interactiveTaskRunner.Run();
                     Console.ReadLine();
