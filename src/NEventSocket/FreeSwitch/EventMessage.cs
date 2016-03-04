@@ -7,6 +7,7 @@
 namespace NEventSocket.FreeSwitch
 {
     using System;
+    using System.Diagnostics;
     using System.Linq;
 
     using NEventSocket.Logging;
@@ -71,6 +72,7 @@ namespace NEventSocket.FreeSwitch
                     Headers = basicMessage.BodyText.Substring(0, delimiterIndex).ParseKeyValuePairs(": ");
                     var contentLength = int.Parse(Headers[HeaderNames.ContentLength]);
 
+                    Debug.Assert(delimiterIndex + 2 + contentLength <= basicMessage.BodyText.Length, "Message cut off mid-transmission");
                     var body = basicMessage.BodyText.Substring(delimiterIndex + 2, contentLength);
 
                     //remove any \n\n if any
@@ -84,6 +86,7 @@ namespace NEventSocket.FreeSwitch
                 Log.Error(BodyText);
                 throw;
             }
+
         }
 
         /// <summary>
