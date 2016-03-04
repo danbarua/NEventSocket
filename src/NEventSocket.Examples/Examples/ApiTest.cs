@@ -15,8 +15,12 @@
             using (var client = await InboundSocket.Connect("localhost", 8021, "ClueCon"))
             {
                 ColorConsole.WriteLine((await client.SendApi("status")).BodyText.DarkBlue());
-                ColorConsole.WriteLine((await client.SendApi("blah")).BodyText.DarkBlue());
-                ColorConsole.WriteLine((await client.SendApi("status")).BodyText.DarkBlue());
+
+                ColorConsole.WriteLine((await client.SendApi("invalid_api_command")).BodyText.DarkRed());
+
+                ColorConsole.WriteLine((await client.SendApi("sofia status")).BodyText.DarkBlue());
+
+                ColorConsole.WriteLine((await client.SendApi("show bridged_calls")).BodyText.DarkBlue());
             }
         }
 
