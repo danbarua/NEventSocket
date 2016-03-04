@@ -28,6 +28,7 @@
                 var originate =
                     await
                         client.Originate(
+
                             "user/1000",
                             new OriginateOptions
                             {
@@ -81,7 +82,7 @@
                                 new BridgeOptions()
                                 {
                                     UUID = bridgeUUID,
-                                    //TimeoutSeconds = 20,
+                                    TimeoutSeconds = 20,
                                     //CallerIdName = "Dan B Leg",
                                     //CallerIdNumber = "987654321",
                                     //HangupAfterBridge = false,
@@ -107,9 +108,7 @@
                         ColorConsole.WriteLine(
                             "Bridge succeeded from {0} to {1} - {2}".Fmt(bridge.ChannelData.UUID, bridge.BridgeUUID, bridge.ResponseText)
                                 .Green());
-
-                        await client.StartDtmf(uuid);
-
+                        
                         //when b-leg hangs up, play a notification to a-leg
                         client.OnHangup(
                             bridge.BridgeUUID,
@@ -183,7 +182,7 @@
             }
 
             ColorConsole.WriteLine("Press [Enter] to exit.".Green());
-            Console.ReadLine();
+            await Util.WaitForEnterKeyPress(cancellationToken);
         }
 
         public void Dispose()

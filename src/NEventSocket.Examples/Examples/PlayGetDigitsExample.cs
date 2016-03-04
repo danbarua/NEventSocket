@@ -44,7 +44,7 @@
                 ColorConsole.WriteLine("{0} {1} {2}".Fmt(originate.ChannelData.EventName, originate.ChannelData.AnswerState, originate.ChannelData.ChannelState).Blue());
                 var uuid = originate.ChannelData.UUID;
                 await client.SetChannelVariable(uuid, "dtmf_verbose", "true");
-                await client.StartDtmf(uuid);
+                //await client.StartDtmf(uuid);
 
                 client.Events.Where(x => x.UUID == uuid && x.EventName == EventName.ChannelHangup)
                     .Subscribe(

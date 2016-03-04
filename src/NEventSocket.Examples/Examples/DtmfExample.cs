@@ -2,6 +2,7 @@
 {
     using System;
     using System.Reactive.Linq;
+    using System.Reactive.Threading.Tasks;
     using System.Threading;
     using System.Threading.Tasks;
 
@@ -73,12 +74,12 @@
                     });
 
                 ColorConsole.WriteLine("Press [Enter] to exit.".Green());
-                Console.ReadLine();
+                await Util.WaitForEnterKeyPress(cancellationToken);
             }
         }
 
         public void Dispose()
-        {
+        { 
             if (client != null) {
                 client.Dispose();
                 client = null;

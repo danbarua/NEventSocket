@@ -90,11 +90,12 @@
     <Compile Include="Examples\ConferenceExample.cs" />
     <Compile Include="Examples\PlayGetDigitsExample.cs" />
     <Compile Include="Examples\DtmfExample.cs" />
-    <Compile Include="Examples\InboundSocket.cs" />
+    <Compile Include="Examples\InboundSocketExample.cs" />
     <Compile Include="Examples\LoadTest.cs" />
     <Compile Include="Examples\OutboundSocketTest.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Util.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
