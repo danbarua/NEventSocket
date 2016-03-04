@@ -68,6 +68,10 @@ namespace NEventSocket.Sockets
             Log.Trace(() => "EventSocket initialized");
         }
 
+        public long Id
+        {
+            get { return this.id; }
+        }
         /// <summary>
         /// Gets or sets the TimeOut after which the socket will throw a <seealso cref="TimeoutException"/>.
         /// </summary>

@@ -28,7 +28,7 @@ namespace NEventSocket.Sockets
     {
         private static long IdCounter = 0;
 
-        private readonly long id;
+        protected readonly long id;
 
         private readonly ILog Log;
 
@@ -58,7 +58,7 @@ namespace NEventSocket.Sockets
         {
             Log = LogProvider.GetLogger(GetType());
 
-            id = Interlocked.Increment(ref IdCounter);
+            this.id = Interlocked.Increment(ref IdCounter);
 
             this.tcpClient = tcpClient;
 
@@ -72,7 +72,7 @@ namespace NEventSocket.Sockets
                     Task.Run(
                         async () =>
                         {
-                            Log.Trace(() => "Observable Socket Worker Thread {0} started".Fmt(id));
+                            Log.Trace(() => "Observable Socket Worker Thread {0} started".Fmt(this.id));
 
                             int bytesRead = 1;
                             var stream = tcpClient.GetStream();
@@ -119,7 +119,7 @@ namespace NEventSocket.Sockets
                                 SharedPools.ByteArray.Free(buffer);
                             }
 
-                            Log.Trace(() => "Observable Socket Worker Thread {0} completed".Fmt(id));
+                            Log.Trace(() => "Observable Socket Worker Thread {0} completed".Fmt(this.id));
 
                             Dispose();
                         });

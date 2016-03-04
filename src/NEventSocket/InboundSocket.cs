@@ -17,7 +17,6 @@ namespace NEventSocket
     using NEventSocket.Logging;
     using NEventSocket.Sockets;
     using NEventSocket.Util;
-    using System.Reactive.Concurrency;
 
     /// <summary>
     /// Wraps an EventSocket connecting inbound to FreeSwitch
