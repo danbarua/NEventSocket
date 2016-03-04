@@ -31,8 +31,8 @@
             
             maxClients = commandLineReader.ReadObject<int>(cancellationToken);
             
-            ColorConsole.WriteLine("Spinning up ".Green(), maxClients.ToString().DarkGreen(), " InboundSockets");
-            ColorConsole.WriteLine("They will connect and subscribe to HeartBeat events and wait until the user presses Enter.");
+            ColorConsole.WriteLine("Spinning up ".DarkGreen(), maxClients.ToString().Green(), " InboundSockets".DarkGreen());
+            ColorConsole.WriteLine("They will connect and subscribe to HeartBeat events then disconnect when the first Heartbeat has been received.".DarkGreen());
             Parallel.For(0, maxClients,
                 async (_) =>
                 {
