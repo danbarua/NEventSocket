@@ -46,7 +46,7 @@ namespace NEventSocket
         /// </summary>
         public async Task<EventMessage> Connect()
         {
-            var response = await SendCommand("connect");
+            var response = await SendCommand("connect").ConfigureAwait(false);
             ChannelData = new EventMessage(response);
 
             Messages.FirstAsync(m => m.ContentType == ContentTypes.DisconnectNotice)

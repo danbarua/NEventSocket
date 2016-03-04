@@ -40,7 +40,7 @@ namespace NEventSocket.Channels
             channel.Bridge = new BridgeStatus(false, null);
             channel.ExitOnHangup = true;
 
-            await outboundSocket.Linger();
+            await outboundSocket.Linger().ConfigureAwait(false);
 
             await outboundSocket.SubscribeEvents(
                EventName.ChannelProgress,
@@ -48,10 +48,10 @@ namespace NEventSocket.Channels
                EventName.ChannelUnbridge,
                EventName.ChannelAnswer,
                EventName.ChannelHangup,
-               EventName.Dtmf); //subscribe to minimum events
+               EventName.Dtmf).ConfigureAwait(false); //subscribe to minimum events
 
-            await outboundSocket.Filter(HeaderNames.UniqueId, outboundSocket.ChannelData.UUID); //filter for our unique id (in case using full socket mode)
-            await outboundSocket.Filter(HeaderNames.OtherLegUniqueId, outboundSocket.ChannelData.UUID); //filter for channels bridging to our unique id
+            await outboundSocket.Filter(HeaderNames.UniqueId, outboundSocket.ChannelData.UUID).ConfigureAwait(false); //filter for our unique id (in case using full socket mode)
+            await outboundSocket.Filter(HeaderNames.OtherLegUniqueId, outboundSocket.ChannelData.UUID).ConfigureAwait(false); //filter for channels bridging to our unique id
 
             channel.InitializeSubscriptions();
             return channel;
@@ -358,7 +358,7 @@ namespace NEventSocket.Channels
                                        if (ExitOnHangup)
                                        {
                                            Log.Info(() => "Channel [{0}] exiting".Fmt(UUID));
-                                           await eventSocket.Exit(); //don't care about the result, no need to wait
+                                           await eventSocket.Exit().ConfigureAwait(false); //don't care about the result, no need to wait
                                        }
                                    }));
             }

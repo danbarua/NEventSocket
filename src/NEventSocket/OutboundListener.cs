@@ -32,7 +32,7 @@ namespace NEventSocket
                     async socket =>
                     {
                         await socket.Connect().ConfigureAwait(false);
-                        return await Channel.Create(socket);
+                        return await Channel.Create(socket).ConfigureAwait(false);
                     });
         }
 

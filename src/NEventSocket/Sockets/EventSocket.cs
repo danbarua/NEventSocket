@@ -399,7 +399,7 @@ namespace NEventSocket.Sockets
              * In this case, we want to return a result as soon as the b-leg picks up and connects so we'll merge with the CHANNEL_BRIDGE event
              * observable.Amb(otherObservable) will propogate the first sequence to produce a result. */
 
-            await SubscribeEvents(EventName.ChannelBridge, EventName.ChannelHangup);
+            await SubscribeEvents(EventName.ChannelBridge, EventName.ChannelHangup).ConfigureAwait(false);
 
             var bridgedOrHungupEvent =
                 Events.FirstOrDefaultAsync(x => x.UUID == uuid && (x.EventName == EventName.ChannelBridge || x.EventName == EventName.ChannelHangup))

@@ -119,7 +119,7 @@ namespace NEventSocket
                 options.UUID = Guid.NewGuid().ToString();
             }
 
-            await SubscribeEvents(EventName.ChannelAnswer, EventName.ChannelHangup, EventName.ChannelProgress);
+            await SubscribeEvents(EventName.ChannelAnswer, EventName.ChannelHangup, EventName.ChannelProgress).ConfigureAwait(false);
 
             var originateString = string.Format("{0}{1} {2}", options, endpoint, destination);
 
