@@ -280,7 +280,7 @@ namespace NEventSocket.Sockets
             Justification = "received is disposed of asynchronously, when the buffer has been flushed out by the consumers")]
         protected virtual void Dispose(bool disposing)
         {
-            if (!disposed.EnsureCalledOnce())
+            if (disposed != null && !disposed.EnsureCalledOnce())
             {
                 if (disposing)
                 {
