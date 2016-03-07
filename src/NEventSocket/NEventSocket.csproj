@@ -98,6 +98,7 @@
     <Compile Include="FreeSwitch\ApplicationResult.cs" />
     <Compile Include="FreeSwitch\HangupCause.cs" />
     <Compile Include="FreeSwitch\SipCallerIdType.cs" />
+    <Compile Include="InboundSocketConnectionFailedException.cs" />
     <Compile Include="InboundSocketExtensions.cs" />
     <Compile Include="Logging\ColouredConsoleLogger.cs" />
     <Compile Include="OutboundListener.cs" />

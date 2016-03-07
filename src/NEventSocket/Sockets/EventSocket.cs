@@ -59,10 +59,6 @@ namespace NEventSocket.Sockets
                 Receiver.SelectMany(x => Encoding.UTF8.GetString(x))
                     .AggregateUntil(() => new Parser(), (builder, ch) => builder.Append(ch), builder => builder.Completed)
                     .Select(builder => builder.ExtractMessage())
-                    //if we shut down teh socket, we might be in the middle of a read.
-                    //the parser will throw an exception as it will have an incorrectly formatted message
-                    //we'll just ignore this and complete the observable
-                    .Catch(Observable.Empty<BasicMessage>())
                     .Do(
                         x => Log.Trace("Messages Received [{0}].".Fmt(x.ContentType)),
                         ex => { },

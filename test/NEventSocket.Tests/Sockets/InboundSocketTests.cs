@@ -63,7 +63,7 @@
         }
 
         [Fact(Timeout = TimeOut.TestTimeOutMs)]
-        public void an_invalid_password_should_throw_a_SecurityException()
+        public void an_invalid_password_should_throw_an_InboundSocketConnectionFailedException()
         {
             using (var listener = new FakeFreeSwitchListener(0))
             {
@@ -86,24 +86,26 @@
 
                 var aggregateException = Record.Exception(() => InboundSocket.Connect("127.0.0.1", listener.Port, "WrongPassword").Wait());
                 Assert.True(authRequestReceived);
-                Assert.IsType<SecurityException>(aggregateException.InnerException);
+                Assert.IsType<InboundSocketConnectionFailedException>(aggregateException.InnerException);
+                Assert.Equal("Invalid password when trying to connect to 127.0.0.1:" + listener.Port, aggregateException.InnerException.Message);
             }
         }
 
         [Fact(Timeout = TimeOut.TestTimeOutMs)]
-        public void when_no_AuthRequest_received_it_should_throw_TimeoutException()
+        public void when_no_AuthRequest_received_it_should_throw_TimeoutException_wrapped_in_InboundSocketConnectionFailedException()
         {
             using (var listener = new FakeFreeSwitchListener(0))
             {
                 listener.Start();
 
                 var aggregateException = Record.Exception(() => InboundSocket.Connect("127.0.0.1", listener.Port, "ClueCon", TimeSpan.FromMilliseconds(100)).Wait());
-                Assert.IsType<TimeoutException>(aggregateException.InnerException);
+                Assert.IsType<InboundSocketConnectionFailedException>(aggregateException.InnerException);
+                Assert.IsType<TimeoutException>(aggregateException.InnerException.InnerException);
             }
         }
 
         [Fact(Timeout = 5000, Skip = "Removing timeouts")]
-        public void when_no_response_to_auth_received_it_should_throw_TimeoutException()
+        public void when_no_response_to_auth_received_it_should_throw_TimeoutException_wrapped_in_InboundSocketConnectionFailedException()
         {
             using (var listener = new FakeFreeSwitchListener(0))
             {
@@ -116,7 +118,8 @@
                     });
 
                 var aggregateException = Record.Exception(() => InboundSocket.Connect("127.0.0.1", listener.Port, "ClueCon", TimeSpan.FromMilliseconds(100)).Wait());
-                Assert.IsType<TimeoutException>(aggregateException.InnerException);
+                Assert.IsType<InboundSocketConnectionFailedException>(aggregateException.InnerException);
+                Assert.IsType<TimeoutException>(aggregateException.InnerException.InnerException);
             }
         }
 

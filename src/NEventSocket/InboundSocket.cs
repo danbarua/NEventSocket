@@ -7,6 +7,7 @@
 namespace NEventSocket
 {
     using System;
+    using System.IO;
     using System.Net.Sockets;
     using System.Reactive.Linq;
     using System.Reactive.Threading.Tasks;
@@ -37,38 +38,53 @@ namespace NEventSocket
         /// <param name="password">(Default: ClueCon) The password to authenticate with.</param>
         /// <param name="timeout">(Optional) The auth request timeout.</param>
         /// <returns>A task of <see cref="InboundSocket"/>.</returns>
+        /// <exception cref="InboundSocketConnectionFailedException"></exception>
         public static async Task<InboundSocket> Connect(
             string host = "localhost", int port = 8021, string password = "ClueCon", TimeSpan? timeout = null)
         {
-            var socket = new InboundSocket(host, port, timeout);
-
-            await
-                socket.Messages.Where(x => x.ContentType == ContentTypes.AuthRequest)
-                      .Take(1)
-                      .Timeout(
-                          socket.ResponseTimeOut,
-                          Observable.Throw<BasicMessage>(
-                              new TimeoutException(
-                                  "No Auth Request received within the specified timeout of {0}.".Fmt(socket.ResponseTimeOut))))
-                      .Do(_ => Log.Trace(() => "Received Auth Request"), ex => Log.ErrorException("Error waiting for AuthRequest.", ex))
-                      .ToTask()
-                      .ConfigureAwait(false);
-
-            var result = await socket.Auth(password).ConfigureAwait(false);
-
-            if (!result.Success)
+            try
             {
-                Log.Error("InboundSocket authentication failed ({0}).".Fmt(result.ErrorMessage));
-                throw new SecurityException("Invalid password");
+                var socket = new InboundSocket(host, port, timeout);
+
+                await
+                    socket.Messages.FirstOrDefaultAsync(x => x.ContentType == ContentTypes.AuthRequest)
+                        .Timeout(
+                            socket.ResponseTimeOut,
+                            Observable.Throw<BasicMessage>(
+                                new TimeoutException(
+                                    "No Auth Request received within the specified timeout of {0}.".Fmt(socket.ResponseTimeOut))))
+                        .Do(_ => Log.Trace(() => "Received Auth Request"), ex => Log.ErrorException("Error waiting for AuthRequest.", ex))
+                        .ToTask()
+                        .ConfigureAwait(false);
+
+                var result = await socket.Auth(password).ConfigureAwait(false);
+
+                if (!result.Success)
+                {
+                    Log.Error("InboundSocket authentication failed ({0}).".Fmt(result.ErrorMessage));
+                    throw new InboundSocketConnectionFailedException("Invalid password when trying to connect to {0}:{1}".Fmt(host, port));
+                }
+
+                Log.Trace(() => "InboundSocket authentication succeeded.");
+
+                return socket;
             }
-
-            Log.Trace(() => "InboundSocket authentication succeeded.");
-
-            return socket;
+            catch (SocketException ex)
+            {
+                throw new InboundSocketConnectionFailedException("Socket error when trying to connect to {0}:{1}".Fmt(host, port), ex);
+            }
+            catch (IOException ex)
+            {
+                throw new InboundSocketConnectionFailedException("IO error when trying to connect to {0}:{1}".Fmt(host, port), ex);
+            }
+            catch (TimeoutException ex)
+            {
+                throw new InboundSocketConnectionFailedException("Timeout when trying to connect to {0}:{1}.{2}".Fmt(host, port, ex.Message), ex);
+            }
         }
 
         /// <summary>
-        /// Originate a new call.
+        /// Originate a new call.7
         /// </summary>
         /// <remarks>
         /// See https://freeswitch.org/confluence/display/FREESWITCH/mod_commands#mod_commands-originate

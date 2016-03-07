@@ -1,6 +1,7 @@
 ﻿namespace NEventSocket.Examples.Examples
 {
     using System;
+    using System.IO;
     using System.Net.Sockets;
     using System.Reactive.Linq;
     using System.Reactive.Threading.Tasks;
@@ -26,15 +27,13 @@
         public Task Run(CancellationToken cancellationToken)
         {
             int authFailures = 0;
-            int activeClients = 0;
             int heartbeatsReceived = 0;
-            int maxClients = 300;
             
-            maxClients = commandLineReader.ReadObject<int>(cancellationToken);
+            var settings = commandLineReader.ReadObject<LoadTestSettings>(cancellationToken);
             
-            ColorConsole.WriteLine("Spinning up ".DarkGreen(), maxClients.ToString().Green(), " InboundSockets".DarkGreen());
+            ColorConsole.WriteLine("Spinning up ".DarkGreen(), settings.MaxClients.ToString().Green(), " InboundSockets".DarkGreen());
             ColorConsole.WriteLine("They will connect and subscribe to HeartBeat events then disconnect when the first Heartbeat has been received.".DarkGreen());
-            Parallel.For(0, maxClients,
+            Parallel.For(0, settings.MaxClients,
                 async (_) =>
                 {
                     long clientId = 0;
@@ -45,7 +44,14 @@
 
                     try
                     {
-                        using (InboundSocket client = await InboundSocket.Connect("127.0.0.1", 8021, "ClueCon", TimeSpan.FromSeconds(10)))
+                        using (
+                            InboundSocket client =
+                                await
+                                    InboundSocket.Connect(
+                                        "127.0.0.1",
+                                        8021,
+                                        "ClueCon",
+                                        TimeSpan.FromSeconds(settings.ConnectionTimeoutSeconds)))
                         {
                             clientId = client.Id;
                             await client.SubscribeEvents(EventName.Heartbeat);
@@ -59,19 +65,21 @@
                             }
                         }
                     }
-                    catch (SocketException)
+                    catch (InboundSocketConnectionFailedException ex)
                     {
-                        ColorConsole.WriteLine("Connection failure".OnDarkRed());
-                        Interlocked.Increment(ref authFailures);
-                    }
-                    catch (TimeoutException)
-                    {
-                        ColorConsole.WriteLine("Auth timeout".OnDarkRed());
+                        if (ex.InnerException != null && ex.InnerException is TimeoutException)
+                        {
+                            ColorConsole.WriteLine("Auth Timeout".OnDarkRed());
+                        }
+                        else
+                        {
+                            ColorConsole.WriteLine("Connection failure ".OnDarkRed(), ex.Message.DarkRed());
+                        }
                         Interlocked.Increment(ref authFailures);
                     }
                     catch (TaskCanceledException)
                     {
-                        
+
                     }
                 });
 
@@ -82,6 +90,18 @@
             ColorConsole.WriteLine("THere were {0} auth timeout failures".Fmt(authFailures).Red());
 
             return Task.FromResult(0);
+        }
+
+        public class LoadTestSettings
+        {
+            public LoadTestSettings()
+            {
+                MaxClients = 512;
+                ConnectionTimeoutSeconds = 30;
+            }
+
+            public int MaxClients { get; set; }
+            public int ConnectionTimeoutSeconds { get; set; }
         }
 
         public void Dispose()

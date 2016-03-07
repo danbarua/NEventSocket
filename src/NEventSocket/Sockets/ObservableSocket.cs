@@ -42,8 +42,6 @@ namespace NEventSocket.Sockets
 
         private IObservable<byte[]> receiver;
         
-        private CancellationTokenSource cancellation;
-
         static ObservableSocket()
         {
             //we need this to work around issues ilmerging rx assemblies
@@ -64,8 +62,6 @@ namespace NEventSocket.Sockets
 
             subject = new Subject<byte[]>();
 
-            cancellation = new CancellationTokenSource();
-
             receiver = Observable.Defer(
                 () =>
                 {
@@ -81,7 +77,7 @@ namespace NEventSocket.Sockets
                             {
                                 while (bytesRead > 0)
                                 {
-                                    bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, cancellation.Token);
+                                    bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
                                     if (bytesRead > 0)
                                     {
                                         if (bytesRead == buffer.Length)
@@ -285,11 +281,6 @@ namespace NEventSocket.Sockets
                 if (disposing)
                 {
                     Log.Trace(() => "Disposing {0} (disposing:{1})".Fmt(GetType(), disposing));
-
-                    if (cancellation.Token.CanBeCanceled)
-                    {
-                        cancellation.Cancel();
-                    }
                 }
 
                 if (IsConnected)
