@@ -68,7 +68,7 @@ namespace NEventSocket.Sockets
                     Task.Run(
                         async () =>
                         {
-                            Log.Trace(() => "Observable Socket Worker Thread {0} started".Fmt(this.id));
+                            Log.Trace(() => "{0} Worker Thread {1} started".Fmt(this.GetType(), this.id));
 
                             int bytesRead = 1;
                             var stream = tcpClient.GetStream();
@@ -122,7 +122,7 @@ namespace NEventSocket.Sockets
                                 SharedPools.ByteArray.Free(buffer);
                             }
 
-                            Log.Trace(() => "Observable Socket Worker Thread {0} completed".Fmt(this.id));
+                            Log.Trace(() => "{0} Worker Thread {1} completed".Fmt(this.GetType(), this.id));
 
                             Dispose();
                         });
@@ -204,9 +204,14 @@ namespace NEventSocket.Sockets
 
             try
             {
-                await syncLock.WaitAsync().ConfigureAwait(false);
+                await syncLock.WaitAsync(cancellationToken).ConfigureAwait(false);
                 var stream = GetStream();
                 await stream.WriteAsync(bytes, 0, bytes.Length, cancellationToken).ConfigureAwait(false);
+            }
+            catch (ObjectDisposedException)
+            {
+                Log.Warn(() => "Network Stream Disposed.");
+                Dispose();
             }
             catch (TaskCanceledException)
             {

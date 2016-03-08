@@ -70,6 +70,8 @@ namespace NEventSocket.FreeSwitch
                     // ...but some Event Messages also carry a body payload, eg. a BACKGROUND_JOB event
                     // which is a message carried inside an EventMessage carried inside a BasicMessage..
                     Headers = basicMessage.BodyText.Substring(0, delimiterIndex).ParseKeyValuePairs(": ");
+
+                    Debug.Assert(Headers.ContainsKey(HeaderNames.ContentLength));
                     var contentLength = int.Parse(Headers[HeaderNames.ContentLength]);
 
                     Debug.Assert(delimiterIndex + 2 + contentLength <= basicMessage.BodyText.Length, "Message cut off mid-transmission");
