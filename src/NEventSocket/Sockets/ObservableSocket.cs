@@ -68,7 +68,7 @@ namespace NEventSocket.Sockets
                     Task.Run(
                         async () =>
                         {
-                            Log.Trace(() => "{0} Worker Thread {1} started".Fmt(this.GetType(), this.id));
+                            SafeLog(LogLevel.Trace, () => "{0} Worker Thread {1} started".Fmt(this.GetType(), this.id));
 
                             int bytesRead = 1;
                             var stream = tcpClient.GetStream();
@@ -108,19 +108,19 @@ namespace NEventSocket.Sockets
                             catch (IOException ex)
                             {
                                 //socket comms interrupted - propogate the error up the layers
-                                Log.WarnException("Error reading from stream", ex);
+                                SafeLog(LogLevel.Error, () => "IO Error reading from stream", ex);
                                 subject.OnError(ex);
                             }
                             catch (SocketException ex)
                             {
                                 //socket comms interrupted - propogate the error up the layers
-                                Log.WarnException("Error reading from stream", ex);
+                                SafeLog(LogLevel.Error, () => "Socket Error reading from stream", ex);
                                 subject.OnError(ex);
                             }
                             catch (Exception ex)
                             {
                                 //unexpected error
-                                Log.ErrorException("Error reading from stream", ex);
+                                SafeLog(LogLevel.Error, () => "Unexpected Error reading from stream", ex);
                                 subject.OnError(ex);
                             }
                             finally
@@ -128,7 +128,7 @@ namespace NEventSocket.Sockets
                                 SharedPools.ByteArray.Free(buffer);
                             }
 
-                            Log.Trace(() => "{0} Worker Thread {1} completed".Fmt(this.GetType(), this.id));
+                            SafeLog(LogLevel.Trace, () => "{0} Worker Thread {1} completed".Fmt(this.GetType(), this.id));
 
                             Dispose();
                         });
@@ -216,12 +216,12 @@ namespace NEventSocket.Sockets
             }
             catch (ObjectDisposedException)
             {
-                Log.Warn(() => "Network Stream Disposed.");
+                SafeLog(LogLevel.Warn, () => "Network Stream Disposed.");
                 Dispose();
             }
             catch (TaskCanceledException)
             {
-                Log.Warn(() => "Write operation was cancelled.");
+                SafeLog(LogLevel.Warn, () => "Write operation was cancelled.");
                 Dispose();
             }
             catch (IOException ex)
@@ -229,7 +229,7 @@ namespace NEventSocket.Sockets
                 if (ex.InnerException is SocketException
                     && ((SocketException)ex.InnerException).SocketErrorCode == SocketError.ConnectionAborted)
                 {
-                    Log.Warn(() => "Socket disconnected");
+                    SafeLog(LogLevel.Warn, () => "Socket disconnected");
                     Dispose();
                     return;
                 }
@@ -240,7 +240,7 @@ namespace NEventSocket.Sockets
             {
                 if (ex.SocketErrorCode == SocketError.ConnectionAborted)
                 {
-                    Log.Warn(() => "Socket disconnected");
+                    SafeLog(LogLevel.Warn, () => "Socket disconnected");
                     Dispose();
                     return;
                 }
@@ -249,7 +249,7 @@ namespace NEventSocket.Sockets
             }
             catch (Exception ex)
             {
-                Log.ErrorException("Error writing", ex);
+                SafeLog(LogLevel.Error, () => "Error writing", ex);
                 Dispose();
                 throw;
             }
@@ -291,10 +291,7 @@ namespace NEventSocket.Sockets
             {
                 if (disposing)
                 {
-                    if (Log != null) //could be running from finalizer
-                    {
-                        Log.Trace(() => "Disposing {0} (disposing:{1})".Fmt(GetType(), disposing));
-                    }
+                    SafeLog(LogLevel.Trace, () => "Disposing {0} (disposing:{1})".Fmt(GetType(), disposing));
                 }
 
                 if (IsConnected)
@@ -304,10 +301,7 @@ namespace NEventSocket.Sockets
                         tcpClient.Close();
                         tcpClient = null;
 
-                        if (Log != null) //could be running from finalizer
-                        {
-                            Log.Trace(() => "TcpClient closed");
-                        }
+                        SafeLog(LogLevel.Trace, () => "TcpClient closed");
                     }
                 }
 
@@ -317,11 +311,23 @@ namespace NEventSocket.Sockets
                     localCopy(this, EventArgs.Empty);
                 }
 
-                if (Log != null) //could be running from finalizer
-                {
-                    Log.Debug(() => "{0} ({1}) Disposed".Fmt(GetType(), id));
-                }
+
+                SafeLog(LogLevel.Debug, () => "{0} ({1}) Disposed".Fmt(GetType(), id));
+                
             }
+        }
+
+
+        private bool SafeLog(LogLevel logLevel, Func<string> messageFunc, Exception exception = null, params object[] formatParameters)
+        {
+            //might get called from the finalizer thread, where Log is null
+
+            if (Log == null)
+            {
+                return false;
+            }
+
+            return Log.Log(logLevel, messageFunc, exception, formatParameters);
         }
     }
 }
