@@ -285,7 +285,10 @@ namespace NEventSocket.Sockets
             {
                 if (disposing)
                 {
-                    Log.Trace(() => "Disposing {0} (disposing:{1})".Fmt(GetType(), disposing));
+                    if (Log != null) //could be running from finalizer
+                    {
+                        Log.Trace(() => "Disposing {0} (disposing:{1})".Fmt(GetType(), disposing));
+                    }
                 }
 
                 if (IsConnected)
