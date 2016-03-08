@@ -105,6 +105,12 @@ namespace NEventSocket.Sockets
                                 //expected - normal shutdown
                                 subject.OnCompleted();
                             }
+                            catch (IOException ex)
+                            {
+                                //socket comms interrupted - propogate the error up the layers
+                                Log.WarnException("Error reading from stream", ex);
+                                subject.OnError(ex);
+                            }
                             catch (SocketException ex)
                             {
                                 //socket comms interrupted - propogate the error up the layers
