@@ -5,6 +5,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NEventSocket", "src\NEventS
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionItems", "{E15B83EF-2CE1-4479-A457-D340DCA80869}"
 	ProjectSection(SolutionItems) = preProject
+		BREAKING CHANGES.md = BREAKING CHANGES.md
 		default.ps1 = default.ps1
 		src\NEventSocket\NEventSocket.nuspec = src\NEventSocket\NEventSocket.nuspec
 		Settings.StyleCop = Settings.StyleCop
