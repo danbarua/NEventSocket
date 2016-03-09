@@ -9,6 +9,18 @@ NEventSocket  [![NuGet Status](http://img.shields.io/nuget/v/NEventSocket.svg?st
 
 NEventSocket is a FreeSwitch [event socket](https://freeswitch.org/confluence/display/FREESWITCH/mod_event_socket) client/[server](https://freeswitch.org/confluence/display/FREESWITCH/Event+Socket+Outbound) library for .Net 4.5.
 
+Installing Release builds
+---
+Package Manager Console: `Install-Package NEventSocket` 
+
+CommandLine: `nuget install NEventSocket`
+
+Installing Pre-Release builds
+---
+NuGet v3 (VS2015): `nuget install NEventSocket -PreRelease -Source "https://www.myget.org/F/neventsocket-prerelease/api/v3/index.json"`
+
+NuGet v2 (VS2012): `nuget install NEventSocket -PreRelease -Source "https://www.myget.org/F/neventsocket-prerelease/api/v2"` 
+
 Inbound Socket Client
 --------------
 
