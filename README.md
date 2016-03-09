@@ -1,4 +1,4 @@
-NEventSocket  [![NuGet Status](http://img.shields.io/nuget/v/NEventSocket.svg?style=flat)](https://www.nuget.org/packages/NEventSocket/)
+NEventSocket  [![NuGet Status](http://img.shields.io/nuget/v/NEventSocket.svg?style=flat)](https://www.nuget.org/packages/NEventSocket/) [![MyGet](https://img.shields.io/myget/pre-release feed/dt/NEventSocket.svg)](https://www.myget.org/feed/neventsocket-prerelease/package/nuget/NEventSocket)
 ============
 
 [![Join the chat at https://gitter.im/danbarua/NEventSocket](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/danbarua/NEventSocket?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
