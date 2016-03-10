@@ -68,7 +68,6 @@
     <Compile Include="App_Packages\LibLog.4.2\LibLog.cs" />
     <Compile Include="Channels\BasicChannel.cs" />
     <Compile Include="Channels\BridgedChannel.cs" />
-    <Compile Include="Channels\BridgeStatus.cs" />
     <Compile Include="CommandExtensions.cs" />
     <Compile Include="ApplicationExtensions.cs" />
     <Compile Include="FreeSwitch\AttendedTransferResult.cs" />
