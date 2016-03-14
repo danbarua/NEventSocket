@@ -1,0 +1,166 @@
+att_xfer scenarios
+
+Background:
+Alice has called Bob and both channels have successfully bridged together.
+Bob has initiated the att_xfer application targeting Charlie, whose Phone is now ringing.
+
+When: Charlie does not answer
+Then: Alice & Bob are bridged
+Events:
+  ChannelHangup           UUID: Charlie     OtherLegUUID: Bob         ChannelCallUUID: Alice
+  ChannelExecuteComplete  UUID: Bob         OtherLegUUID: Alice       ChannelCallUUID: Alice
+    last_bridge_hangup_cause: NO_ANSWER
+    originate_disposition: NO_ANSWER
+    att_xfer_result:
+    xfer_uuids:
+
+When: Charlie rejects the call
+Then: Alice & Bob are bridged
+Events:
+  ChannelHangup           UUID: Charlie     OtherLegUUID: Bob         ChannelCallUUID: Alice
+  ChannelExecuteComplete  UUID: Bob         OtherLegUUID: Alice       ChannelCallUUID: Alice
+    last_bridge_hangup_cause: CALL_REJECTED
+    originate_disposition: CALL_REJECTED
+    att_xfer_result:
+    xfer_uuids:
+
+Scenario:Charlie answers
+When: Bob presses * to terminate call and hand over
+Then: Alice & Charlie are bridged
+Events:
+  ChannelAnswer           UUID: Charlie     OtherLegUUID: Bob         ChannelCallUUID: Alice
+  ChannelBridge           UUID: Bob         OtherLegUUID: Charlie     ChannelCallUUID: Alice
+  ChannelHangup           UUID: Bob         OtherLegUUID: Charlie     ChannelCallUUID: Alice
+  ChannelUnbridge         UUID: Alice       OtherLegUUID: Bob         ChannelCallUUID: Alice
+  ChannelUnbridge         UUID: Bob         OtherLegUUID: Charlie     ChannelCallUUID: Bob
+  ChannelExecuteComplete  UUID: Bob         OtherLegUUID: Charlie     ChannelCallUUID: Bob
+    last_bridge_hangup_cause:
+    originate_disposition: SUCCESS
+    att_xfer_result:
+  ChannelBridge           UUID: Charlie     OtherLegUUID: Alice       ChannelCallUUID: Charlie
+
+Given: Bob hangs up while Charlie is ringing
+When: Charlie answers
+Then: Alice & Charlie are bridged
+xfer Result: Answer-State : hangup
+Events:
+  ChannelUnbridge         UUID: Alice       OtherLegUUID: Bob         ChannelCallUUID: Alice
+  ChannelAnswer           UUID: Charlie     OtherLegUUID: Bob         ChannelCallUUID: Alice
+  ChannelExecuteComplete  UUID: Bob         OtherLegUUID: Alice       ChannelCallUUID: Bob
+    last_bridge_hangup_cause:
+    originate_disposition: ATTENDED_TRANSFER
+    att_xfer_result:
+    xfer_uuids:
+  ChannelBridge           UUID: Alice       OtherLegUUID: Charlie     ChannelCallUUID: Alice
+
+Given: Charlie answers
+When: Bob presses # to cancel
+Then: Alice & Bob are bridged
+Events:
+  ChannelAnswer           UUID: Charlie     OtherLegUUID: Bob         ChannelCallUUID: Alice
+  ChannelBridge           UUID: Bob         OtherLegUUID: Charlie     ChannelCallUUID: Alice
+  ChannelHangup           UUID: Charlie     OtherLegUUID: Bob         ChannelCallUUID: Bob
+  ChannelUnbridge         UUID: Bob         OtherLegUUID: Charlie     ChannelCallUUID: Alice
+  ChannelExecuteComplete  UUID: Bob         OtherLegUUID: Alice       ChannelCallUUID: Alice
+    last_bridge_hangup_cause: NORMAL_CLEARING
+    originate_disposition: SUCCESS
+    att_xfer_result: success
+    xfer_uuids:
+  ChannelUnbridge         UUID: Alice       OtherLegUUID: Bob         ChannelCallUUID: Alice
+  ChannelBridge           UUID: Bob         OtherLegUUID: Alice       ChannelCallUUID: Bob
+
+
+Given: Charlie rings but does not answer
+When: Bob presses # to cancel
+Then: Alice & Bob are bridged
+Events:
+  ChannelHangup           UUID: Charlie     OtherLegUUID: Bob         ChannelCallUUID: Alice
+  ChannelExecuteComplete  UUID: Bob         OtherLegUUID: Alice       ChannelCallUUID: Alice
+    last_bridge_hangup_cause: NO_ANSWER
+    originate_disposition: NO_ANSWER
+    att_xfer_result:
+    xfer_uuids:
+
+Given: Bob hangs up while Charlie is ringing
+       
+When: Charlie does not answer
+Then: Alice Hangs up
+Events:
+   ChannelHangup           UUID: Bob         OtherLegUUID: Alice       ChannelCallUUID: Alice
+   ChannelUnbridge         UUID: Alice       OtherLegUUID: Bob         ChannelCallUUID: Alice
+   ChannelHangup           UUID: Charlie     OtherLegUUID: Bob         ChannelCallUUID: Alice
+   ChannelExecuteComplete  UUID: Bob         OtherLegUUID: Alice       ChannelCallUUID: Bob
+    last_bridge_hangup_cause:
+    originate_disposition: ATTENDED_TRANSFER
+    att_xfer_result:
+    xfer_uuids:
+  ChannelHangup           UUID: Bob (NEW)   OtherLegUUID: Alice        ChannelCallUUID: Alice
+  ChannelHangup           UUID: Alice       ChannelCallUUID: Alice
+
+Given: Bob hangs up while Charlie is ringing
+       Charlie rejects
+       Bob is ringing
+When:  Bob does not answer
+Then: Alice Hangs up.
+Events:
+  ChannelHangup           UUID: Bob         OtherLegUUID: Alice       ChannelCallUUID: Alice
+  ChannelUnbridge         UUID: Alice       OtherLegUUID: Bob         ChannelCallUUID: Alice
+  ChannelHangup           UUID: Charlie     OtherLegUUID: Bob         ChannelCallUUID: Alice
+  ChannelExecuteComplete  UUID: Bob         OtherLegUUID: Alice       ChannelCallUUID: Bob
+    last_bridge_hangup_cause:
+    originate_disposition: ATTENDED_TRANSFER
+    att_xfer_result:
+    xfer_uuids:
+  ChannelHangup           UUID: Bob (NEW)   OtherLegUUID: Alice       ChannelCallUUID: Alice  
+  ChannelHangup           UUID: Alice       ChannelCallUUID: Alice
+
+Given: Charlie answers
+When:     Bob presses 0 for three-way
+Then: Alice & Bob & Charlie are bridged
+Events:
+  ChannelAnswer           UUID: Charlie     OtherLegUUID: Bob         ChannelCallUUID: Alice
+  ChannelBridge           UUID: Bob         OtherLegUUID: Charlie     ChannelCallUUID: Alice
+  ChannelUnbridge         UUID: Bob         OtherLegUUID: Charlie     ChannelCallUUID: Alice
+  ChannelExecuteComplete  UUID: Bob         OtherLegUUID: Alice       ChannelCallUUID: Alice
+    last_bridge_hangup_cause:
+    originate_disposition: SUCCESS
+    att_xfer_result: success
+    xfer_uuids: 1efc4692-b745-4467-bbab-87b5d64a9ed5 7b158bd4-caf9-491d-9da5-33e8ff4bc86d
+  ChannelUnbridge         UUID: Alice       OtherLegUUID: Bob         ChannelCallUUID: Alice
+  ChannelBridge           UUID: Bob         OtherLegUUID: Alice       ChannelCallUUID: Bob
+
+Given: Charlie answers
+          Bob presses 0 for three-way
+When:     Charlie hangs up
+Then: Alice & Bob are bridged
+Events:
+  ChannelAnswer           UUID: Charlie     OtherLegUUID: Bob         ChannelCallUUID: Alice
+  ChannelBridge           UUID: Bob         OtherLegUUID: Charlie     ChannelCallUUID: Alice
+  ChannelUnbridge         UUID: Bob         OtherLegUUID: Charlie     ChannelCallUUID: Alice
+  ChannelExecuteComplete  UUID: Bob         OtherLegUUID: Alice       ChannelCallUUID: Alice
+    last_bridge_hangup_cause:
+    originate_disposition: SUCCESS
+    att_xfer_result: success
+    xfer_uuids: 1efc4692-b745-4467-bbab-87b5d64a9ed5 7b158bd4-caf9-491d-9da5-33e8ff4bc86d
+  ChannelUnbridge         UUID: Alice       OtherLegUUID: Bob         ChannelCallUUID: Alice
+  ChannelBridge           UUID: Bob         OtherLegUUID: Alice       ChannelCallUUID: Bob
+  ChannelHangup           UUID: Charlie     OtherLegUUID: Bob         ChannelCallUUID: Charlie
+
+Given: Charlie answers
+       Bob presses 0 for three-way
+When: Bob hangs up
+Then: Alice & Charlie are bridged
+Events:
+  ChannelAnswer           UUID: Charlie     OtherLegUUID: Bob         ChannelCallUUID: Alice
+  ChannelBridge           UUID: Bob         OtherLegUUID: Charlie     ChannelCallUUID: Alice
+  ChannelUnbridge         UUID: Bob         OtherLegUUID: Charlie     ChannelCallUUID: Alice
+  ChannelExecuteComplete  UUID: Bob         OtherLegUUID: Alice       ChannelCallUUID: Alice
+    last_bridge_hangup_cause:
+    originate_disposition: SUCCESS
+    att_xfer_result: success
+    xfer_uuids: 1efc4692-b745-4467-bbab-87b5d64a9ed5 7b158bd4-caf9-491d-9da5-33e8ff4bc86d
+  ChannelUnbridge         UUID: Alice       OtherLegUUID: Bob         ChannelCallUUID: Alice
+  ChannelBridge           UUID: Bob         OtherLegUUID: Alice       ChannelCallUUID: Bob
+  ChannelHangup           UUID: Bob         OtherLegUUID: Alice       ChannelCallUUID: Bob
+  ChannelUnbridge         UUID: Bob         OtherLegUUID: Alice       ChannelCallUUID: Bob
+  ChannelBridge           UUID: Charlie     OtherLegUUID: Alice       ChannelCallUUID: Charlie
