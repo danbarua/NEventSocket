@@ -31,7 +31,8 @@ namespace NEventSocket.FreeSwitch
                 BodyText = basicMessage.BodyText;
                 return;
             }
-            else if (basicMessage.ContentType != ContentTypes.EventPlain)
+
+            if (basicMessage.ContentType == ContentTypes.CommandReply)
             {
                 /* 
                  * Special Case:
@@ -41,8 +42,8 @@ namespace NEventSocket.FreeSwitch
                  */
                 if (basicMessage.Headers.ContainsKey(HeaderNames.EventName))
                 {
-                    Headers = basicMessage.Headers;
-                    BodyText = basicMessage.BodyText;
+                    this.Headers = basicMessage.Headers;
+                    this.BodyText = basicMessage.BodyText;
                     return;
                 }
 
@@ -106,6 +107,22 @@ namespace NEventSocket.FreeSwitch
             get
             {
                 return Headers.GetValueOrDefault(HeaderNames.UniqueId);
+            }
+        }
+
+        public string OtherLegUUID
+        {
+            get
+            {
+                return Headers.GetValueOrDefault(HeaderNames.OtherLegUniqueId);
+            }
+        }
+
+        public string ChannelCallUUID
+        {
+            get
+            {
+                return Headers.GetValueOrDefault(HeaderNames.ChannelCallUniqueId);
             }
         }
 

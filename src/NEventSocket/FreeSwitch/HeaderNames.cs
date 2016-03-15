@@ -47,6 +47,8 @@ namespace NEventSocket.FreeSwitch
 
         public const string OtherLegUniqueId = "Other-Leg-Unique-ID";
 
+        public const string ChannelCallUniqueId = "Channel-Call-UUID";
+
         public const string JobUUID = "Job-UUID";
 
         public const string ReplyText = "Reply-Text";

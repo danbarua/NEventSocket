@@ -34,6 +34,11 @@ namespace NEventSocket.FreeSwitch
         /// If the c-leg rejects the call, FreeSwitch will call back
         /// the b-leg and attempt to reconnect them to the a-leg.
         /// </summary>
-        AttendedTransfer
+        AttendedTransfer,
+
+        /// <summary>
+        /// The transfer was aborted
+        /// </summary>
+        Aborted
     }
 }

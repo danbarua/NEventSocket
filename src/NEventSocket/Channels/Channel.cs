@@ -27,6 +27,8 @@ namespace NEventSocket.Channels
 
         private Subject<BridgedChannel> bridgedChannels = new Subject<BridgedChannel>();
 
+        private string bridgedUUID;
+
         protected internal Channel(OutboundSocket outboundSocket) : this(outboundSocket.ChannelData, outboundSocket)
         {
         }
@@ -43,6 +45,7 @@ namespace NEventSocket.Channels
 
             await outboundSocket.Linger().ConfigureAwait(false);
 
+
             await outboundSocket.SubscribeEvents(
                EventName.ChannelProgress,
                EventName.ChannelBridge,
@@ -53,6 +56,7 @@ namespace NEventSocket.Channels
 
             await outboundSocket.Filter(HeaderNames.UniqueId, outboundSocket.ChannelData.UUID).ConfigureAwait(false); //filter for our unique id (in case using full socket mode)
             await outboundSocket.Filter(HeaderNames.OtherLegUniqueId, outboundSocket.ChannelData.UUID).ConfigureAwait(false); //filter for channels bridging to our unique id
+            await outboundSocket.Filter(HeaderNames.ChannelCallUniqueId, outboundSocket.ChannelData.UUID).ConfigureAwait(false); //filter for channels bridging to our unique id
 
             channel.InitializeSubscriptions();
             return channel;
@@ -63,8 +67,7 @@ namespace NEventSocket.Channels
             Dispose(false);
         }
 
-        public IObservable<BridgedChannel> BridgedChannels { get { return bridgedChannels.AsObservable(); } } 
-
+        public IObservable<BridgedChannel> BridgedChannels { get { return bridgedChannels.AsObservable(); } }
 
         public async Task BridgeTo(string destination, BridgeOptions options, Action<EventMessage> onProgress = null)
         {
@@ -81,16 +84,6 @@ namespace NEventSocket.Channels
             }
 
             var subscriptions = new CompositeDisposable();
-
-            subscriptions.Add(
-                eventSocket.Events.Where(x => x.UUID == options.UUID && x.EventName == EventName.ChannelAnswer)
-                    .Take(1)
-                    .Subscribe(
-                        async x =>
-                        {
-                            await eventSocket.Filter(HeaderNames.UniqueId, x.UUID).ConfigureAwait(false);
-                            this.bridgedChannels.OnNext(new BridgedChannel(x, eventSocket));
-                        }));
 
             if (onProgress != null)
             {
@@ -268,7 +261,11 @@ namespace NEventSocket.Channels
                 }
 
                 eventSocket = null;
+
+                Log.Debug(() => "BasicChannel Disposed.");
             }
+
+            base.Dispose(disposing);
         }
         
         private void InitializeSubscriptions()
@@ -280,38 +277,64 @@ namespace NEventSocket.Channels
             }
 
             Disposables.Add(
-                    eventSocket.Events.Where(x => x.UUID == UUID && x.EventName == EventName.ChannelBridge).Subscribe(
-                        x =>
+                    eventSocket.Events.Where(x => x.UUID == UUID 
+                                            && x.EventName == EventName.ChannelBridge
+                                            && x.OtherLegUUID != bridgedUUID)
+                    .Subscribe(
+                        async x =>
                         {
-                            Log.Trace(
-                                () =>
-                                "Channel [{0}] Bridged to [{1}]".Fmt(UUID, x.GetHeader(HeaderNames.OtherLegUniqueId)));
-                            }));
+                            Log.Info(() => "Channel [{0}] Bridged to [{1}] CHANNEL_BRIDGE".Fmt(UUID, x.GetHeader(HeaderNames.OtherLegUniqueId)));
+
+                            var apiResponse = await eventSocket.Api("uuid_dump", x.OtherLegUUID);
+
+                            if (apiResponse.Success && apiResponse.BodyText != "+OK")
+                            {
+                                var eventMessage = new EventMessage(apiResponse);
+                                bridgedChannels.OnNext(new BridgedChannel(eventMessage, eventSocket));
+                            }
+                            else
+                            {
+                                Log.Error(() => "Unable to get CHANNEL_DATA info from 'api uuid_dump {0}' - received '{1}'.".Fmt(x.OtherLegUUID, apiResponse.BodyText));
+                            }
+                        }));
 
             Disposables.Add(
                 eventSocket.Events.Where(x => x.UUID == UUID && x.EventName == EventName.ChannelUnbridge)
-                           .Subscribe(
-                               x =>
-                               Log.Trace(
-                                   () =>
-                                   "Channel [{0}] Unbridged from [{1}] {2}".Fmt(
-                                       UUID, x.GetVariable("last_bridge_to"), x.GetVariable("bridge_hangup_cause")))));
+                           .Subscribe(x =>Log.Info(() =>"Channel [{0}] Unbridged from [{1}] {2}".Fmt(UUID, x.GetVariable("last_bridge_to"), x.GetVariable("bridge_hangup_cause")))));
+
+            Disposables.Add(bridgedChannels.Subscribe(
+                async b =>
+                {
+                    if (this.bridgedUUID != null && this.bridgedUUID != b.UUID)
+                    {
+                        await eventSocket.FilterDelete(HeaderNames.UniqueId, bridgedUUID).ConfigureAwait(false);
+                        await eventSocket.FilterDelete(HeaderNames.OtherLegUniqueId, bridgedUUID).ConfigureAwait(false);
+                        await eventSocket.FilterDelete(HeaderNames.ChannelCallUniqueId, bridgedUUID).ConfigureAwait(false);
+                    }
+
+                    bridgedUUID = b.UUID;
+
+                    await eventSocket.Filter(HeaderNames.UniqueId, bridgedUUID).ConfigureAwait(false); 
+                    await eventSocket.Filter(HeaderNames.OtherLegUniqueId, bridgedUUID).ConfigureAwait(false); 
+                    await eventSocket.Filter(HeaderNames.ChannelCallUniqueId, bridgedUUID).ConfigureAwait(false); 
+                }));
 
             Disposables.Add(
                 eventSocket.Events.Where(
                     x =>
-                    x.EventName == EventName.ChannelBridge && x.UUID != UUID
-                    && x.GetHeader(HeaderNames.OtherLegUniqueId) == UUID)
+                    x.EventName == EventName.ChannelBridge
+                    && ((x.UUID != UUID && x.GetHeader(HeaderNames.OtherLegUniqueId) == UUID)) // || (bridgedUUID != null && x.GetHeader(HeaderNames.ChannelCallUniqueId) == bridgedUUID))
+                    && x.UUID != this.bridgedUUID)
                     .Subscribe(
-                        async x =>
+                        x =>
                         {
-                            await eventSocket.Filter(HeaderNames.UniqueId, x.UUID).ConfigureAwait(false);
-
                             //there is another channel out there that has bridged to us but we didn't get the CHANNEL_BRIDGE event on this channel
+                            Log.Info(() => "Channel [{0}] bridged to [{1}]] on CHANNEL_BRIDGE received on other channel".Fmt(UUID, x.UUID));
                             bridgedChannels.OnNext(new BridgedChannel(x, eventSocket));
                         }));
 
-            if (this.eventSocket is OutboundSocket)
+
+            if (eventSocket is OutboundSocket)
             {
                 Disposables.Add(
                     eventSocket.Events.Where(x => x.UUID == UUID && x.EventName == EventName.ChannelHangup)

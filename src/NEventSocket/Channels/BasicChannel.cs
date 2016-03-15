@@ -12,6 +12,7 @@ namespace NEventSocket.Channels
     using System;
     using System.Reactive.Disposables;
     using System.Reactive.Linq;
+    using System.Security.Cryptography.X509Certificates;
     using System.Threading.Tasks;
 
     using NEventSocket.FreeSwitch;
@@ -244,21 +245,125 @@ namespace NEventSocket.Channels
                 var tcs = new TaskCompletionSource<AttendedTransferResult>();
                 var subscriptions = new CompositeDisposable();
 
-                var otherChannel = lastEvent.Headers[HeaderNames.OtherLegUniqueId];
+                var aLegUUID = lastEvent.Headers[HeaderNames.OtherLegUniqueId];
+                var bLegUUID = UUID;
 
-                subscriptions.Add(
-                    eventSocket.Events.FirstOrDefaultAsync(x => x.UUID == otherChannel && x.EventName == EventName.ChannelHangup)
-                               .Subscribe(x => tcs.TrySetResult(new AttendedTransferResult(null))));
+                var events = eventSocket.Events;
 
-                eventSocket.ExecuteApplication(UUID, "att_xfer", endpoint)
-                           .ContinueWithCompleted(tcs, evt => new AttendedTransferResult(evt))
+                Log.Debug(() => "Att XFer Starting A-Leg [{0}] B-Leg [{1}]".Fmt(aLegUUID, bLegUUID));
+
+                var aLegHangup = events.Where(x => x.EventName == EventName.ChannelHangup && x.UUID == aLegUUID)
+                                        .Do(x => Log.Debug(() => "Att XFer Hangup Detected on A-Leg [{0}]".Fmt(x.UUID)));
+
+                var bLegHangup = events.Where(x => x.EventName == EventName.ChannelHangup && x.UUID == bLegUUID)
+                                        .Do(x => Log.Debug(() => "Att XFer Hangup Detected on B-Leg [{0}]".Fmt(x.UUID)));
+
+                var cLegHangup = events.Where(x => x.EventName == EventName.ChannelHangup && x.UUID != bLegUUID && x.UUID != aLegUUID)
+                                        .Do(x => Log.Debug(() => "Att XFer Hangup Detected on C-Leg[{0}]".Fmt(x.UUID)));
+
+                var cLegAnswer =
+                    events.Where(x => x.EventName == EventName.ChannelAnswer && x.UUID != bLegUUID && x.UUID != aLegUUID)
+                          .Do(x => Log.Debug(() => "Att XFer Answer Detected on C-Leg [{0}]".Fmt(x.UUID)));
+
+                var bLegUnbridge =
+                    events.Where(x => x.EventName == EventName.ChannelUnbridge && x.UUID == bLegUUID)
+                          .Do(x => Log.Debug(() => "Att XFer Unbridge Detected on C-Leg [{0}]".Fmt(x.UUID)));
+
+                var cLegUnbridge =
+                    events.Where(x => x.EventName == EventName.ChannelUnbridge && x.UUID != bLegUUID && x.UUID != aLegUUID)
+                          .Do(x => Log.Debug(() => "Att XFer Unbridge Detected on C-Leg [{0}]".Fmt(x.UUID)));
+
+                var aLegBridge =
+                    events.Where(x => x.EventName == EventName.ChannelBridge && x.UUID == aLegUUID)
+                          .Do(x => Log.Debug(() => "Att XFer Bridge Detected on A-Leg [{0}]".Fmt(x.UUID)));
+
+                var cLegBridge =
+                    events.Where(x => x.EventName == EventName.ChannelBridge && x.UUID != bLegUUID && x.UUID != aLegUUID)
+                          .Do(x => Log.Debug(() => "Att XFer Bridge Detected on C-Leg [{0}]".Fmt(x.UUID)));
+
+
+                var channelExecuteComplete =
+                    events.Where(
+                        x =>
+                            x.EventName == EventName.ChannelExecuteComplete
+                            && x.UUID == bLegUUID
+                            && x.GetHeader(HeaderNames.Application) == "att_xfer");
+
+                var cNotAnswered = cLegHangup.And(channelExecuteComplete.Where(x => x.GetVariable("originate_disposition") == "NO_ANSWER"));
+
+                var cRejected = cLegHangup.And(channelExecuteComplete.Where(x => x.GetVariable("originate_disposition") == "CALL_REJECTED"));
+
+                var cAnsweredThenHungUp =
+                    cLegAnswer.And(cLegHangup)
+                        .And(channelExecuteComplete.Where(
+                                x =>
+                                    x.GetVariable("att_xfer_result") == "success"
+                                    && x.GetVariable("last_bridge_hangup_cause") == "NORMAL_CLEARING"
+                                    && x.GetVariable("originate_disposition") == "SUCCESS"));
+
+                var cAnsweredThenBPressedStarOrHungUp =
+                    cLegAnswer.And(bLegHangup)
+                        .And(cLegBridge.Where(x => x.OtherLegUUID == aLegUUID));
+
+                subscriptions.Add(Observable.When(cNotAnswered.Then((hangup, execComplete) => new { hangup, execComplete }))
+                                            .Subscribe(
+                                                x =>
+                                                {
+                                                    Log.Debug(() => "Att Xfer Not Answered");
+                                                    tcs.TrySetResult(AttendedTransferResult.Failed(FreeSwitch.HangupCause.NoAnswer));
+                                                }));
+
+                subscriptions.Add(Observable.When(cRejected.Then((hangup, execComplete) => new {hangup, execComplete}))
+                                            .Subscribe(x => {
+                                                Log.Debug(() => "Att Xfer Rejected");
+                                                tcs.TrySetResult(AttendedTransferResult.Failed(FreeSwitch.HangupCause.CallRejected));
+                                            }));
+
+                subscriptions.Add(Observable.When(cAnsweredThenHungUp.Then((answer, hangup, execComplete) => new { answer, hangup, execComplete }))
+                                            .Subscribe(
+                                                x =>
+                                                {
+                                                    Log.Debug(() => "Att Xfer Rejected after C Hungup");
+                                                    tcs.TrySetResult(AttendedTransferResult.Failed(FreeSwitch.HangupCause.NormalClearing));
+                                                }));
+
+                subscriptions.Add(channelExecuteComplete.Where(x => !string.IsNullOrEmpty(x.GetVariable("xfer_uuids")))
+                                            .Subscribe(x => {
+                                                    Log.Debug(() => "Att Xfer Success (threeway)");
+                                                    tcs.TrySetResult(AttendedTransferResult.Success(AttendedTransferResultStatus.Threeway));
+                                                }));
+
+                subscriptions.Add(Observable.When(cAnsweredThenBPressedStarOrHungUp.Then((answer, hangup, bridge) => new { answer, hangup, bridge }))
+                                            .Subscribe(
+                                                x =>
+                                                {
+                                                    Log.Debug(() => "Att Xfer Succeeded after B pressed *");
+                                                    tcs.TrySetResult(AttendedTransferResult.Success());
+                                                }));
+
+                subscriptions.Add(Observable.When(bLegHangup.And(cLegAnswer).And(aLegBridge.Where(x => x.OtherLegUUID != bLegUUID)).Then((hangup, answer, bridge) => new { answer, hangup, bridge }))
+                                            .Subscribe(
+                                                x =>
+                                                {
+                                                    Log.Debug(() => "Att Xfer Succeeded after B hung up and C answered");
+                                                    tcs.TrySetResult(AttendedTransferResult.Success());
+                                                }));
+
+                subscriptions.Add(aLegHangup.Subscribe(
+                    x =>
+                    {
+                        Log.Debug(() => "Att Xfer Failed after A-Leg Hung Up");
+                        tcs.TrySetResult(AttendedTransferResult.Hangup(x));
+                    }));
+
+                eventSocket.ExecuteApplication(UUID, "att_xfer", endpoint, false, true)
                            .ContinueOnFaultedOrCancelled(tcs, subscriptions.Dispose);
 
-                return tcs.Task;
+                return tcs.Task.Then(() => subscriptions.Dispose());
             }
             catch (TaskCanceledException ex)
             {
-                return Task.FromResult(new AttendedTransferResult(null));
+                return Task.FromResult(AttendedTransferResult.Failed(FreeSwitch.HangupCause.None));
             }
         }
 
