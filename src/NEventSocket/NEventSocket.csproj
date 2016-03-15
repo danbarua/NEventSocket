@@ -70,6 +70,7 @@
     <Compile Include="Channels\BridgedChannel.cs" />
     <Compile Include="CommandExtensions.cs" />
     <Compile Include="ApplicationExtensions.cs" />
+    <Compile Include="Util\DisposableAction.cs" />
     <Compile Include="FreeSwitch\AttendedTransferResult.cs" />
     <Compile Include="FreeSwitch\AttendedTransferResultStatus.cs" />
     <Compile Include="FreeSwitch\BridgeResult.cs" />

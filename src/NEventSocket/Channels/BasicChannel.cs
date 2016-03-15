@@ -205,6 +205,28 @@ namespace NEventSocket.Channels
             }
         }
 
+        public async Task<IDisposable> HoldMusic(string source)
+        {
+            if (!IsAnswered)
+            {
+                return Task.FromResult(new DisposableAction());
+            }
+
+            await this.eventSocket.Api("uuid_broadcast", "{0} playback::{1} aleg".Fmt(UUID, source)).ConfigureAwait(false);
+
+            var handle = new DisposableAction(
+                async () =>
+                {
+                    if (!IsAnswered)
+                    {
+                        return;
+                    }
+
+                    await eventSocket.Api("uuid_break", UUID);
+                });
+
+            return handle;
+        }
         public async Task<string> PlayGetDigits(PlayGetDigitsOptions options)
         {
             if (!IsAnswered)
