@@ -10,15 +10,18 @@
 namespace NEventSocket.Channels
 {
     using System;
+    using System.Collections;
+    using System.Collections.Generic;
     using System.Reactive.Disposables;
     using System.Reactive.Linq;
-    using System.Security.Cryptography.X509Certificates;
+    using System.Threading;
     using System.Threading.Tasks;
 
     using NEventSocket.FreeSwitch;
     using NEventSocket.Logging;
     using NEventSocket.Sockets;
     using NEventSocket.Util;
+    using NEventSocket.Util.ObjectPooling;
 
     public abstract class BasicChannel
     {
@@ -173,12 +176,12 @@ namespace NEventSocket.Channels
                 return;
             }
 
-            if (terminator != null)
+            if (terminator != null && lastEvent.GetVariable("playback_terminators") != terminator)
             {
                 await SetChannelVariable("playback_terminators", terminator).ConfigureAwait(false);
             }
 
-            if (leg == Leg.ALeg) //!this.IsBridged)
+            if (leg == Leg.ALeg && !IsBridged)
             {
                 await eventSocket.Play(UUID, file, new PlayOptions()).ConfigureAwait(false);
                 return;
@@ -205,16 +208,45 @@ namespace NEventSocket.Channels
             }
         }
 
-        public async Task<IDisposable> HoldMusic(string source)
+        public Task PlayFiles(IEnumerable<string> files, Leg leg = Leg.ALeg, bool mix = false, string terminator = null)
+        {
+            var sb = StringBuilderPool.Allocate();
+            var first = true;
+
+            sb.Append("file_string://");
+
+            foreach (var file in files)
+            {
+                if (!first)
+                {
+                    sb.Append("!");
+                }
+                sb.Append(file);
+                first = false;
+            }
+
+            return PlayFile(StringBuilderPool.ReturnAndFree(sb), leg, mix, terminator);
+        }
+
+        /// <summary>
+        /// Plays the provided audio source to the A-Leg.
+        /// Dispose the returned token to cancel playback.
+        /// </summary>
+        /// <param name="file">The audio source.</param>
+        /// <returns>An <seealso cref="IDisposable"/> which can be disposed to stop the audio.</returns>
+        public async Task<IDisposable> HoldMusic(string file)
         {
             if (!IsAnswered)
             {
+                Log.Warn(() => "Channel [{0}] attempted to play hold music when not answered".Fmt(UUID));
                 return Task.FromResult(new DisposableAction());
             }
 
-            await this.eventSocket.Api("uuid_broadcast", "{0} playback::{1} aleg".Fmt(UUID, source)).ConfigureAwait(false);
+            // essentially, we'll do a playback application call without waiting for the ChannelExecuteComplete event
+            // the caller can .Dispose() the returned token to do a uuid_break on the channel to kill audio.
+            await eventSocket.SendCommand(string.Format("sendmsg {0}\ncall-command: execute\nexecute-app-name: playback\nexecute-app-arg:{1}", UUID, file));
 
-            var handle = new DisposableAction(
+            var cancellation = new DisposableAction(
                 async () =>
                 {
                     if (!IsAnswered)
@@ -222,11 +254,19 @@ namespace NEventSocket.Channels
                         return;
                     }
 
-                    await eventSocket.Api("uuid_break", UUID);
+                    try
+                    {
+                        await eventSocket.Api("uuid_break", UUID);
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.ErrorException("Error calling 'api uuid_break {0}'".Fmt(UUID), ex);
+                    }
                 });
 
-            return handle;
+            return cancellation;
         }
+
         public async Task<string> PlayGetDigits(PlayGetDigitsOptions options)
         {
             if (!IsAnswered)
@@ -450,6 +490,8 @@ namespace NEventSocket.Channels
                         Disposables.Dispose();
                     }
                 }
+
+                Log.Debug(() => "BasicChannel Disposed.");
             }
         }
 
