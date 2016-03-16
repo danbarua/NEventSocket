@@ -4,6 +4,9 @@ namespace NEventSocket
     using System;
     using System.Runtime.Serialization;
 
+    /// <summary>
+    /// Wraps errors caught when attempting to create an <seealso cref="InboundSocket"/> connection.
+    /// </summary>
     [Serializable]
     public class InboundSocketConnectionFailedException : Exception
     {

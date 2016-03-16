@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace NEventSocket
+﻿namespace NEventSocket
 {
-    using NEventSocket.Util;
+    using System;
 
     public static class Digits
     {
@@ -52,7 +46,7 @@ namespace NEventSocket
                 return string.Format("digits/{0}.wav!digits/{1}.wav", Math.Abs(count / 10) * 10, count % 10);
             }
 
-            if (count > 0 && count <= 20)
+            if (count > 0 && count <= 20) // special case - "eleven", "twelve" etc
             {
                 return string.Format("digits/{0}.wav", count);
             }
