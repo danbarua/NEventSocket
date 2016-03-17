@@ -343,7 +343,7 @@ namespace NEventSocket.Sockets
                             ex => Log.ErrorException("Error waiting for BackgroundJobResult Reply to [{0}].".Fmt(command), ex))
                         .Subscribe(x => tcs.TrySetResult(x), ex => tcs.TrySetException(ex), subscriptions.Dispose));
 
-            SubscribeEvents(EventName.ChannelExecuteComplete).ContinueWith(t =>
+            SubscribeEvents(EventName.BackgroundJob).ContinueWith(t =>
             {
                 if (t.IsCompleted)
                 {
