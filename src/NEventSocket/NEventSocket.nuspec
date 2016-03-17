@@ -14,23 +14,24 @@
     <copyright>Copyright (C) Dan Barua 2014</copyright>
     <tags>FreeSwitch EventSocket ESL Reactive</tags>
     <releaseNotes>
-1.0.0 - BREAKING CHANGE: Affects behaviour of socket.SubscribeEvents() - see https://github.com/danbarua/NEventSocket/blob/master/BREAKING%20CHANGES.md
-0.6.10 - Bugfix: handle garbage collected event handler in Dispose();
-0.6.9 - Bugfix: make all Dispose() calls thread safe
-0.6.8 - Bugfix: properly handle multiple Dispose() calls
-0.6.7 - Bugfix: logger garbage collected in Dispose() call
-0.6.6 - Bugfix: remove superfluous logging
-0.6.5 - Bugfix: ensure Message/Event pumps are not blocked
-0.6.4 - Channels: expose Channel.Advanded.LastEvent property
-0.6.3 - Bugfix - Replace .OnErrorResumeNext() with .Retry() on Channel connection error
-0.6.2 - Bugfix - don't terminate OutboundListener.Channels observable on connection errors.
-0.6.1 - Added events and helpers for conferences
-0.6.0 - Channels: move channel variables, event headers, underlying socket to Channel.Advanced.
-0.5.3 - Channels: fix channel init bug
-0.5.2 - Channels: Filter events so underlying socket does not receive events for all channels
-0.5.1 - Fix issues with initializing Rx when run in scriptcs
-0.5.0 - Fix uri decoding issue on message parsing
-Allow operations on Channels in Pre-Answer state
+      1.0.1 - Bugfix - ensure subscribed to BackgroundJob events when initiating BgAPI
+      1.0.0 - BREAKING CHANGE: Affects behaviour of socket.SubscribeEvents() - see https://github.com/danbarua/NEventSocket/blob/master/BREAKING%20CHANGES.md
+      0.6.10 - Bugfix: handle garbage collected event handler in Dispose();
+      0.6.9 - Bugfix: make all Dispose() calls thread safe
+      0.6.8 - Bugfix: properly handle multiple Dispose() calls
+      0.6.7 - Bugfix: logger garbage collected in Dispose() call
+      0.6.6 - Bugfix: remove superfluous logging
+      0.6.5 - Bugfix: ensure Message/Event pumps are not blocked
+      0.6.4 - Channels: expose Channel.Advanded.LastEvent property
+      0.6.3 - Bugfix - Replace .OnErrorResumeNext() with .Retry() on Channel connection error
+      0.6.2 - Bugfix - don't terminate OutboundListener.Channels observable on connection errors.
+      0.6.1 - Added events and helpers for conferences
+      0.6.0 - Channels: move channel variables, event headers, underlying socket to Channel.Advanced.
+      0.5.3 - Channels: fix channel init bug
+      0.5.2 - Channels: Filter events so underlying socket does not receive events for all channels
+      0.5.1 - Fix issues with initializing Rx when run in scriptcs
+      0.5.0 - Fix uri decoding issue on message parsing
+      Allow operations on Channels in Pre-Answer state
     </releaseNotes>
   </metadata>
     <files>
