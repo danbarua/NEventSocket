@@ -1,5 +1,8 @@
 Release Notes  [![NuGet Status](http://img.shields.io/nuget/v/NEventSocket.svg?style=flat)](https://www.nuget.org/packages/NEventSocket/)
 ============
+1.0.2 - Bugfix: Handle multi-arg applications on Originate
+                      Surface Api Response and Command Reply errors in logs
+
 1.0.1 - Bugfix - ensure subscribed to BackgroundJob events when initiating BgAPI
 
 1.0.0 - Remove event autosubscription [Issue #23](https://github.com/danbarua/NEventSocket/issues/23)
