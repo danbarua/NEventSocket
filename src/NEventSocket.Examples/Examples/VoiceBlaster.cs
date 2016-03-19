@@ -101,8 +101,8 @@
                                 }
                             });
 
-                    await Util.WaitForEnterKeyPress(cancellationToken);
                     ColorConsole.WriteLine("Press [Enter] to exit.".Green());
+                    await Util.WaitForEnterKeyPress(cancellationToken);
                     ourCancellationToken.Cancel();
 
                     listener.Dispose();
@@ -114,7 +114,7 @@
         {
             while (!ourCancellationToken.IsCancellationRequested)
             {
-                while (currentCallCount >= MAX_CALLS)
+                while (currentCallCount >= MAX_CALLS && !ourCancellationToken.IsCancellationRequested)
                 {
                     await Task.Delay(2000);
                 }
