@@ -115,9 +115,9 @@ namespace NEventSocket
         /// <param name="options">(Optional) <seealso cref="OriginateOptions"/> to configure the call.</param>
         /// <param name="application">(Default: park) The DialPlan application to execute on answer</param>
         /// <returns>A Task of <seealso cref="OriginateResult"/>.</returns>
-        public Task<OriginateResult> Originate(string endpoint, OriginateOptions options = null, string application = "park")
+        public Task<OriginateResult> Originate(string endpoint, OriginateOptions options = null, string application = "park", string applicationArgs = null)
         {
-            return InternalOriginate(endpoint, "&" + application, options);
+            return InternalOriginate(endpoint, string.Format("'&{0}({1})'", application, applicationArgs), options);
         }
 
         private async Task<OriginateResult> InternalOriginate(string endpoint, string destination, OriginateOptions options = null)
