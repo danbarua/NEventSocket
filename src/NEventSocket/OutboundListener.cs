@@ -19,7 +19,7 @@ namespace NEventSocket
     {
         private static readonly ILog Log = LogProvider.GetCurrentClassLogger();
 
-        private IObservable<Channel> channels;
+        private readonly IObservable<Channel> channels;
 
         /// <summary>
         /// Initializes a new OutboundListener on the given port.

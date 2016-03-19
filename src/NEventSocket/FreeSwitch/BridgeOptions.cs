@@ -38,9 +38,9 @@ namespace NEventSocket.FreeSwitch
         /// </summary>
         public BridgeOptions(SerializationInfo info, StreamingContext context)
         {
-            this.parameters =
+            parameters =
                 (Dictionary<string, string>)info.GetValue("parameters", typeof(Dictionary<string, string>));
-            this.ChannelVariables =
+            ChannelVariables =
                 (Dictionary<string, string>)info.GetValue("ChannelVariables", typeof(Dictionary<string, string>));
         }
 
@@ -347,8 +347,8 @@ namespace NEventSocket.FreeSwitch
         /// </summary>
         public void GetObjectData(SerializationInfo info, StreamingContext context)
         {
-            info.AddValue("parameters", this.parameters, typeof(Dictionary<string, string>));
-            info.AddValue("ChannelVariables", this.ChannelVariables, typeof(Dictionary<string, string>));
+            info.AddValue("parameters", parameters, typeof(Dictionary<string, string>));
+            info.AddValue("ChannelVariables", ChannelVariables, typeof(Dictionary<string, string>));
         }
 
         public override bool Equals(object obj)
@@ -363,7 +363,7 @@ namespace NEventSocket.FreeSwitch
                 return true;
             }
 
-            if (obj.GetType() != this.GetType())
+            if (obj.GetType() != GetType())
             {
                 return false;
             }
@@ -375,13 +375,13 @@ namespace NEventSocket.FreeSwitch
         {
             unchecked
             {
-                return (this.parameters.GetHashCode() * 397) ^ this.ChannelVariables.GetHashCode();
+                return (parameters.GetHashCode() * 397) ^ ChannelVariables.GetHashCode();
             }
         }
 
         protected bool Equals(BridgeOptions other)
         {
-            return this.parameters.SequenceEqual(other.parameters) && this.ChannelVariables.SequenceEqual(other.ChannelVariables);
+            return parameters.SequenceEqual(other.parameters) && ChannelVariables.SequenceEqual(other.ChannelVariables);
         }
     }
 }

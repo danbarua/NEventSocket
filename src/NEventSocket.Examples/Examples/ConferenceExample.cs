@@ -24,11 +24,11 @@ namespace NEventSocket.Examples.Examples
             const string ConferencePin = "1234";
             const string ConferenceArgs = ConferenceId;// +"+" + ConferencePin;
 
-            this.listener = new OutboundListener(8084);
+            listener = new OutboundListener(8084);
             string conferenceServerIp = null;
             bool conferenceIsStarted = false;
 
-            this.listener.Channels.Subscribe(
+            listener.Channels.Subscribe(
                 async channel =>
                 {
                     try
@@ -106,7 +106,7 @@ namespace NEventSocket.Examples.Examples
                     }
                 });
 
-            this.listener.Start();
+            listener.Start();
                 
             Console.WriteLine("Listener started. Press [Enter] to stop");
             Console.ReadLine();
@@ -116,7 +116,7 @@ namespace NEventSocket.Examples.Examples
 
         public void Dispose()
         {
-            this.listener.Dispose();
+            listener.Dispose();
         }
     }
 }

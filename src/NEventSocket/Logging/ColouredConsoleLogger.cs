@@ -100,7 +100,7 @@
 
             public bool Log(LogLevel logLevel, Func<string> messageFunc)
             {
-                if (logLevel < this.minLogLevel)
+                if (logLevel < minLogLevel)
                 {
                     return false;
                 }
@@ -110,13 +110,13 @@
                     return true;
                 }
 
-                this.Write(logLevel, messageFunc());
+                Write(logLevel, messageFunc());
                 return true;
             }
 
             public bool Log(LogLevel logLevel, Func<string> messageFunc, Exception exception = null, params object[] formatParameters)
             {
-                if (logLevel < this.minLogLevel)
+                if (logLevel < minLogLevel)
                 {
                     return false;
                 }
@@ -126,18 +126,18 @@
                     return true;
                 }
 
-                this.Write(logLevel, messageFunc(), exception);
+                Write(logLevel, messageFunc(), exception);
                 return true;
             }
 
             public void Log<TException>(LogLevel logLevel, Func<string> messageFunc, TException exception) where TException : Exception
             {
-                this.Write(logLevel, messageFunc(), exception);
+                Write(logLevel, messageFunc(), exception);
             }
 
             protected void Write(LogLevel logLevel, string message, Exception e = null)
             {
-                var formattedMessage = MessageFormatter(this.name, logLevel, message, e);
+                var formattedMessage = MessageFormatter(name, logLevel, message, e);
                 ConsoleColor color;
 
                 if (Colors.TryGetValue(logLevel, out color))

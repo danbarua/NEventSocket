@@ -29,10 +29,10 @@ namespace NEventSocket.FreeSwitch
             get
             {
                 string headerValue;
-                ConferenceAction action;
 
                 if (Headers.TryGetValue(HeaderNames.Conference.Action, out headerValue))
                 {
+                    ConferenceAction action;
                     if (Enum.TryParse(headerValue.Replace("-", string.Empty).Replace("_", string.Empty), true, out action))
                     {
                         return action;
@@ -150,7 +150,7 @@ namespace NEventSocket.FreeSwitch
 
         public override string ToString()
         {
-            return string.Format("Action: {1}, ConferenceUUID: {2}, CurrentEnergy: {3}, EnergyLevel: {4}, Floor: {5}, Hear: {6}, MemberId: {7}, MemberType: {8}, MuteDetect: {9}, Name: {10}, Size: {11}, Speak: {12}, Talking: {13}, Video: {14}", base.ToString(), this.Action, this.ConferenceUUID, this.CurrentEnergy, this.EnergyLevel, this.Floor, this.Hear, this.MemberId, this.MemberType, this.MuteDetect, this.Name, this.Size, this.Speak, this.Talking, this.Video);
+            return string.Format("Action: {1}, ConferenceUUID: {2}, CurrentEnergy: {3}, EnergyLevel: {4}, Floor: {5}, Hear: {6}, MemberId: {7}, MemberType: {8}, MuteDetect: {9}, Name: {10}, Size: {11}, Speak: {12}, Talking: {13}, Video: {14}", base.ToString(), Action, ConferenceUUID, CurrentEnergy, EnergyLevel, Floor, Hear, MemberId, MemberType, MuteDetect, Name, Size, Speak, Talking, Video);
         }
     }
 }

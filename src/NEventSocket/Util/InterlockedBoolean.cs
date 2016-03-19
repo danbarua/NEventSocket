@@ -38,7 +38,7 @@ namespace NEventSocket.Util
         /// </summary>
         public bool Value
         {
-            get { return this._value == 1; }
+            get { return _value == 1; }
         }
 
         /// <summary>
@@ -47,7 +47,7 @@ namespace NEventSocket.Util
         /// <param name="initialValue">initial value</param>
         public InterlockedBoolean(bool initialValue = false)
         {
-            this._value = initialValue ? 1 : 0;
+            _value = initialValue ? 1 : 0;
         }
 
         /// <summary>
@@ -57,7 +57,7 @@ namespace NEventSocket.Util
         /// <returns>the original value before any operation was performed</returns>
         public bool Set(bool newValue)
         {
-            var oldValue = Interlocked.Exchange(ref this._value, newValue ? 1 : 0);
+            var oldValue = Interlocked.Exchange(ref _value, newValue ? 1 : 0);
             return oldValue == 1;
         }
 
@@ -70,7 +70,7 @@ namespace NEventSocket.Util
         /// <returns>the original value before any operation was performed</returns>
         public bool CompareExchange(bool newValue, bool comparand)
         {
-            var oldValue = Interlocked.CompareExchange(ref this._value, newValue ? 1 : 0, comparand ? 1 : 0);
+            var oldValue = Interlocked.CompareExchange(ref _value, newValue ? 1 : 0, comparand ? 1 : 0);
             return oldValue == 1;
         }
     }

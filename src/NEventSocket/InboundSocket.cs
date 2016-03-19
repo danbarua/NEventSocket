@@ -102,7 +102,7 @@ namespace NEventSocket
             string context = "default",
             OriginateOptions options = null)
         {
-            return this.InternalOriginate(endpoint, string.Format("{0} {1} {2}", extension, dialplan, context), options);
+            return InternalOriginate(endpoint, string.Format("{0} {1} {2}", extension, dialplan, context), options);
         }
 
         /// <summary>
@@ -117,7 +117,7 @@ namespace NEventSocket
         /// <returns>A Task of <seealso cref="OriginateResult"/>.</returns>
         public Task<OriginateResult> Originate(string endpoint, OriginateOptions options = null, string application = "park")
         {
-            return this.InternalOriginate(endpoint, "&" + application, options);
+            return InternalOriginate(endpoint, "&" + application, options);
         }
 
         private async Task<OriginateResult> InternalOriginate(string endpoint, string destination, OriginateOptions options = null)
@@ -148,7 +148,7 @@ namespace NEventSocket
                             x.UUID == options.UUID
                             && (x.EventName == EventName.ChannelAnswer || x.EventName == EventName.ChannelHangup
                                 || (options.ReturnRingReady && x.EventName == EventName.ChannelProgress))).Cast<BasicMessage>())
-                    .FirstAsync(x => ((x is BackgroundJobResult) && !((BackgroundJobResult)x).Success) || (x is EventMessage))
+                    .FirstAsync(x => (x is BackgroundJobResult && !((BackgroundJobResult)x).Success) || x is EventMessage)
                     .Select(OriginateResult.FromBackgroundJobResultOrChannelEvent)
                     .ToTask()
                     .ConfigureAwait(false);

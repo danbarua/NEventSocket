@@ -24,7 +24,7 @@
 
         private Task Run(CancellationToken cancellationToken)
         {
-            return this.container.Resolve<DisplayCommandLineTasks>().Run(cancellationToken);
+            return container.Resolve<DisplayCommandLineTasks>().Run(cancellationToken);
         }
 
         public int Run()
@@ -33,11 +33,11 @@
 
             SetupLogging(builder);
 
-            this.container = builder.Build();
+            container = builder.Build();
 
-            var cancellationToken = this.CreateCancellationToken();
+            var cancellationToken = CreateCancellationToken();
 
-            Task.WaitAll(this.Run(cancellationToken));
+            Task.WaitAll(Run(cancellationToken));
 
             return 0;
         }
@@ -68,12 +68,12 @@
         {
             Console.CancelKeyPress += (sender, args) =>
             {
-                this.cancellationTokenSource.Cancel();
+                cancellationTokenSource.Cancel();
                 args.Cancel = true;
             };
 
-            this.cancellationTokenSource = new CancellationTokenSource();
-            var cancellationToken = this.cancellationTokenSource.Token;
+            cancellationTokenSource = new CancellationTokenSource();
+            var cancellationToken = cancellationTokenSource.Token;
             //cancellationToken.Register(() => container.Resolve<ILogger>().Warning("Canceling"));
             return cancellationToken;
         }
@@ -82,7 +82,7 @@
         {
             try
             {
-                this.container.Dispose();
+                container.Dispose();
             }
             catch (Exception e)
             {

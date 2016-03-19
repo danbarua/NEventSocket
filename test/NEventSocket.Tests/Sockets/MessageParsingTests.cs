@@ -224,9 +224,9 @@
         [PropertyData("ExampleSessions")]
         public void Can_parse_example_sessions_to_completion(string input)
         {
-                        if (System.Environment.GetEnvironmentVariable("APPVEYOR_BUILD_NUMBER") == null)
+                        if (Environment.GetEnvironmentVariable("APPVEYOR_BUILD_NUMBER") == null)
             {
-                Logging.LogProvider.SetCurrentLogProvider(new ColouredConsoleLogProvider());
+                LogProvider.SetCurrentLogProvider(new ColouredConsoleLogProvider());
             }
 
             bool gotDisconnectNotice = false;

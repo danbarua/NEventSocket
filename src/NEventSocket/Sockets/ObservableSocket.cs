@@ -56,7 +56,7 @@ namespace NEventSocket.Sockets
         {
             Log = LogProvider.GetLogger(GetType());
 
-            this.id = Interlocked.Increment(ref IdCounter);
+            id = Interlocked.Increment(ref IdCounter);
 
             this.tcpClient = tcpClient;
 
@@ -68,7 +68,7 @@ namespace NEventSocket.Sockets
                     Task.Run(
                         async () =>
                         {
-                            SafeLog(LogLevel.Trace, () => "{0} Worker Thread {1} started".Fmt(this.GetType(), this.id));
+                            SafeLog(LogLevel.Trace, () => "{0} Worker Thread {1} started".Fmt(GetType(), id));
 
                             int bytesRead = 1;
                             var stream = tcpClient.GetStream();
@@ -82,7 +82,7 @@ namespace NEventSocket.Sockets
                                     {
                                         if (bytesRead == buffer.Length)
                                         {
-                                            this.subject.OnNext(buffer);
+                                            subject.OnNext(buffer);
                                         }
                                         else
                                         {
@@ -128,7 +128,7 @@ namespace NEventSocket.Sockets
                                 SharedPools.ByteArray.Free(buffer);
                             }
 
-                            SafeLog(LogLevel.Trace, () => "{0} Worker Thread {1} completed".Fmt(this.GetType(), this.id));
+                            SafeLog(LogLevel.Trace, () => "{0} Worker Thread {1} completed".Fmt(GetType(), id));
 
                             Dispose();
                         });

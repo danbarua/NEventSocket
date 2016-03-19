@@ -51,7 +51,7 @@ namespace NEventSocket.Sockets
         /// <param name="responseTimeOut">(Optional) The response timeout.</param>
         protected EventSocket(TcpClient tcpClient, TimeSpan? responseTimeOut = null) : base(tcpClient)
         {
-            Log = LogProvider.GetLogger("{0} ({1})".Fmt(this.GetType(), this.Id));
+            Log = LogProvider.GetLogger("{0} ({1})".Fmt(GetType(), Id));
 
             ResponseTimeOut = responseTimeOut ?? TimeSpan.FromSeconds(5);
 
@@ -77,7 +77,7 @@ namespace NEventSocket.Sockets
 
         public long Id
         {
-            get { return this.id; }
+            get { return id; }
         }
 
         /// <summary>
@@ -250,13 +250,13 @@ namespace NEventSocket.Sockets
             var tcs = new TaskCompletionSource<EventMessage>();
             var subscriptions = new CompositeDisposable();
 
-            if (this.cts.Token.CanBeCanceled)
+            if (cts.Token.CanBeCanceled)
             {
-                subscriptions.Add(this.cts.Token.Register(() => tcs.TrySetCanceled()));
+                subscriptions.Add(cts.Token.Register(() => tcs.TrySetCanceled()));
             }
 
             subscriptions.Add(
-                this.Events.Where(
+                Events.Where(
                     x => x.EventName == EventName.ChannelExecuteComplete && x.Headers["Application-UUID"] == applicationUUID)
                     .Take(1)
                     .Subscribe(
@@ -264,7 +264,7 @@ namespace NEventSocket.Sockets
                             {
                                 if (executeCompleteEvent != null)
                                 {
-                                    this.Log.Debug(
+                                    Log.Debug(
                                         () =>
                                         "{0} ChannelExecuteComplete [{1} {2} {3}]".Fmt(
                                             executeCompleteEvent.UUID,
@@ -274,7 +274,7 @@ namespace NEventSocket.Sockets
                                 }
                                 else
                                 {
-                                    this.Log.Trace(() => "No ChannelExecuteComplete event received for {0}".Fmt(application));
+                                    Log.Trace(() => "No ChannelExecuteComplete event received for {0}".Fmt(application));
                                 }
 
                                 tcs.TrySetResult(executeCompleteEvent);

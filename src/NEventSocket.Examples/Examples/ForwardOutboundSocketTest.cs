@@ -20,15 +20,15 @@
 
         public Task Run(CancellationToken cancellationToken)
         {
-            this.listener = new OutboundListener(8084);
-            this.listener2 = new OutboundListener(8085);
+            listener = new OutboundListener(8084);
+            listener2 = new OutboundListener(8085);
 
             /* this example demonstrates forwarding an outbound connection from one listener to another.
                FS Dialplan is configured to hit localhost:8084
                By parking the call then using sched_api to schedule a transfer, we can disconnect the socket on localhost:8084
                and allow  transfer the call to localhost:8085 without hanging up the call when the first socket disconnects. */
 
-            this.listener.Connections.Subscribe(
+            listener.Connections.Subscribe(
                 async connection =>
                 {
                     try
@@ -48,7 +48,7 @@
                     }
                 });
 
-            this.listener2.Connections.Subscribe(
+            listener2.Connections.Subscribe(
                 async connection =>
                 {
                     await connection.Connect();
@@ -93,9 +93,9 @@
                         await connection.Play(uuid, "$${base_dir}/sounds/en/us/callie/misc/8000/misc-freeswitch_is_state_of_the_art.wav");
                 });
 
-            this.listener.Start();
+            listener.Start();
 
-            this.listener2.Start();
+            listener2.Start();
 
             Console.WriteLine("Listener started on 8084 and 8085. Press [Enter] to exit");
             Console.ReadLine();
@@ -105,8 +105,8 @@
 
         public void Dispose()
         {
-            this.listener.Dispose();
-            this.listener2.Dispose();
+            listener.Dispose();
+            listener2.Dispose();
         }
     }
 }

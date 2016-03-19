@@ -305,7 +305,7 @@ namespace NEventSocket.Channels
             Disposables.Add(bridgedChannels.Subscribe(
                 async b =>
                 {
-                    if (this.bridgedUUID != null && this.bridgedUUID != b.UUID)
+                    if (bridgedUUID != null && bridgedUUID != b.UUID)
                     {
                         await eventSocket.FilterDelete(HeaderNames.UniqueId, bridgedUUID).ConfigureAwait(false);
                         await eventSocket.FilterDelete(HeaderNames.OtherLegUniqueId, bridgedUUID).ConfigureAwait(false);
@@ -323,8 +323,9 @@ namespace NEventSocket.Channels
                 eventSocket.Events.Where(
                     x =>
                     x.EventName == EventName.ChannelBridge
-                    && ((x.UUID != UUID && x.GetHeader(HeaderNames.OtherLegUniqueId) == UUID)) // || (bridgedUUID != null && x.GetHeader(HeaderNames.ChannelCallUniqueId) == bridgedUUID))
-                    && x.UUID != this.bridgedUUID)
+                    && x.UUID != UUID
+                    && x.GetHeader(HeaderNames.OtherLegUniqueId) == UUID
+                    && x.UUID != bridgedUUID)
                     .Subscribe(
                         x =>
                         {

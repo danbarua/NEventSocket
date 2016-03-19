@@ -60,7 +60,7 @@
 
         public void Dispose()
         {
-            this.listener.Dispose();
+            listener.Dispose();
         }
     }
 }

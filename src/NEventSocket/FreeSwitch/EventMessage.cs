@@ -42,8 +42,8 @@ namespace NEventSocket.FreeSwitch
                  */
                 if (basicMessage.Headers.ContainsKey(HeaderNames.EventName))
                 {
-                    this.Headers = basicMessage.Headers;
-                    this.BodyText = basicMessage.BodyText;
+                    Headers = basicMessage.Headers;
+                    BodyText = basicMessage.BodyText;
                     return;
                 }
 
@@ -79,8 +79,8 @@ namespace NEventSocket.FreeSwitch
                     var body = basicMessage.BodyText.Substring(delimiterIndex + 2, contentLength);
 
                     //remove any \n\n if any
-                    var index = body.IndexOf("\n\n", System.StringComparison.Ordinal);
-                    this.BodyText = index > 0 ? body.Substring(0, index) : body;
+                    var index = body.IndexOf("\n\n", StringComparison.Ordinal);
+                    BodyText = index > 0 ? body.Substring(0, index) : body;
                 }
             }
             catch (Exception ex)

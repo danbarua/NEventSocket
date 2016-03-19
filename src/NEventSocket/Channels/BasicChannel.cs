@@ -465,7 +465,7 @@ namespace NEventSocket.Channels
         public Task SendDTMF(string digits, TimeSpan? duration = null)
         {
             var durationMs = duration.HasValue ? duration.Value.TotalMilliseconds : 2000; // default value in freeswitch
-            return this.eventSocket.ExecuteApplication(this.UUID, "send_dtmf", "{0}@{1}".Fmt(digits, durationMs));
+            return eventSocket.ExecuteApplication(UUID, "send_dtmf", "{0}@{1}".Fmt(digits, durationMs));
         }
 
         public Task Exit()
@@ -512,7 +512,7 @@ namespace NEventSocket.Channels
 
         public class AdvancedProperties
         {
-            private BasicChannel channel;
+            private readonly BasicChannel channel;
 
             public AdvancedProperties(BasicChannel channel)
             {

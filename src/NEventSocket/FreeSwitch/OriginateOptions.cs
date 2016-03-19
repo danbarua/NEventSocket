@@ -39,9 +39,9 @@ namespace NEventSocket.FreeSwitch
         /// </summary>
         public OriginateOptions(SerializationInfo info, StreamingContext context)
         {
-            this.parameters =
+            parameters =
                 (Dictionary<string, string>)info.GetValue("parameters", typeof(Dictionary<string, string>));
-            this.ChannelVariables =
+            ChannelVariables =
                 (Dictionary<string, string>)info.GetValue("ChannelVariables", typeof(Dictionary<string, string>));
         }
 
@@ -282,8 +282,8 @@ namespace NEventSocket.FreeSwitch
         /// </summary>
         public void GetObjectData(SerializationInfo info, StreamingContext context)
         {
-            info.AddValue("parameters", this.parameters, typeof(Dictionary<string, string>));
-            info.AddValue("ChannelVariables", this.ChannelVariables, typeof(Dictionary<string, string>));
+            info.AddValue("parameters", parameters, typeof(Dictionary<string, string>));
+            info.AddValue("ChannelVariables", ChannelVariables, typeof(Dictionary<string, string>));
         }
 
         public override bool Equals(object obj)
@@ -298,7 +298,7 @@ namespace NEventSocket.FreeSwitch
                 return true;
             }
 
-            if (obj.GetType() != this.GetType())
+            if (obj.GetType() != GetType())
             {
                 return false;
             }
@@ -310,13 +310,13 @@ namespace NEventSocket.FreeSwitch
         {
             unchecked
             {
-                return ((this.ChannelVariables != null ? this.ChannelVariables.GetHashCode() : 0) * 397) ^ (this.parameters != null ? this.parameters.GetHashCode() : 0);
+                return ((ChannelVariables != null ? ChannelVariables.GetHashCode() : 0) * 397) ^ (parameters != null ? parameters.GetHashCode() : 0);
             }
         }
 
         protected bool Equals(OriginateOptions other)
         {
-            return this.ChannelVariables.SequenceEqual(other.ChannelVariables) && this.parameters.SequenceEqual(other.parameters);
+            return ChannelVariables.SequenceEqual(other.ChannelVariables) && parameters.SequenceEqual(other.parameters);
         }
     }
 }
