@@ -143,8 +143,14 @@ namespace NEventSocket.Sockets
                             .Select(x => new ApiResponse(x))
                             .Do(
                                 result =>
-                                Log.Debug(
-                                    () => "ApiResponse received [{0}] for [{1}]".Fmt(result.BodyText.Replace("\n", string.Empty), command)),
+                                    {
+                                        var logLevel = result.Success ? LogLevel.Debug : LogLevel.Error;
+                                        Log.Log(
+                                            logLevel,
+                                            () =>
+                                            "ApiResponse received [{0}] for [{1}]".Fmt(result.BodyText.Replace("\n", string.Empty), command));
+                                    }
+                                ,
                                 ex => Log.ErrorException("Error waiting for Api Response to [{0}].".Fmt(command), ex))
                             .Subscribe(x => tcs.TrySetResult(x), ex => tcs.TrySetException(ex), subscriptions.Dispose));
 
@@ -178,8 +184,14 @@ namespace NEventSocket.Sockets
                             .Select(x => new CommandReply(x))
                             .Do(
                                 result =>
-                                Log.Debug(
-                                    () => "CommandReply received [{0}] for [{1}]".Fmt(result.ReplyText.Replace("\n", string.Empty), command)),
+                                    {
+                                        var logLevel = result.Success ? LogLevel.Debug : LogLevel.Error;
+                                        Log.Log(logLevel,
+                                            () =>
+                                            "CommandReply received [{0}] for [{1}]".Fmt(
+                                                result.ReplyText.Replace("\n", string.Empty),
+                                                command));
+                                    },
                                 ex => Log.ErrorException("Error waiting for Command Reply to [{0}].".Fmt(command), ex))
                             .Subscribe(x => tcs.TrySetResult(x), ex => tcs.TrySetException(ex), subscriptions.Dispose));
 
