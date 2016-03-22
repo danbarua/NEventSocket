@@ -44,53 +44,72 @@
                     }
                     catch (OperationCanceledException)
                     {
-                        
                     }
                 });
 
             listener2.Connections.Subscribe(
                 async connection =>
                 {
-                    await connection.Connect();
-                    Console.WriteLine("New Socket connected");
+                    try
+                    {
+                        await connection.Connect();
 
-                    connection.Events.Where(x => x.UUID == connection.ChannelData.UUID && x.EventName == EventName.ChannelHangup)
-                        .Take(1)
-                        .Subscribe(
-                            async e =>
-                            {
-                                ColorConsole.WriteLine(
-                                    "Hangup Detected on A-Leg ".Red(),
-                                    e.Headers[HeaderNames.CallerUniqueId],
-                                    " ",
-                                    e.Headers[HeaderNames.HangupCause]);
+                        Console.WriteLine("New Socket connected");
 
-                                await connection.Exit();
-                            });
+                        await connection.ExecuteApplication(connection.ChannelData.UUID, "answer");
+
+                        connection.Events.Where(x => x.UUID == connection.ChannelData.UUID && x.EventName == EventName.ChannelHangup)
+                            .Take(1)
+                            .Subscribe(
+                                async e =>
+                                {
+                                    ColorConsole.WriteLine(
+                                        "Hangup Detected on A-Leg ".Red(),
+                                        e.Headers[HeaderNames.CallerUniqueId],
+                                        " ",
+                                        e.Headers[HeaderNames.HangupCause]);
+
+                                    await connection.Exit();
+                                });
 
 
-                    connection.Events.Where(x => x.UUID == connection.ChannelData.UUID && x.EventName == EventName.Dtmf)
-                       .Subscribe(
-                           async e =>
-                           {
-                               ColorConsole.WriteLine(
-                                   "DTMF Detected on A-Leg ".Red(),
-                                   e.Headers[HeaderNames.CallerUniqueId].Yellow(),
-                                   " ",
-                                   e.Headers[HeaderNames.DtmfDigit].Red());
+                        connection.Events.Where(x => x.UUID == connection.ChannelData.UUID && x.EventName == EventName.Dtmf)
+                            .Subscribe(
+                                async e =>
+                                {
+                                    ColorConsole.WriteLine(
+                                        "DTMF Detected on A-Leg ".Red(),
+                                        e.Headers[HeaderNames.CallerUniqueId].Yellow(),
+                                        " ",
+                                        e.Headers[HeaderNames.DtmfDigit].Red());
 
-                               await connection.Play(connection.ChannelData.UUID, "$${base_dir}/sounds/en/us/callie/misc/8000/misc-freeswitch_is_state_of_the_art.wav");
-                           });
+                                    await connection.Play(connection.ChannelData.UUID, "ivr/ivr-you_entered.wav");
 
-                    var uuid = connection.ChannelData.Headers[HeaderNames.UniqueId];
+                                    await
+                                        connection.Say(
+                                            connection.ChannelData.UUID,
+                                            new SayOptions()
+                                            {
+                                                Gender = SayGender.Feminine,
+                                                Method = SayMethod.Iterated,
+                                                Text = e.Headers[HeaderNames.DtmfDigit],
+                                                Type = SayType.Number
+                                            });
+                                });
 
-                    await connection.SubscribeEvents(EventName.Dtmf, EventName.ChannelHangup);
+                        var uuid = connection.ChannelData.Headers[HeaderNames.UniqueId];
 
-                    await connection.Linger();
-                    await connection.ExecuteApplication(uuid, "answer", null, true, false);
+                        await connection.SubscribeEvents(EventName.Dtmf, EventName.ChannelHangup);
 
-                    var result =
-                        await connection.Play(uuid, "$${base_dir}/sounds/en/us/callie/misc/8000/misc-freeswitch_is_state_of_the_art.wav");
+                        await connection.Linger();
+                        await connection.ExecuteApplication(uuid, "answer", null, true, false);
+
+                        await connection.Play(uuid, "misc/misc-freeswitch_is_state_of_the_art.wav");
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        
+                    }
                 });
 
             listener.Start();

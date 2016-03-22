@@ -50,7 +50,7 @@ namespace NEventSocket.Examples.Examples
 
                             await channel.Answer();
                             await channel.Sleep(400);
-                            await channel.PlayFile("ivr/ivr-welcome_to_freeswitch.wav");
+                            await channel.Play("ivr/ivr-welcome_to_freeswitch.wav");
 
                             await channel.Advanced.Socket.SubscribeCustomEvents(CustomEvents.Conference.Maintainence);
 
@@ -62,8 +62,8 @@ namespace NEventSocket.Examples.Examples
                                 ColorConsole.WriteLine("Recording name file to ", nameFile.Blue());
 
 
-                                await channel.PlayFile("ivr/ivr-say_name.wav");
-                                await channel.PlayFile("tone_stream://%(500,0,500)");
+                                await channel.Play("ivr/ivr-say_name.wav");
+                                await channel.Play("tone_stream://%(500,0,500)");
                                 await channel.Advanced.Socket.ExecuteApplication(channel.UUID, "record", nameFile + " 10 200 1");
 
                                 //when this member enters the conference, play the announcement

@@ -169,7 +169,7 @@ namespace NEventSocket.Channels
                     true);
         }
 
-        public async Task PlayFile(string file, Leg leg = Leg.ALeg, bool mix = false, string terminator = null)
+        public async Task Play(string file, Leg leg = Leg.ALeg, bool mix = false, string terminator = null)
         {
             if (!IsAnswered)
             {
@@ -208,7 +208,7 @@ namespace NEventSocket.Channels
             }
         }
 
-        public Task PlayFiles(IEnumerable<string> files, Leg leg = Leg.ALeg, bool mix = false, string terminator = null)
+        public Task Play(IEnumerable<string> files, Leg leg = Leg.ALeg, bool mix = false, string terminator = null)
         {
             var sb = StringBuilderPool.Allocate();
             var first = true;
@@ -225,7 +225,7 @@ namespace NEventSocket.Channels
                 first = false;
             }
 
-            return PlayFile(StringBuilderPool.ReturnAndFree(sb), leg, mix, terminator);
+            return Play(StringBuilderPool.ReturnAndFree(sb), leg, mix, terminator);
         }
 
         /// <summary>
@@ -234,7 +234,7 @@ namespace NEventSocket.Channels
         /// </summary>
         /// <param name="file">The audio source.</param>
         /// <returns>An <seealso cref="IDisposable"/> which can be disposed to stop the audio.</returns>
-        public async Task<IDisposable> HoldMusic(string file)
+        public async Task<IDisposable> PlayUntilCancelled(string file)
         {
             if (!IsAnswered)
             {

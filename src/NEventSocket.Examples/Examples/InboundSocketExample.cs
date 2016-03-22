@@ -65,7 +65,7 @@
                             client.Exit();
                         });
 
-                    var playResult = await client.Play(uuid, "ivr/8000/ivr-call_being_transferred.wav");
+                    await client.Play(uuid, "ivr/ivr-call_being_transferred.wav");
 
                     var bridgeUUID = Guid.NewGuid().ToString();
 
@@ -100,7 +100,7 @@
 
                         ColorConsole.WriteLine("Bridge failed ".Red(), bridge.ResponseText);
 
-                        await client.Play(uuid, "ivr/8000/ivr-call_rejected.wav");
+                        await client.Play(uuid, "ivr/ivr-call_rejected.wav");
                         await client.Hangup(uuid, HangupCause.CallRejected);
                     }
                     else
@@ -120,7 +120,7 @@
                                     " ",
                                     e.Headers[HeaderNames.HangupCause]);
 
-                                await client.Play(uuid, "ivr/8000/ivr-you_may_exit_by_hanging_up.wav");
+                                await client.Play(uuid, "ivr/ivr-you_may_exit_by_hanging_up.wav");
                                 await client.Hangup(uuid, HangupCause.NormalClearing);
                             });
 
@@ -146,7 +146,7 @@
                                                 client.ExecuteApplication(
                                                     uuid,
                                                     "displace_session",
-                                                    applicationArguments: "{0} m".Fmt("ivr/8000/ivr-recording_paused.wav"));
+                                                    applicationArguments: "{0} m".Fmt("ivr/ivr-recording_paused.wav"));
                                             break;
                                         case "2":
                                             ColorConsole.WriteLine("Unmask recording".Green());
@@ -155,7 +155,7 @@
                                                 client.ExecuteApplication(
                                                     uuid,
                                                     "displace_session",
-                                                    applicationArguments: "{0} m".Fmt("ivr/8000/ivr-begin_recording.wav"));
+                                                    applicationArguments: "{0} m".Fmt("ivr/ivr-begin_recording.wav"));
                                             break;
                                         case "3":
                                             ColorConsole.WriteLine("Stop recording".Green());
@@ -164,7 +164,7 @@
                                                 client.ExecuteApplication(
                                                     uuid,
                                                     "displace_session",
-                                                    applicationArguments: "{0} m".Fmt("ivr/8000/ivr-recording_stopped.wav"));
+                                                    applicationArguments: "{0} m".Fmt("ivr/ivr-recording_stopped.wav"));
                                             break;
                                     }
                                 });
@@ -176,9 +176,6 @@
             {
                 ColorConsole.WriteLine("TaskCancelled - shutting down".OnRed());
                 client.Dispose();
-            }
-            finally
-            {
             }
 
             ColorConsole.WriteLine("Press [Enter] to exit.".Green());

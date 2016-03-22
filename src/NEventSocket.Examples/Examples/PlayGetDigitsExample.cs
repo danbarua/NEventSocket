@@ -68,8 +68,8 @@
                              TimeoutMs = 4000,
                              TerminatorDigits = "#",
                              PromptAudioFile =
-                                     "ivr/8000/ivr-please_enter_pin_followed_by_pound.wav",
-                             BadInputAudioFile = "ivr/8000/ivr-that_was_an_invalid_entry.wav",
+                                     "ivr/ivr-please_enter_pin_followed_by_pound.wav",
+                             BadInputAudioFile = "ivr/ivr-that_was_an_invalid_entry.wav",
                              DigitTimeoutMs = 2000,
                          });
 
@@ -77,7 +77,7 @@
 
                 if (playGetDigitsResult.Success)
                 {
-                    await client.Play(uuid, "ivr/8000/ivr-you_entered.wav");
+                    await client.Play(uuid, "ivr/ivr-you_entered.wav");
                     await
                         client.Say(
                             uuid,
@@ -89,7 +89,7 @@
                             });
                     await
                         client.Play(
-                            uuid, "ivr/8000/ivr-you_may_exit_by_hanging_up.wav", new PlayOptions() { Loops = 3 });
+                            uuid, "ivr/ivr-you_may_exit_by_hanging_up.wav", new PlayOptions() { Loops = 3 });
                     await client.Hangup(uuid, HangupCause.CallRejected);
                 }
             }
