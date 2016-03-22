@@ -49,6 +49,19 @@ namespace NEventSocket
             var response = await SendCommand("connect").ConfigureAwait(false);
             ChannelData = new EventMessage(response);
 
+            var socketMode = ChannelData.GetHeader("Socket-Mode");
+            var controlMode = ChannelData.GetHeader("Control");
+
+            if (socketMode == "static")
+            {
+                Log.Warn("This socket is not using 'async' mode - certain dialplan applications may bock control flow");
+            }
+
+            if (controlMode != "full")
+            {
+                Log.Debug("This socket is not using 'full' control mode - FreeSwitch will not let you execute certain commands.");
+            }
+
             Messages.FirstAsync(m => m.ContentType == ContentTypes.DisconnectNotice)
                             .Subscribe(dn => Log.Trace(() => "Channel {0} Disconnect Notice {1} received.".Fmt(ChannelData.UUID, dn.BodyText)));
 
