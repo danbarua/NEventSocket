@@ -51,7 +51,7 @@ namespace NEventSocket
                         eventSocket.ExecuteApplication(uuid, "playback", file, loops: options.Loops)
                                    .ConfigureAwait(false));
 
-                if (!result.Success)
+                if (!result.Success && result.ChannelData.AnswerState == AnswerState.Answered)
                 {
                     LogFailedApplicationResult(eventSocket, result);
                 }
