@@ -115,8 +115,6 @@ namespace NEventSocket.Examples.Examples
                                                         await bridgedChannel.SetChannelVariable("origination_cancel_key", "#");
                                                         await bridgedChannel.SetChannelVariable("transfer_ringback", RingTone);
 
-                                                        await bridgedChannel.Play("ivr/ivr-please_hold_while_party_contacted.wav");
-
                                                         var xfer = await bridgedChannel.AttendedTransfer("user/{0}".Fmt(digits));
                                                         holdMusic.Dispose();
 

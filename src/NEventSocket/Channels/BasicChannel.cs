@@ -351,9 +351,7 @@ namespace NEventSocket.Channels
                             && x.UUID == bLegUUID
                             && x.GetHeader(HeaderNames.Application) == "att_xfer");
 
-                var cNotAnswered = cLegHangup.And(channelExecuteComplete.Where(x => x.GetVariable("originate_disposition") == "NO_ANSWER"));
-
-                var cRejected = cLegHangup.And(channelExecuteComplete.Where(x => x.GetVariable("originate_disposition") == "CALL_REJECTED"));
+                var cFailed = cLegHangup.And(channelExecuteComplete.Where(x => x.GetVariable("originate_disposition") != "SUCCESS"));
 
                 var cAnsweredThenHungUp =
                     cLegAnswer.And(cLegHangup)
@@ -367,19 +365,13 @@ namespace NEventSocket.Channels
                     cLegAnswer.And(bLegHangup)
                         .And(cLegBridge.Where(x => x.OtherLegUUID == aLegUUID));
 
-                subscriptions.Add(Observable.When(cNotAnswered.Then((hangup, execComplete) => new { hangup, execComplete }))
+                subscriptions.Add(Observable.When(cFailed.Then((hangup, execComplete) => new { hangup, execComplete }))
                                             .Subscribe(
                                                 x =>
                                                 {
                                                     Log.Debug(() => "Att Xfer Not Answered");
-                                                    tcs.TrySetResult(AttendedTransferResult.Failed(FreeSwitch.HangupCause.NoAnswer));
+                                                    tcs.TrySetResult(AttendedTransferResult.Failed(x.execComplete.GetVariable("originate_disposition").HeaderToEnum<HangupCause>()));
                                                 }));
-
-                subscriptions.Add(Observable.When(cRejected.Then((hangup, execComplete) => new {hangup, execComplete}))
-                                            .Subscribe(x => {
-                                                Log.Debug(() => "Att Xfer Rejected");
-                                                tcs.TrySetResult(AttendedTransferResult.Failed(FreeSwitch.HangupCause.CallRejected));
-                                            }));
 
                 subscriptions.Add(Observable.When(cAnsweredThenHungUp.Then((answer, hangup, execComplete) => new { answer, hangup, execComplete }))
                                             .Subscribe(
@@ -423,7 +415,7 @@ namespace NEventSocket.Channels
 
                 return tcs.Task.Then(() => subscriptions.Dispose());
             }
-            catch (TaskCanceledException ex)
+            catch (TaskCanceledException)
             {
                 return Task.FromResult(AttendedTransferResult.Failed(FreeSwitch.HangupCause.None));
             }
