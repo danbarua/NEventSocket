@@ -145,6 +145,14 @@ namespace NEventSocket.Sockets
                                 result =>
                                     {
                                         var logLevel = result.Success ? LogLevel.Debug : LogLevel.Error;
+
+                                        if (command.StartsWith("pause") || command.StartsWith("uuid_break"))
+                                        {
+                                            //it seems these commands always return "-ERR no reply"
+                                            //https://freeswitch.org/confluence/display/FREESWITCH/mod_commands#mod_commands-pause.1
+                                            logLevel = LogLevel.Debug;
+                                        }
+
                                         Log.Log(
                                             logLevel,
                                             () =>
