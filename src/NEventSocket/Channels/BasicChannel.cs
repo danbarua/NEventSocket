@@ -194,7 +194,7 @@ namespace NEventSocket.Channels
                     await
                         Task.WhenAll(
                             eventSocket.ExecuteApplication(UUID, "displace_session", "{0} {1}{2}".Fmt(file, mix ? "m" : string.Empty, "w"), false, false),
-                            eventSocket.ExecuteApplication(UUID, "displace_session", "{0} {1}{2}".Fmt(file, mix ? "m" : string.Empty, "r"), false, false))
+                            eventSocket.ExecuteApplication(lastEvent.Headers[HeaderNames.OtherLegUniqueId], "displace_session", "{0} {1}{2}".Fmt(file, mix ? "m" : string.Empty, "w"), false, false))
                             .ConfigureAwait(false);
                     break;
                 case Leg.ALeg:
