@@ -146,10 +146,11 @@ namespace NEventSocket.Sockets
                                     {
                                         var logLevel = result.Success ? LogLevel.Debug : LogLevel.Error;
 
-                                        if (command.StartsWith("pause") || command.StartsWith("uuid_break"))
+                                        if (result.BodyText.StartsWith("-ERR no reply"))
                                         {
-                                            //it seems these commands always return "-ERR no reply"
-                                            //https://freeswitch.org/confluence/display/FREESWITCH/mod_commands#mod_commands-pause.1
+                                            //API Commands that don't return a response get turned into "-ERR no reply"
+                                            //this is probably not an error condition
+                                            //see mod_event_socket.c line 1553
                                             logLevel = LogLevel.Debug;
                                         }
 
