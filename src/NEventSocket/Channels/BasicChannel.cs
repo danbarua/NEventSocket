@@ -181,7 +181,7 @@ namespace NEventSocket.Channels
                 await SetChannelVariable("playback_terminators", terminator).ConfigureAwait(false);
             }
 
-            if (leg == Leg.ALeg && !IsBridged)
+            if (leg == Leg.ALeg || !IsBridged)
             {
                 await eventSocket.Play(UUID, file, new PlayOptions()).ConfigureAwait(false);
                 return;
