@@ -36,6 +36,8 @@ namespace NEventSocket.Sockets
 
         private readonly InterlockedBoolean disposed = new InterlockedBoolean();
 
+        private readonly InterlockedBoolean isStarted = new InterlockedBoolean();
+
         private TcpClient tcpClient;
 
         private Subject<byte[]> subject;
@@ -65,6 +67,11 @@ namespace NEventSocket.Sockets
             receiver = Observable.Defer(
                 () =>
                 {
+                    if (isStarted.EnsureCalledOnce())
+                    {
+                        return subject.AsObservable();
+                    }
+
                     Task.Run(
                         async () =>
                         {
