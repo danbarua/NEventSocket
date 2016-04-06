@@ -145,6 +145,15 @@ namespace NEventSocket.Sockets
                                 result =>
                                     {
                                         var logLevel = result.Success ? LogLevel.Debug : LogLevel.Error;
+
+                                        if (result.BodyText.StartsWith("-ERR no reply"))
+                                        {
+                                            //API Commands that don't return a response get turned into "-ERR no reply"
+                                            //this is probably not an error condition
+                                            //see mod_event_socket.c line 1553
+                                            logLevel = LogLevel.Debug;
+                                        }
+
                                         Log.Log(
                                             logLevel,
                                             () =>
