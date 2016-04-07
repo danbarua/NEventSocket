@@ -29,6 +29,8 @@ namespace NEventSocket.Channels
 
         private string bridgedUUID;
 
+        private RecordingStatus recordingStatus = RecordingStatus.NotRecording;
+
         protected internal Channel(OutboundSocket outboundSocket) : this(outboundSocket.ChannelData, outboundSocket)
         {
         }
@@ -68,6 +70,8 @@ namespace NEventSocket.Channels
         }
 
         public IObservable<BridgedChannel> BridgedChannels { get { return bridgedChannels.AsObservable(); } }
+
+        public RecordingStatus RecordingStatus { get {  return recordingStatus;} }
 
         public async Task BridgeTo(string destination, BridgeOptions options, Action<EventMessage> onProgress = null)
         {
@@ -173,6 +177,7 @@ namespace NEventSocket.Channels
             recordingPath = file;
             await eventSocket.SendApi("uuid_record {0} start {1} {2}".Fmt(UUID, recordingPath, maxSeconds)).ConfigureAwait(false);
             Log.Debug(() => "Channel {0} is recording to {1}".Fmt(UUID, recordingPath));
+            recordingStatus = RecordingStatus.Recording;
         }
 
         public async Task MaskRecording()
@@ -190,6 +195,7 @@ namespace NEventSocket.Channels
             {
                 await eventSocket.SendApi("uuid_record {0} mask {1}".Fmt(UUID, recordingPath)).ConfigureAwait(false);
                 Log.Debug(() => "Channel {0} has masked recording to {1}".Fmt(UUID, recordingPath));
+                recordingStatus = RecordingStatus.Paused;
             }
         }
 
@@ -208,6 +214,7 @@ namespace NEventSocket.Channels
             {
                 await eventSocket.SendApi("uuid_record {0} unmask {1}".Fmt(UUID, recordingPath)).ConfigureAwait(false);
                 Log.Debug(() => "Channel {0} has unmasked recording to {1}".Fmt(UUID, recordingPath));
+                recordingStatus = RecordingStatus.Recording;
             }
         }
 
@@ -227,6 +234,7 @@ namespace NEventSocket.Channels
                 await eventSocket.SendApi("uuid_record {0} stop {1}".Fmt(UUID, recordingPath)).ConfigureAwait(false);
                 recordingPath = null;
                 Log.Debug(() => "Channel {0} has stopped recording to {1}".Fmt(UUID, recordingPath));
+                recordingStatus = RecordingStatus.NotRecording;
             }
         }
 
