@@ -1,3 +1,5 @@
+v2.0.0
+ - Moved Originate operations from InboundSocket to extension methods on EventSocket (breaks binary compatibility)
 v1.0.0
  - If you want to subscribe to events via the `socket.Events` observable, when calling ```socket.SubscribeEvents()``` you must specify which events you want to subscribe to.
  - Channels will continue to manage their own event subscriptions under the hood. Events can be subscribed via ```channel.Advanced.Socket.SubscribeEvents()```.

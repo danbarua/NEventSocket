@@ -71,6 +71,7 @@
     <Compile Include="CommandExtensions.cs" />
     <Compile Include="ApplicationExtensions.cs" />
     <Compile Include="Digits.cs" />
+    <Compile Include="OriginateExtensions.cs" />
     <Compile Include="Util\DisposableAction.cs" />
     <Compile Include="FreeSwitch\AttendedTransferResult.cs" />
     <Compile Include="FreeSwitch\AttendedTransferResultStatus.cs" />
