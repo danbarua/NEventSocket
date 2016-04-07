@@ -71,6 +71,8 @@ namespace NEventSocket.Channels
 
         public IObservable<BridgedChannel> BridgedChannels { get { return bridgedChannels.AsObservable(); } }
 
+        public BridgedChannel OtherLeg { get; private set; }
+
         public RecordingStatus RecordingStatus { get {  return recordingStatus;} }
 
         public async Task BridgeTo(string destination, BridgeOptions options, Action<EventMessage> onProgress = null)
@@ -323,8 +325,10 @@ namespace NEventSocket.Channels
                     bridgedUUID = b.UUID;
 
                     await eventSocket.Filter(HeaderNames.UniqueId, bridgedUUID).ConfigureAwait(false); 
-                    await eventSocket.Filter(HeaderNames.OtherLegUniqueId, bridgedUUID).ConfigureAwait(false); 
-                    await eventSocket.Filter(HeaderNames.ChannelCallUniqueId, bridgedUUID).ConfigureAwait(false); 
+                    await eventSocket.Filter(HeaderNames.OtherLegUniqueId, bridgedUUID).ConfigureAwait(false);
+                    await eventSocket.Filter(HeaderNames.ChannelCallUniqueId, bridgedUUID).ConfigureAwait(false);
+
+                    this.OtherLeg = b;
                 }));
 
             Disposables.Add(
