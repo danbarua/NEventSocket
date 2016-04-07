@@ -37,6 +37,7 @@ namespace NEventSocket.Channels
 
         protected internal Channel(EventMessage eventMessage, EventSocket eventSocket) : base(eventMessage, eventSocket)
         {
+            LingerTime = 10;
         }
 
         internal static async Task<Channel> Create(OutboundSocket outboundSocket)
@@ -75,6 +76,10 @@ namespace NEventSocket.Channels
         public BridgedChannel OtherLeg { get; private set; }
 
         public RecordingStatus RecordingStatus { get {  return recordingStatus;} }
+
+        public bool ExitOnHangup { get; set; }
+
+        public int LingerTime { get; set; }
 
         public async Task BridgeTo(string destination, BridgeOptions options, Action<EventMessage> onProgress = null)
         {
@@ -357,6 +362,12 @@ namespace NEventSocket.Channels
                                    {
                                        if (ExitOnHangup)
                                        {
+                                           //give event subscribers time to complete
+                                           if (LingerTime > 0)
+                                           {
+                                               await Task.Delay(LingerTime * 1000);
+                                           }
+
                                            Log.Info(() => "Channel [{0}] exiting".Fmt(UUID));
                                            await eventSocket.Exit().ConfigureAwait(false);
                                        }
@@ -365,7 +376,5 @@ namespace NEventSocket.Channels
 
             Log.Trace(() => "Channel [{0}] subscriptions initialized".Fmt(UUID));
         }
-
-        public bool ExitOnHangup { get; set; }
     }
 }
