@@ -253,7 +253,7 @@ namespace NEventSocket.Channels
 
             // essentially, we'll do a playback application call without waiting for the ChannelExecuteComplete event
             // the caller can .Dispose() the returned token to do a uuid_break on the channel to kill audio.
-            await eventSocket.SendCommand(string.Format("sendmsg {0}\ncall-command: execute\nexecute-app-name: playback\nexecute-app-arg:{1}", UUID, file));
+            await eventSocket.SendCommand(string.Format("sendmsg {0}\ncall-command: execute\nexecute-app-name: playback\nexecute-app-arg:{1}\nloops:-1", UUID, file));
 
             var cancellation = new DisposableAction(
                 async () =>
