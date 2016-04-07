@@ -24,6 +24,8 @@ namespace NEventSocket.Sockets
     using NEventSocket.Util;
     using NEventSocket.Util.ObjectPooling;
 
+    using AsyncLock = Util.AsyncLock;
+
     /// <summary>
     /// Base class providing common functionality shared between an <seealso cref="InboundSocket"/> and an <seealso cref="OutboundSocket"/>.
     /// </summary>
@@ -38,7 +40,7 @@ namespace NEventSocket.Sockets
 
         private readonly CancellationTokenSource cts = new CancellationTokenSource();
 
-        private readonly object gate = new object();
+        private readonly AsyncLock gate = new AsyncLock();
 
         private readonly IObservable<BasicMessage> messages;
 
@@ -128,12 +130,12 @@ namespace NEventSocket.Sockets
         /// </remarks>
         /// <param name="command">The API command to send (see https://wiki.freeswitch.org/wiki/Mod_commands) </param>
         /// <returns>A Task of <seealso cref="ApiResponse"/>.</returns>
-        public Task<ApiResponse> SendApi(string command)
+        public async Task<ApiResponse> SendApi(string command)
         {
-            Log.Trace(() => "Sending [api {0}]".Fmt(command));
 
-            lock (gate)
+            using (var asyncLock = await gate.LockAsync().ConfigureAwait(false))
             {
+                Log.Trace(() => "Sending [api {0}]".Fmt(command));
                 var tcs = new TaskCompletionSource<ApiResponse>();
                 var subscriptions = new CompositeDisposable { cts.Token.Register(() => tcs.TrySetCanceled()) };
 
@@ -142,37 +144,39 @@ namespace NEventSocket.Sockets
                             .Take(1)
                             .Select(x => new ApiResponse(x))
                             .Do(
-                                result =>
+                                m =>
+                                {
+                                    var logLevel = m.Success ? LogLevel.Debug : LogLevel.Error;
+
+                                    if (m.BodyText.StartsWith("-ERR no reply"))
                                     {
-                                        var logLevel = result.Success ? LogLevel.Debug : LogLevel.Error;
-
-                                        if (result.BodyText.StartsWith("-ERR no reply"))
-                                        {
-                                            //API Commands that don't return a response get turned into "-ERR no reply"
-                                            //this is probably not an error condition
-                                            //see mod_event_socket.c line 1553
-                                            logLevel = LogLevel.Debug;
-                                        }
-
-                                        if (result.Success && command.StartsWith("uuid_dump"))
-                                        {
-                                            //we don't need to dump the entire response to the logs
-                                            Log.Log(logLevel, () => "ApiResponse received CHANNEL_DATA for [{0}]".Fmt(command));
-                                        }
-                                        else
-                                        {
-                                            Log.Log(logLevel, () => "ApiResponse received [{0}] for [{1}]".Fmt(result.BodyText.Replace("\n", string.Empty), command));
-                                        }
-                                        
+                                    //API Commands that don't return a response get turned into "-ERR no reply"
+                                    //this is probably not an error condition
+                                    //see mod_event_socket.c line 1553
+                                    logLevel = LogLevel.Debug;
                                     }
-                                ,
+
+                                    if (m.Success && command.StartsWith("uuid_dump"))
+                                    {
+                                    //we don't need to dump the entire response to the logs
+                                    Log.Log(logLevel, () => "ApiResponse received CHANNEL_DATA for [{0}]".Fmt(command));
+                                    }
+                                    else
+                                    {
+                                        Log.Log(
+                                            logLevel,
+                                            () => "ApiResponse received [{0}] for [{1}]".Fmt(m.BodyText.Replace("\n", string.Empty), command));
+                                    }
+                                },
                                 ex => Log.ErrorException("Error waiting for Api Response to [{0}].".Fmt(command), ex))
-                            .Subscribe(x => tcs.TrySetResult(x), ex => tcs.TrySetException(ex), subscriptions.Dispose));
+                                .Subscribe(x => tcs.TrySetResult(x), ex => tcs.TrySetException(ex), subscriptions.Dispose));
 
-                SendAsync(Encoding.ASCII.GetBytes("api " + command + "\n\n"), cts.Token)
-                    .ContinueOnFaultedOrCancelled(tcs, subscriptions.Dispose);
+                await
+                    SendAsync(Encoding.ASCII.GetBytes("api " + command + "\n\n"), cts.Token)
+                        .ContinueOnFaultedOrCancelled(tcs, subscriptions.Dispose)
+                        .ConfigureAwait(false);
 
-                return tcs.Task;
+                return await tcs.Task.ConfigureAwait(false);
             }
         }
 
@@ -184,12 +188,11 @@ namespace NEventSocket.Sockets
         /// </remarks>
         /// <param name="command">The command to send.</param>
         /// <returns>A Task of <seealso cref="CommandReply"/>.</returns>
-        public Task<CommandReply> SendCommand(string command)
+        public async Task<CommandReply> SendCommand(string command)
         {
-            Log.Trace(() => "Sending [{0}]".Fmt(command));
-
-            lock (gate)
+            using (var asyncLock = await gate.LockAsync().ConfigureAwait(false))
             {
+                Log.Trace(() => "Sending [{0}]".Fmt(command));
                 var tcs = new TaskCompletionSource<CommandReply>();
                 var subscriptions = new CompositeDisposable { cts.Token.Register(() => tcs.TrySetCanceled()) };
 
@@ -210,9 +213,12 @@ namespace NEventSocket.Sockets
                                 ex => Log.ErrorException("Error waiting for Command Reply to [{0}].".Fmt(command), ex))
                             .Subscribe(x => tcs.TrySetResult(x), ex => tcs.TrySetException(ex), subscriptions.Dispose));
 
-                SendAsync(Encoding.ASCII.GetBytes(command + "\n\n"), cts.Token).ContinueOnFaultedOrCancelled(tcs, subscriptions.Dispose);
+                await
+                    SendAsync(Encoding.ASCII.GetBytes(command + "\n\n"), cts.Token)
+                        .ContinueOnFaultedOrCancelled(tcs, subscriptions.Dispose)
+                        .ConfigureAwait(false);
 
-                return tcs.Task;
+                return await tcs.Task.ConfigureAwait(false);
             }
         }
 
