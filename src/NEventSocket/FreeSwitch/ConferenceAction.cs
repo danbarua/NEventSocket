@@ -20,7 +20,7 @@ namespace NEventSocket.FreeSwitch
         SpeakText,
         SpeakTextMember,
         ConferenceCreate,
-        ConfernceDestroy,
+        ConferenceDestroy,
         Lock,
         Unlock,
         EnergyLevel,
