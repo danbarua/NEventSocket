@@ -154,10 +154,16 @@ namespace NEventSocket.Sockets
                                             logLevel = LogLevel.Debug;
                                         }
 
-                                        Log.Log(
-                                            logLevel,
-                                            () =>
-                                            "ApiResponse received [{0}] for [{1}]".Fmt(result.BodyText.Replace("\n", string.Empty), command));
+                                        if (result.Success && command.StartsWith("uuid_dump"))
+                                        {
+                                            //we don't need to dump the entire response to the logs
+                                            Log.Log(logLevel, () => "ApiResponse received CHANNEL_DATA for [{0}]".Fmt(command));
+                                        }
+                                        else
+                                        {
+                                            Log.Log(logLevel, () => "ApiResponse received [{0}] for [{1}]".Fmt(result.BodyText.Replace("\n", string.Empty), command));
+                                        }
+                                        
                                     }
                                 ,
                                 ex => Log.ErrorException("Error waiting for Api Response to [{0}].".Fmt(command), ex))
