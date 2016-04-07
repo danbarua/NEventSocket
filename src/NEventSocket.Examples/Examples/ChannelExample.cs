@@ -167,7 +167,7 @@ namespace NEventSocket.Examples.Examples
                         channel.HangupCallBack = (e) =>
                         {
                             ColorConsole.WriteLine("Hangup Detected on A-Leg {0} {1}".Fmt(e.Headers[HeaderNames.CallerUniqueId], e.Headers[HeaderNames.HangupCause]).Red());
-                            ColorConsole.WriteLine("Aleg bridge {0}".Fmt(channel.Advanced.GetVariable("last_bridge_hangup_cause")).OnRed());
+                            ColorConsole.WriteLine("Aleg bridge {0}".Fmt(channel.GetVariable("last_bridge_hangup_cause")).OnRed());
                         };
 
                         await channel.Answer();
@@ -195,9 +195,9 @@ namespace NEventSocket.Examples.Examples
                             ContinueOnFail = true,
                             HangupAfterBridge = true,
                             TimeoutSeconds = 10,
-                            CallerIdName = channel.Advanced.GetVariable("effective_caller_id_name"),
+                            CallerIdName = channel.GetVariable("effective_caller_id_name"),
                             CallerIdNumber =
-                                                    channel.Advanced.GetVariable("effective_caller_id_number"),
+                                                    channel.GetVariable("effective_caller_id_number"),
                         };
 
 
@@ -210,7 +210,7 @@ namespace NEventSocket.Examples.Examples
 
                         if (!channel.IsBridged)
                         {
-                            ColorConsole.WriteLine("Bridge Failed - {0}".Fmt(channel.Advanced.GetVariable("last_bridge_hangup_cause")).Red());
+                            ColorConsole.WriteLine("Bridge Failed - {0}".Fmt(channel.GetVariable("last_bridge_hangup_cause")).Red());
                             await channel.Play("ivr/ivr-call_rejected.wav");
                             await channel.Hangup(HangupCause.NormalTemporaryFailure);
                         }

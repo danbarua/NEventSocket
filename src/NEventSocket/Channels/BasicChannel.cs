@@ -72,11 +72,6 @@ namespace NEventSocket.Channels
                                    }));
         }
 
-        /// <summary>
-        /// Provides access to the underlying <see cref="EventSocket"/> for low-level operations
-        /// </summary>
-        public AdvancedProperties Advanced { get { return new AdvancedProperties(this); } }
-
         public string UUID { get; protected set; }
 
         public ChannelState ChannelState
@@ -125,6 +120,10 @@ namespace NEventSocket.Channels
                         .Select(x => x.Headers[HeaderNames.DtmfDigit]);
             }
         }
+        
+        public EventSocket Socket { get { return eventSocket; } }
+
+        public IDictionary<string,string> Headers { get {  return lastEvent.Headers; } } 
 
         public bool IsBridged
         {
@@ -148,6 +147,16 @@ namespace NEventSocket.Channels
             {
                 return Answered.HasValue && Answered.Value == AnswerState.Early;
             }
+        }
+
+        public string GetHeader(string headerName)
+        {
+            return lastEvent.GetHeader(headerName);
+        }
+
+        public string GetVariable(string variableName)
+        {
+            return lastEvent.GetVariable(variableName);
         }
 
         public IObservable<string> FeatureCodes(string prefix = "#")
@@ -500,30 +509,6 @@ namespace NEventSocket.Channels
             }
 
             return toRun();
-        }
-
-        public class AdvancedProperties
-        {
-            private readonly BasicChannel channel;
-
-            public AdvancedProperties(BasicChannel channel)
-            {
-                this.channel = channel;
-            }
-
-            public EventMessage LastEvent { get { return channel.lastEvent; } }
-
-            public EventSocket Socket { get { return channel.eventSocket; } }
-
-            public string GetHeader(string headerName)
-            {
-                return channel.lastEvent.GetHeader(headerName);
-            }
-
-            public string GetVariable(string variableName)
-            {
-                return channel.lastEvent.GetVariable(variableName);
-            }
         }
     }
 }

@@ -33,8 +33,8 @@ namespace NEventSocket.Examples.Examples
                 {
                     try
                     {
-                        var serverIpAddress = channel.Advanced.GetHeader("FreeSWITCH-IPv4");
-                        var destinationNumber = channel.Advanced.GetHeader("Channel-Destination-Number");
+                        var serverIpAddress = channel.GetHeader("FreeSWITCH-IPv4");
+                        var destinationNumber = channel.GetHeader("Channel-Destination-Number");
 
                         ColorConsole.WriteLine("Connection from server ", serverIpAddress.Blue(), " for number", destinationNumber.Blue());
 
@@ -52,7 +52,7 @@ namespace NEventSocket.Examples.Examples
                             await channel.Sleep(400);
                             await channel.Play("ivr/ivr-welcome_to_freeswitch.wav");
 
-                            await channel.Advanced.Socket.SubscribeCustomEvents(CustomEvents.Conference.Maintainence);
+                            await channel.Socket.SubscribeCustomEvents(CustomEvents.Conference.Maintainence);
 
                             if (conferenceIsStarted)
                             {
@@ -64,12 +64,12 @@ namespace NEventSocket.Examples.Examples
 
                                 await channel.Play("ivr/ivr-say_name.wav");
                                 await channel.Play("tone_stream://%(500,0,500)");
-                                await channel.Advanced.Socket.ExecuteApplication(channel.UUID, "record", nameFile + " 10 200 1");
+                                await channel.Socket.ExecuteApplication(channel.UUID, "record", nameFile + " 10 200 1");
 
                                 //when this member enters the conference, play the announcement
-                                channel.Advanced.Socket.ConferenceEvents.FirstAsync(x => x.Action == ConferenceAction.AddMember)
+                                channel.Socket.ConferenceEvents.FirstAsync(x => x.Action == ConferenceAction.AddMember)
                                     .Subscribe(
-                                        _ => channel.Advanced.Socket.Api("conference {0} play file_string://{1}!conference/conf-has_joined.wav"
+                                        _ => channel.Socket.Api("conference {0} play file_string://{1}!conference/conf-has_joined.wav"
                                             .Fmt(ConferenceId, nameFile)));
                             }
                             else
@@ -79,7 +79,7 @@ namespace NEventSocket.Examples.Examples
                                 conferenceServerIp = serverIpAddress;
                             }
 
-                            channel.Advanced.Socket.ConferenceEvents
+                            channel.Socket.ConferenceEvents
                                 .Subscribe(x =>
                                 {
                                     ColorConsole.WriteLine("Got conf event ".DarkYellow(), x.Action.ToString().Yellow());
@@ -96,7 +96,7 @@ namespace NEventSocket.Examples.Examples
                                 });
 
                             //if we await the result of this, we'll get OperationCanceledException on hangup
-                            await channel.Advanced.Socket.ExecuteApplication(channel.UUID, "conference", ConferenceArgs);
+                            await channel.Socket.ExecuteApplication(channel.UUID, "conference", ConferenceArgs);
                         }
                     }
                     catch (OperationCanceledException ex)
