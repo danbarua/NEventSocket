@@ -184,12 +184,23 @@ namespace NEventSocket.FreeSwitch
         /// <remarks>
         /// See https://wiki.freeswitch.org/wiki/Variable_bridge_filter_dtmf
         /// </remarks>
-        public bool FilterDtmf
+        public Leg FilterDtmf
         {
             set
             {
-                ChannelVariables["bridge_filter_dtmf"] = value.ToString().ToLowerInvariant();
-                parameters["bridge_filter_dtmf"] = value.ToString().ToLowerInvariant();
+                switch (value)
+                {
+                    case Leg.ALeg:
+                        ChannelVariables["bridge_filter_dtmf"] = "true";
+                        break;
+                    case Leg.BLeg:
+                        parameters["bridge_filter_dtmf"] = "true";
+                        break;
+                    case Leg.Both:
+                        ChannelVariables["bridge_filter_dtmf"] = "true";
+                        parameters["bridge_filter_dtmf"] = "true";
+                        break;
+                }
             }
         }
 
@@ -322,7 +333,7 @@ namespace NEventSocket.FreeSwitch
         }
 
         /// <summary>
-        /// Container for any Channel Variables to be set before executing the bridge
+        /// Container for any Channel Variables to be set on the A-Leg before executing the bridge
         /// </summary>
         public IDictionary<string, string> ChannelVariables { get; private set; }
 
