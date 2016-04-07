@@ -45,6 +45,27 @@ namespace NEventSocket.FreeSwitch
         }
 
         /// <summary>
+        /// Gets or sets the raw <see cref="System.String"/> value of the specified parameter.
+        /// </summary>
+        /// <value>
+        /// The raw value.
+        /// </value>
+        /// <param name="parameter">The parameter name.</param>
+        /// <returns></returns>
+        public string this[string parameter]
+        {
+            get
+            {
+                return parameters[parameter];
+            }
+
+            set
+            {
+                parameters[parameter] = value;
+            }
+        }
+
+        /// <summary>
         /// Optionally set the UUID of the outbound leg before initiating the bridge.
         /// </summary>
         /// <remarks>
@@ -168,6 +189,7 @@ namespace NEventSocket.FreeSwitch
             set
             {
                 ChannelVariables["bridge_filter_dtmf"] = value.ToString().ToLowerInvariant();
+                parameters["bridge_filter_dtmf"] = value.ToString().ToLowerInvariant();
             }
         }
 
