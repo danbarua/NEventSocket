@@ -46,6 +46,27 @@ namespace NEventSocket.FreeSwitch
         }
 
         /// <summary>
+        /// Gets or sets the raw <see cref="System.String"/> value of the specified parameter.
+        /// </summary>
+        /// <value>
+        /// The raw value.
+        /// </value>
+        /// <param name="parameter">The parameter name.</param>
+        /// <returns></returns>
+        public string this[string parameter]
+        {
+            get
+            {
+                return parameters[parameter];
+            }
+
+            set
+            {
+                parameters[parameter] = value;
+            }
+        }
+
+        /// <summary>
         /// Optionally set the UUID of the outbound leg before originating the call.
         /// </summary>
         /// <remarks>
