@@ -14,7 +14,15 @@
     <copyright>Copyright (C) Dan Barua 2014</copyright>
     <tags>FreeSwitch EventSocket ESL Reactive</tags>
     <releaseNotes>
-      
+      1.1.0 - Critical Bugfix:
+                - Make socket initialization thread-safe
+              Other Bugfixes: 
+                - Use async-locking around command and API sends
+                  to correlate responses
+                - Don't log spurious API error responses
+                - Don't log uuid_dump responses
+                - Fix Playback application edge cases
+                - Log warnings in OutboundSocket mode when not using async full
       1.0.2 - Bugfix: Handle multi-arg applications on Originate
                       Surface Api Response and Command Reply errors in logs
       1.0.1 - Bugfix - ensure subscribed to BackgroundJob events when initiating BgAPI
