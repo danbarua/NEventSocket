@@ -46,16 +46,25 @@ namespace NEventSocket
             {
                 var socket = new InboundSocket(host, port, timeout);
 
-                await
-                    socket.Messages.FirstOrDefaultAsync(x => x.ContentType == ContentTypes.AuthRequest)
-                        .Timeout(
-                            socket.ResponseTimeOut,
-                            Observable.Throw<BasicMessage>(
-                                new TimeoutException(
-                                    "No Auth Request received within the specified timeout of {0}.".Fmt(socket.ResponseTimeOut))))
-                        .Do(_ => Log.Trace(() => "Received Auth Request"), ex => Log.ErrorException("Error waiting for AuthRequest.", ex))
-                        .ToTask()
-                        .ConfigureAwait(false);
+                var firstMessage =
+                await socket.Messages.Where(
+                              x => x.ContentType == ContentTypes.AuthRequest
+                           || x.ContentType == ContentTypes.RudeRejection)
+                          .Take(1)
+                          .Timeout(
+                              socket.ResponseTimeOut,
+                              Observable.Throw<BasicMessage>(
+                                  new TimeoutException(
+                                      "No Auth Request received within the specified timeout of {0}.".Fmt(socket.ResponseTimeOut))))
+                          .Do(_ => Log.Trace(() => "Received Auth Request"), ex => Log.ErrorException("Error waiting for AuthRequest.", ex))
+                          .ToTask()
+                          .ConfigureAwait(false);
+
+                if (firstMessage.ContentType == ContentTypes.RudeRejection)
+                {
+                    Log.Error("InboundSocket connection rejected ({0}).".Fmt(firstMessage.BodyText));
+                    throw new InboundSocketConnectionFailedException("Connection Rejected - '{0}'. Check the acl in eventsocket.conf".Fmt(firstMessage.BodyText));
+                }
 
                 var result = await socket.Auth(password).ConfigureAwait(false);
 
