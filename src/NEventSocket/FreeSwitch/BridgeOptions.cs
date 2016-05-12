@@ -152,8 +152,6 @@ namespace NEventSocket.FreeSwitch
             }
         }
 
-        // { get; set; }
-
         /// <summary>
         /// The maximum number of seconds to wait for an answer from a remote endpoint.
         /// </summary>
@@ -161,7 +159,7 @@ namespace NEventSocket.FreeSwitch
         {
             set
             {
-                parameters["call_timeout"] = value.ToString();
+                parameters["leg_timeout"] = value.ToString();
             }
         }
 
