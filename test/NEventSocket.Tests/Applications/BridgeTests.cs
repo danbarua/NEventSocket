@@ -30,7 +30,7 @@
             options.ChannelVariables.Add("baz", "widgets");
 
             var toString = options.ToString();
-            const string Expected = "{origination_uuid='985cea12-4e70-4c03-8a2c-2c4b4502bbbb',call_timeout='20',origination_caller_id_name='Dan B Leg',origination_caller_id_number='987654321',ignore_early_media='true'}";
+            const string Expected = "{origination_uuid='985cea12-4e70-4c03-8a2c-2c4b4502bbbb',leg_timeout='20',origination_caller_id_name='Dan B Leg',origination_caller_id_number='987654321',ignore_early_media='true'}";
             Assert.Equal(Expected, toString);
         }
 
