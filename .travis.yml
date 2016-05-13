@@ -1,5 +1,5 @@
 # Mono/.NET are now officially supported on Travis wooooo
-language: c#
+language: csharp
 
 # Run the build script
 script:
