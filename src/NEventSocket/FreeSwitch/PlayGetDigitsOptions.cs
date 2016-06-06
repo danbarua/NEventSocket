@@ -146,7 +146,7 @@ namespace NEventSocket.FreeSwitch
         }
 
         /// <summary>
-        /// Valid Digits
+        /// Valid Digits helper property - converts "12345" into a Regex
         /// </summary>
         public string ValidDigits
         {
@@ -178,6 +178,22 @@ namespace NEventSocket.FreeSwitch
 
                 sb.Append(")+");
                 digitsRegex = StringBuilderPool.ReturnAndFree(sb);
+            }
+        }
+
+        /// <summary>
+        /// Regex used to validate input
+        /// </summary>
+        public string ValidDigitsRegex
+        {
+            get
+            {
+                return digitsRegex;
+            }
+
+            set
+            {
+                digitsRegex = value;
             }
         }
 
