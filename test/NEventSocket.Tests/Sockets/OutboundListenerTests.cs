@@ -58,6 +58,35 @@
         }
 
         [Fact(Timeout = 2000)]
+        public async Task Stopping_the_listener_does_not_dispose_any_connected_clients()
+        {
+            using (var listener = new OutboundListener(0))
+            {
+                listener.Start();
+
+                bool connected = false;
+                bool disposed = false;
+
+                listener.Connections.Subscribe((socket) =>
+                {
+                    connected = true;
+                    socket.Disposed += (o, e) => disposed = true;
+                });
+
+                var _ = new FakeFreeSwitchSocket(listener.Port);
+
+                await Wait.Until(() => connected);
+
+                listener.Stop();
+
+                Assert.False(disposed);
+
+                listener.Dispose();
+                Assert.True(disposed);
+            }
+        }
+
+        [Fact(Timeout = 2000)]
         public async Task a_new_connection_produces_an_outbound_socket()
         {
             using (var listener = new OutboundListener(0))

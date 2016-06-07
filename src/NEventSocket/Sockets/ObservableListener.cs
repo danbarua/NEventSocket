@@ -103,34 +103,46 @@ namespace NEventSocket.Sockets
                 throw new ObjectDisposedException(ToString());
             }
 
-            tcpListener = new TcpListener(IPAddress.Any, port);
+            //if (tcpListener != null)
+            {
+                tcpListener = new TcpListener(IPAddress.Any, port);
 
-            tcpListener.Start();
+                tcpListener.Start();
 
-            Log.Trace(() => "Listener Started on Port {0}".Fmt(Port));
+                Log.Trace(() => "Listener Started on Port {0}".Fmt(Port));
 
-            subscription =
-                Observable.FromAsync(tcpListener.AcceptTcpClientAsync)
-                          .Repeat()
-                          .TakeUntil(listenerTermination)
-                          .Do(connection => Log.Trace(() => "New Connection from {0}".Fmt(connection.Client.RemoteEndPoint)))
-                          .Select(tcpClient => observableSocketFactory(tcpClient))
-                          .Subscribe(
-                              connection =>
+                subscription =
+                    Observable.FromAsync(tcpListener.AcceptTcpClientAsync)
+                              .Repeat()
+                              .TakeUntil(listenerTermination)
+                              .Do(connection => Log.Trace(() => "New Connection from {0}".Fmt(connection.Client.RemoteEndPoint)))
+                              .Select(tcpClient => observableSocketFactory(tcpClient))
+                              .Subscribe(
+                                  connection =>
                                   {
                                       connections.Add(connection);
                                       observable.OnNext(connection);
 
                                       disposables.Add(
-                                          Observable.FromEventPattern(h => connection.Disposed += h, h => connection.Disposed -= h)
-                                                    .FirstAsync()
-                                                    .Subscribe(_ =>
+                                      Observable.FromEventPattern(h => connection.Disposed += h, h => connection.Disposed -= h)
+                                                .FirstAsync()
+                                                .Subscribe(_ =>
                                                         {
                                                             Log.Trace(() => "Connection Disposed");
                                                             connections.Remove(connection);
                                                         }));
-                                  }, 
-                              ex => Log.ErrorFormat("Error handling inbound connection", ex));
+                                  },
+                                  ex => Log.ErrorFormat("Error handling inbound connection", ex));
+            }
+        }
+
+        public void Stop()
+        {
+            if (tcpListener != null)
+            {
+                tcpListener.Stop();
+                Log.Trace(() => "Listener stopped");
+            }
         }
 
         /// <summary>
