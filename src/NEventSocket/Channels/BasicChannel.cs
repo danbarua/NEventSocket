@@ -276,15 +276,14 @@ namespace NEventSocket.Channels
             return cancellation;
         }
 
-        public async Task<string> PlayGetDigits(PlayGetDigitsOptions options)
+        public async Task<PlayGetDigitsResult> PlayGetDigits(PlayGetDigitsOptions options)
         {
             if (!IsAnswered)
             {
-                return string.Empty;
+                return new PlayGetDigitsResult(null, null);
             }
 
-            var result = await eventSocket.PlayGetDigits(UUID, options).ConfigureAwait(false);
-            return result.Digits;
+            return await eventSocket.PlayGetDigits(UUID, options).ConfigureAwait(false);
         }
 
         public Task<ReadResult> Read(ReadOptions options)
