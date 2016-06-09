@@ -12,6 +12,7 @@ namespace NEventSocket.Channels
     using System;
     using System.Collections;
     using System.Collections.Generic;
+    using System.Linq;
     using System.Reactive.Disposables;
     using System.Reactive.Linq;
     using System.Threading;
@@ -161,11 +162,13 @@ namespace NEventSocket.Channels
 
         public IObservable<string> FeatureCodes(string prefix = "#")
         {
-            return eventSocket
-                       .Events.Where(x => x.EventName == EventName.Dtmf && x.UUID == UUID).Select(x => x.Headers[HeaderNames.DtmfDigit])
-                       .Buffer(TimeSpan.FromSeconds(2), 2)
-                       .Where(x => x.Count == 2 && x[0] == prefix)
-                       .Select(x => string.Concat(x))
+            var dtmf =  eventSocket
+                       .Events.Where(x => x.EventName == EventName.Dtmf && x.UUID == UUID)
+                       .Select(x => x.Headers[HeaderNames.DtmfDigit]);
+
+            return dtmf.FirstAsync(x => x == prefix)
+                       .CombineLatest(dtmf, (x, y) => string.Concat(x, y))
+                       .Where(x => x != prefix + prefix)
                        .Do(x => Log.Debug(() => "Channel {0} detected Feature Code {1}".Fmt(UUID, x)));
         }
 
@@ -203,7 +206,7 @@ namespace NEventSocket.Channels
                         Task.WhenAll(
                             eventSocket.Play(UUID, file, new PlayOptions()),
                             eventSocket.Play(bLegUUID, file, new PlayOptions()))
-                            .ConfigureAwait(false)).First();
+                            .ConfigureAwait(false)).First<PlayResult>();
                 case Leg.BLeg:
                     return await eventSocket.Play(bLegUUID, file, new PlayOptions()).ConfigureAwait(false);
                 default:
