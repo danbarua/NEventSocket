@@ -47,6 +47,9 @@ namespace NEventSocket.Examples.Examples
                                                 e.Headers[HeaderNames.HangupCause]).Red());
 
                                 ColorConsole.WriteLine("Enabling feature codes on the B-Leg: ".DarkGreen());
+                                ColorConsole.WriteLine("Press ".DarkGreen(), "#1".Yellow(), " to Play to both Legs".DarkGreen());
+                                ColorConsole.WriteLine("Press ".DarkGreen(), "#2".Yellow(), " to Play to A Leg".DarkGreen());
+                                ColorConsole.WriteLine("Press ".DarkGreen(), "#3".Yellow(), " to Play to B Leg".DarkGreen());
                                 ColorConsole.WriteLine("Press ".DarkGreen(), "#7".Yellow(), " to Start Recording".DarkGreen());
                                 ColorConsole.WriteLine("Press ".DarkGreen(), "#8".Yellow(), " to Stop Recording".DarkGreen());
                                 ColorConsole.WriteLine("Press ".DarkGreen(), "#4".Yellow(), " to Pause Recording".DarkGreen());
@@ -64,6 +67,15 @@ namespace NEventSocket.Examples.Examples
                                             ColorConsole.WriteLine("Detected Feature Code: ".DarkYellow(), x);
                                             switch (x)
                                             {
+                                                case "#1":
+                                                    await channel.Play("ivr/ivr-welcome_to_freeswitch.wav", Leg.Both);
+                                                    break;
+                                                case "#2":
+                                                    await channel.Play("ivr/ivr-welcome_to_freeswitch.wav", Leg.ALeg);
+                                                    break;
+                                                case "#3":
+                                                    await channel.Play("ivr/ivr-welcome_to_freeswitch.wav", Leg.BLeg);
+                                                    break;
                                                 case "#4":
                                                     ColorConsole.WriteLine("Mask recording".Yellow());
                                                     await channel.MaskRecording();

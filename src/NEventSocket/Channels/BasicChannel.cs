@@ -178,11 +178,11 @@ namespace NEventSocket.Channels
                     true);
         }
 
-        public async Task Play(string file, Leg leg = Leg.ALeg, bool mix = false, string terminator = null)
+        public async Task<PlayResult> Play(string file, Leg leg = Leg.ALeg, string terminator = null)
         {
             if (!IsAnswered)
             {
-                return;
+                return new PlayResult(null);
             }
 
             if (terminator != null && lastEvent.GetVariable("playback_terminators") != terminator)
@@ -190,34 +190,28 @@ namespace NEventSocket.Channels
                 await SetChannelVariable("playback_terminators", terminator).ConfigureAwait(false);
             }
 
-            if (leg == Leg.ALeg || !IsBridged)
-            {
-                await eventSocket.Play(UUID, file, new PlayOptions()).ConfigureAwait(false);
-                return;
-            }
+            var bLegUUID = lastEvent.Headers[HeaderNames.OtherLegUniqueId];
 
-            // uuid displace only works on one leg
+            if (leg == Leg.ALeg || bLegUUID == null)
+            {
+                return await eventSocket.Play(UUID, file, new PlayOptions()).ConfigureAwait(false);
+            }
             switch (leg)
             {
                 case Leg.Both:
-                    await
+                    return (await
                         Task.WhenAll(
-                            eventSocket.ExecuteApplication(UUID, "displace_session", "{0} {1}{2}".Fmt(file, mix ? "m" : string.Empty, "w"), false, false),
-                            eventSocket.ExecuteApplication(lastEvent.Headers[HeaderNames.OtherLegUniqueId], "displace_session", "{0} {1}{2}".Fmt(file, mix ? "m" : string.Empty, "w"), false, false))
-                            .ConfigureAwait(false);
-                    break;
-                case Leg.ALeg:
-                    await eventSocket.ExecuteApplication(UUID, "displace_session", "{0} {1}{2}".Fmt(file, mix ? "m" : string.Empty, "w"), false, false).ConfigureAwait(false);
-                    break;
+                            eventSocket.Play(UUID, file, new PlayOptions()),
+                            eventSocket.Play(bLegUUID, file, new PlayOptions()))
+                            .ConfigureAwait(false)).First();
                 case Leg.BLeg:
-                    await eventSocket.ExecuteApplication(UUID, "displace_session", "{0} {1}{2}".Fmt(file, mix ? "m" : string.Empty, "r"), false, false).ConfigureAwait(false);
-                    break;
+                    return await eventSocket.Play(bLegUUID, file, new PlayOptions()).ConfigureAwait(false);
                 default:
                     throw new NotSupportedException("Leg {0} is not supported".Fmt(leg));
             }
         }
 
-        public Task Play(IEnumerable<string> files, Leg leg = Leg.ALeg, bool mix = false, string terminator = null)
+        public Task Play(IEnumerable<string> files, Leg leg = Leg.ALeg, string terminator = null)
         {
             var sb = StringBuilderPool.Allocate();
             var first = true;
@@ -234,7 +228,7 @@ namespace NEventSocket.Channels
                 first = false;
             }
 
-            return Play(StringBuilderPool.ReturnAndFree(sb), leg, mix, terminator);
+            return Play(StringBuilderPool.ReturnAndFree(sb), leg, terminator);
         }
 
         /// <summary>
