@@ -193,7 +193,7 @@ namespace NEventSocket.Channels
                 await SetChannelVariable("playback_terminators", terminator).ConfigureAwait(false);
             }
 
-            var bLegUUID = lastEvent.Headers[HeaderNames.OtherLegUniqueId];
+            var bLegUUID = lastEvent.GetHeader(HeaderNames.OtherLegUniqueId);
 
             if (leg == Leg.ALeg || bLegUUID == null)
             {
