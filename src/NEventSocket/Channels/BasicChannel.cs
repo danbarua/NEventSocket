@@ -162,13 +162,11 @@ namespace NEventSocket.Channels
 
         public IObservable<string> FeatureCodes(string prefix = "#")
         {
-            var dtmf =  eventSocket
-                       .Events.Where(x => x.EventName == EventName.Dtmf && x.UUID == UUID)
-                       .Select(x => x.Headers[HeaderNames.DtmfDigit]);
-
-            return dtmf.FirstAsync(x => x == prefix)
-                       .CombineLatest(dtmf, (x, y) => string.Concat(x, y))
-                       .Where(x => x != prefix + prefix)
+            return eventSocket
+                       .Events.Where(x => x.EventName == EventName.Dtmf && x.UUID == UUID).Select(x => x.Headers[HeaderNames.DtmfDigit])
+                       .Buffer(TimeSpan.FromSeconds(2), 2)
+                       .Where(x => x.Count == 2 && x[0] == prefix)
+                       .Select(x => string.Concat(x))
                        .Do(x => Log.Debug(() => "Channel {0} detected Feature Code {1}".Fmt(UUID, x)));
         }
 
