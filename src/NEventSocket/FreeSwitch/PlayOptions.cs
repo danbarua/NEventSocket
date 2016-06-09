@@ -28,10 +28,5 @@ namespace NEventSocket.FreeSwitch
                 loops = value;
             }
         }
-
-        /// <summary>
-        /// Gets or sets which <seealso cref="Leg"/> of a call to play on.
-        /// </summary>
-        public Leg Leg { get; set; }
     }
 }
