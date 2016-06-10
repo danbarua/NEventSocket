@@ -368,8 +368,11 @@ namespace NEventSocket.Channels
                                                await Task.Delay(LingerTime * 1000);
                                            }
 
-                                           Log.Info(() => "Channel [{0}] exiting".Fmt(UUID));
-                                           await eventSocket.Exit().ConfigureAwait(false);
+                                           if (eventSocket != null)
+                                           {
+                                               Log.Info(() => "Channel [{0}] exiting".Fmt(UUID));
+                                               await eventSocket.Exit().ConfigureAwait(false);
+                                           }
                                        }
                                    }));
             }
