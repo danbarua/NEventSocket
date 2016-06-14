@@ -437,7 +437,7 @@ namespace NEventSocket.Channels
 
         public Task StopDetectingInbandDtmf()
         {
-            return RunIfAnswered(() => eventSocket.Stoptmf(UUID));
+            return RunIfAnswered(() => eventSocket.StopDtmf(UUID));
         }
 
         public Task SetChannelVariable(string name, string value)
