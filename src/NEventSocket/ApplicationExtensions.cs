@@ -119,7 +119,7 @@ namespace NEventSocket
             return eventSocket.ExecuteApplication(uuid, "spandsp_start_dtmf");
         }
 
-        public static Task<EventMessage> Stoptmf(this EventSocket eventSocket, string uuid)
+        public static Task<EventMessage> StopDtmf(this EventSocket eventSocket, string uuid)
         {
             return eventSocket.ExecuteApplication(uuid, "spandsp_stop_dtmf");
         }
