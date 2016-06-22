@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -e
-travis_retry mono --runtime=v4.0 ./.nuget/NuGet.exe install ./.nuget/packages.config -OutputDirectory packages
-travis_retry mono --runtime=v4.0 ./.nuget/NuGet.exe restore ./NEventSocket.sln
+nuget restore ./NEventSocket.sln
+nuget install xunit.runners -Version 1.9.2
 xbuild ./NEventSocket.sln /property:Configuration=Release /nologo /verbosity:minimal
-mono --runtime=v4.0 ./packages/xunit.runners.1.9.2/tools/xunit.console.clr4.x86.exe ./test/NEventSocket.Tests/bin/Release/NEventSocket.Tests.dll
+mono  ./xunit.runners.1.9.2/tools/xunit.console.clr4.x86.exe ./test/NEventSocket.Tests/bin/Release/NEventSocket.Tests.dll
