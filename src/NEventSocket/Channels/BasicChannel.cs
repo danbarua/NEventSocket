@@ -181,7 +181,7 @@ namespace NEventSocket.Channels
 
         public async Task<PlayResult> Play(string file, Leg leg = Leg.ALeg, string terminator = null)
         {
-            if (!IsAnswered)
+            if (!CanPlayBackAudio)
             {
                 return new PlayResult(null);
             }
@@ -240,7 +240,7 @@ namespace NEventSocket.Channels
         /// <returns>An <seealso cref="IDisposable"/> which can be disposed to stop the audio.</returns>
         public async Task<IDisposable> PlayUntilCancelled(string file)
         {
-            if (!IsAnswered)
+            if (!CanPlayBackAudio)
             {
                 Log.Warn(() => "Channel [{0}] attempted to play hold music when not answered".Fmt(UUID));
                 return Task.FromResult(new DisposableAction());
@@ -253,7 +253,7 @@ namespace NEventSocket.Channels
             var cancellation = new DisposableAction(
                 async () =>
                 {
-                    if (!IsAnswered)
+                    if (!CanPlayBackAudio)
                     {
                         return;
                     }
@@ -270,6 +270,9 @@ namespace NEventSocket.Channels
 
             return cancellation;
         }
+
+        /// Returns true if audio playback is currently possible, false otherwise.
+        bool CanPlayBackAudio => IsAnswered || IsPreAnswered;
 
         public async Task<PlayGetDigitsResult> PlayGetDigits(PlayGetDigitsOptions options)
         {
