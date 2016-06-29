@@ -129,6 +129,11 @@ namespace NEventSocket
             await eventSocket.SendApi("uuid_bridge {0} {1}".Fmt(uuid1, uuid2));
         }
 
+        public static async Task Park(this EventSocket eventSocket, string uuid)
+        {
+            await eventSocket.SendApi("uuid_park {0}".Fmt(uuid));
+        }
+
         private static void LogFailedApplicationResult(EventSocket eventSocket, ApplicationResult result)
         {
             if (result.ChannelData != null)
