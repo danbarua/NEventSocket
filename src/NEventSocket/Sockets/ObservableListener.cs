@@ -176,7 +176,7 @@ namespace NEventSocket.Sockets
                     }
 
                     disposables.Dispose();
-                    connections.ToList().ForEach(connection => connection.Dispose());
+                    connections?.ToList().ForEach(connection => connection.Dispose());
 
                     observable.OnCompleted();
                     observable.Dispose();
