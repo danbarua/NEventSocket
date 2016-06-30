@@ -66,7 +66,7 @@ task CreateNuGetPackages -depends ILMerge {
   
   $packageVersion
   gci $srcDir -Recurse -Include *.nuspec | % {
-    exec { .$rootDir\.nuget\nuget.exe pack $_ -o $buildOutputDir -version $packageVersion }
+    exec { nuget.exe pack $_ -o $buildOutputDir -version $packageVersion }
   }
 }
 
@@ -74,6 +74,6 @@ task PublishNugetPackages -depends CreateNuGetPackages {
   Get-ChildItem "$buildOutputDir\*.nupkg" | `
     ForEach-Object {
       Write-Host "Publishing $($_.FullName)"
-      exec { .$rootDir\.nuget\nuget.exe push $_.FullName }
+      exec { nuget.exe push $_.FullName }
     }
 }
