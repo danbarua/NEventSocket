@@ -224,7 +224,7 @@
         [PropertyData("ExampleSessions")]
         public void Can_parse_example_sessions_to_completion(string input)
         {
-                        if (Environment.GetEnvironmentVariable("APPVEYOR_BUILD_NUMBER") == null)
+            if (Environment.GetEnvironmentVariable("APPVEYOR_BUILD_NUMBER") == null)
             {
                 LogProvider.SetCurrentLogProvider(new ColouredConsoleLogProvider());
             }
@@ -280,12 +280,12 @@ See you at ClueCon! http://www.cluecon.com/
         {
             get
             {
-                yield return new object[] { Resources.Example1 };
-                yield return new object[] { Resources.Example2 };
-                yield return new object[] { Resources.Example3 };
-                yield return new object[] { Resources.Example4 };
-                yield return new object[] { Resources.Example5 };
-                yield return new object[] { Resources.Example6 };
+                yield return new object[] { Resources.Example1.Replace("\r\n", "\n") };
+                yield return new object[] { Resources.Example2.Replace("\r\n", "\n") };
+                yield return new object[] { Resources.Example3.Replace("\r\n", "\n") };
+                yield return new object[] { Resources.Example4.Replace("\r\n", "\n") };
+                yield return new object[] { Resources.Example5.Replace("\r\n", "\n") };
+                yield return new object[] { Resources.Example6.Replace("\r\n", "\n") };
             }
         } 
     }
