@@ -79,7 +79,9 @@ namespace NEventSocket.Channels
         {
             get
             {
-                return lastEvent.ChannelState;
+                // should always be populated, otherwise will throw invalidoperationexception
+                // which means we've introduced a b-u-g and are listening to non-channel events
+                return lastEvent.ChannelState.Value; 
             }
         }
 
