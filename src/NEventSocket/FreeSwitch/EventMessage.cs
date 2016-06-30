@@ -140,13 +140,19 @@ namespace NEventSocket.FreeSwitch
         /// <summary>
         /// Gets the <see cref="ChannelState"/> of the Channel.
         /// </summary>
-        public ChannelState ChannelState
+        public ChannelState? ChannelState
         {
             get
             {
                 // channel state = "CS_NEW"
                 // strip first 3 chars and then parse it to ChannelState enum.
                 var channelState = Headers.GetValueOrDefault(HeaderNames.ChannelState);
+
+                if (channelState == null)
+                {
+                    return null;
+                }
+
                 channelState = channelState.Substring(3, channelState.Length - 3);
                 return channelState.HeaderToEnum<ChannelState>();
             }
