@@ -274,7 +274,7 @@ namespace NEventSocket.Channels
         }
 
         /// Returns true if audio playback is currently possible, false otherwise.
-        bool CanPlayBackAudio => IsAnswered || IsPreAnswered;
+        bool CanPlayBackAudio => (IsAnswered || IsPreAnswered) && Socket?.IsConnected == true;
 
         public async Task<PlayGetDigitsResult> PlayGetDigits(PlayGetDigitsOptions options)
         {
