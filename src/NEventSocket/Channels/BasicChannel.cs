@@ -276,24 +276,14 @@ namespace NEventSocket.Channels
         /// Returns true if audio playback is currently possible, false otherwise.
         bool CanPlayBackAudio => (IsAnswered || IsPreAnswered) && Socket?.IsConnected == true;
 
-        public async Task<PlayGetDigitsResult> PlayGetDigits(PlayGetDigitsOptions options)
+        public Task<PlayGetDigitsResult> PlayGetDigits(PlayGetDigitsOptions options)
         {
-            if (!IsAnswered)
-            {
-                return new PlayGetDigitsResult(null, null);
-            }
-
-            return await eventSocket.PlayGetDigits(UUID, options).ConfigureAwait(false);
+            return RunIfAnswered(() => eventSocket.PlayGetDigits(UUID, options), () => new PlayGetDigitsResult(null, null));
         }
 
         public Task<ReadResult> Read(ReadOptions options)
         {
-            if (!IsAnswered)
-            {
-                return Task.FromResult(new ReadResult(null, null));
-            }
-
-            return eventSocket.Read(UUID, options);
+            return RunIfAnswered(() => eventSocket.Read(UUID, options), () => new ReadResult(null, null));
         }
 
         public Task Say(SayOptions options)
@@ -429,15 +419,14 @@ namespace NEventSocket.Channels
             }
         }
 
-        public async Task StartDetectingInbandDtmf()
+        public Task StartDetectingInbandDtmf()
         {
-            if (!IsAnswered)
-            {
-                return;
-            }
-
-            await eventSocket.SubscribeEvents(EventName.Dtmf).ConfigureAwait(false);
-            await eventSocket.StartDtmf(UUID).ConfigureAwait(false);
+            return RunIfAnswered(
+                async () =>
+                {
+                    await eventSocket.SubscribeEvents(EventName.Dtmf).ConfigureAwait(false);
+                    await eventSocket.StartDtmf(UUID).ConfigureAwait(false);
+                });
         }
 
         public Task StopDetectingInbandDtmf()
@@ -447,13 +436,12 @@ namespace NEventSocket.Channels
 
         public Task SetChannelVariable(string name, string value)
         {
-            if (!IsAnswered)
-            {
-                return TaskHelper.Completed;
-            }
-
-            Log.Debug(() => "Channel {0} setting variable '{1}' to '{2}'".Fmt(UUID, name, value));
-            return eventSocket.SendApi("uuid_setvar {0} {1} {2}".Fmt(UUID, name, value));
+            return RunIfAnswered(
+                () =>
+                {
+                    Log.Debug(() => "Channel {0} setting variable '{1}' to '{2}'".Fmt(UUID, name, value));
+                    return eventSocket.SendApi("uuid_setvar {0} {1} {2}".Fmt(UUID, name, value));
+                });
         }
 
         /// <summary>
@@ -502,9 +490,25 @@ namespace NEventSocket.Channels
         /// <param name="orPreAnswered">Function also run in pre answer state</param>
         protected Task RunIfAnswered(Func<Task> toRun, bool orPreAnswered = false)
         {
+            //check not disposed, socket is not null and connected, no hangup event received
             if (disposed.Value || !eventSocket.IsConnected || !IsAnswered && (!orPreAnswered || !IsPreAnswered))
             {
                 return TaskHelper.Completed;
+            }
+
+            return toRun();
+        }
+
+        /// <summary>
+        /// Runs the given async function if the Channel is still connected, otherwise uses the provided function to return a default value.
+        /// </summary>
+        /// <param name="toRun">An Async function.</param>
+        /// <param name="defaultValueProvider">Function returning the default value</param>
+        protected Task<T> RunIfAnswered<T>(Func<Task<T>> toRun, Func<T> defaultValueProvider)
+        {
+            if (disposed.Value || !eventSocket.IsConnected || !IsAnswered)
+            {
+                return Task.FromResult(defaultValueProvider());
             }
 
             return toRun();
