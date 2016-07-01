@@ -133,11 +133,10 @@ namespace NEventSocket.Sockets
                             finally
                             {
                                 SharedPools.ByteArray.Free(buffer);
+
+                                SafeLog(LogLevel.Trace, () => "{0} Worker Thread {1} completed".Fmt(GetType(), id));
+                                Dispose();
                             }
-
-                            SafeLog(LogLevel.Trace, () => "{0} Worker Thread {1} completed".Fmt(GetType(), id));
-
-                            Dispose();
                         });
 
                     return subject.AsObservable();
