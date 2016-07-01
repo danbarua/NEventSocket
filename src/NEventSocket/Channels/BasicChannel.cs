@@ -491,7 +491,7 @@ namespace NEventSocket.Channels
                     }
                 }
 
-                Log.Debug(() => "BasicChannel Disposed.");
+                Log.Trace(() => "BasicChannel Disposed.");
             }
         }
 

@@ -38,6 +38,7 @@ namespace NEventSocket.Channels
         protected internal Channel(EventMessage eventMessage, EventSocket eventSocket) : base(eventMessage, eventSocket)
         {
             LingerTime = 10;
+            eventSocket.Disposed += (o, e) => Dispose();
         }
 
         internal static async Task<Channel> Create(OutboundSocket outboundSocket)
@@ -252,7 +253,7 @@ namespace NEventSocket.Channels
             GC.SuppressFinalize(this);
         }
 
-        protected virtual void Dispose(bool disposing)
+        protected override void Dispose(bool disposing)
         {
             if (disposed != null && !disposed.EnsureCalledOnce())
             {
@@ -278,7 +279,7 @@ namespace NEventSocket.Channels
 
                 eventSocket = null;
 
-                Log.Debug(() => "BasicChannel Disposed.");
+                Log.Debug(() => "Channel Disposed.");
             }
 
             base.Dispose(disposing);
