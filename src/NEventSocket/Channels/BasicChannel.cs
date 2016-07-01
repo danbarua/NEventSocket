@@ -502,7 +502,7 @@ namespace NEventSocket.Channels
         /// <param name="orPreAnswered">Function also run in pre answer state</param>
         protected Task RunIfAnswered(Func<Task> toRun, bool orPreAnswered = false)
         {
-            if (!IsAnswered && (!orPreAnswered || !IsPreAnswered))
+            if (disposed.Value || !eventSocket.IsConnected || !IsAnswered && (!orPreAnswered || !IsPreAnswered))
             {
                 return TaskHelper.Completed;
             }
