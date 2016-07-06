@@ -10,7 +10,6 @@ namespace NEventSocket.Channels
     using System.Reactive.Disposables;
     using System.Reactive.Linq;
     using System.Reactive.Subjects;
-    using System.Reactive.Threading.Tasks;
     using System.Threading.Tasks;
 
     using NEventSocket.FreeSwitch;
@@ -101,17 +100,10 @@ namespace NEventSocket.Channels
                         .Subscribe(onProgress));
             }
 
-            var waitForABridgedChannel = this.BridgedChannels.FirstAsync().ToTask();
+            var result = await eventSocket.Bridge(UUID, destination, options).ConfigureAwait(false);
 
-            var bridgeResult = await eventSocket.Bridge(UUID, destination, options).ConfigureAwait(false);
-
-            Log.Debug(() => "Channel {0} bridge complete {1} {2}".Fmt(UUID, bridgeResult.Success, bridgeResult.ResponseText));
+            Log.Debug(() => "Channel {0} bridge complete {1} {2}".Fmt(UUID, result.Success, result.ResponseText));
             subscriptions.Dispose();
-
-            if (bridgeResult.Success)
-            {
-                await waitForABridgedChannel.ConfigureAwait(false);
-            }
         }
 
         public Task Execute(string application, string args)
