@@ -106,10 +106,17 @@ namespace NEventSocket.Channels
                         .Subscribe(onProgress));
             }
 
-            var result = await eventSocket.Bridge(UUID, destination, options).ConfigureAwait(false);
+            var waitForABridgedChannel = this.BridgedChannels.FirstAsync().ToTask();
 
-            Log.Debug(() => "Channel {0} bridge complete {1} {2}".Fmt(UUID, result.Success, result.ResponseText));
+            var bridgeResult = await eventSocket.Bridge(UUID, destination, options).ConfigureAwait(false);
+
+            Log.Debug(() => "Channel {0} bridge complete {1} {2}".Fmt(UUID, bridgeResult.Success, bridgeResult.ResponseText));
             subscriptions.Dispose();
+
+            if (bridgeResult.Success)
+            {
+                await waitForABridgedChannel.ConfigureAwait(false);
+            }
         }
 
         public Task Execute(string application, string args)
