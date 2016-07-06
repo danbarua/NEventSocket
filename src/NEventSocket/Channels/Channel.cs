@@ -24,13 +24,9 @@ namespace NEventSocket.Channels
         
         private readonly InterlockedBoolean disposed = new InterlockedBoolean();
 
-        private string recordingPath;
-
         private Subject<BridgedChannel> bridgedChannels = new Subject<BridgedChannel>();
 
         private string bridgedUUID;
-
-        private RecordingStatus recordingStatus = RecordingStatus.NotRecording;
 
         protected internal Channel(OutboundSocket outboundSocket) : this(outboundSocket.ChannelData, outboundSocket)
         {
@@ -76,8 +72,6 @@ namespace NEventSocket.Channels
         public IObservable<BridgedChannel> BridgedChannels { get { return bridgedChannels.AsObservable(); } }
 
         public BridgedChannel OtherLeg { get; private set; }
-
-        public RecordingStatus RecordingStatus { get {  return recordingStatus;} }
 
         public bool ExitOnHangup { get; set; }
 
@@ -170,87 +164,6 @@ namespace NEventSocket.Channels
             return eventSocket.ExecuteApplication(UUID, "sleep", milliseconds.ToString());
         }
 
-        public Task StartRecording(string file, int? maxSeconds = null)
-        {
-            return RunIfAnswered(
-                async () =>
-                {
-                    if (file == recordingPath)
-                    {
-                        return;
-                    }
-
-                    if (recordingPath != null)
-                    {
-                        Log.Warn(
-                            () =>
-                                "Channel {0} received a request to record to file {1} while currently recording to file {2}. Channel will stop recording and start recording to the new file."
-                                    .Fmt(UUID, file, recordingPath));
-                        await StopRecording().ConfigureAwait(false);
-                    }
-
-                    recordingPath = file;
-                    await eventSocket.SendApi("uuid_record {0} start {1} {2}".Fmt(UUID, recordingPath, maxSeconds)).ConfigureAwait(false);
-                    Log.Debug(() => "Channel {0} is recording to {1}".Fmt(UUID, recordingPath));
-                    recordingStatus = RecordingStatus.Recording;
-                });
-        }
-
-        public Task MaskRecording()
-        {
-            return RunIfAnswered(
-                async () =>
-                {
-                    if (string.IsNullOrEmpty(recordingPath))
-                    {
-                        Log.Warn(() => "Channel {0} is not recording".Fmt(UUID));
-                    }
-                    else
-                    {
-                        await eventSocket.SendApi("uuid_record {0} mask {1}".Fmt(UUID, recordingPath)).ConfigureAwait(false);
-                        Log.Debug(() => "Channel {0} has masked recording to {1}".Fmt(UUID, recordingPath));
-                        recordingStatus = RecordingStatus.Paused;
-                    }
-                });
-        }
-
-        public Task UnmaskRecording()
-        {
-            return RunIfAnswered(
-                async () =>
-                {
-                    if (string.IsNullOrEmpty(recordingPath))
-                    {
-                        Log.Warn(() => "Channel {0} is not recording".Fmt(UUID));
-                    }
-                    else
-                    {
-                        await eventSocket.SendApi("uuid_record {0} unmask {1}".Fmt(UUID, recordingPath)).ConfigureAwait(false);
-                        Log.Debug(() => "Channel {0} has unmasked recording to {1}".Fmt(UUID, recordingPath));
-                        recordingStatus = RecordingStatus.Recording;
-                    }
-                });
-        }
-
-        public Task StopRecording()
-        {
-            return RunIfAnswered(
-                async () =>
-                {
-                    if (string.IsNullOrEmpty(recordingPath))
-                    {
-                        Log.Warn(() => "Channel {0} is not recording".Fmt(UUID));
-                    }
-                    else
-                    {
-                        await eventSocket.SendApi("uuid_record {0} stop {1}".Fmt(UUID, recordingPath)).ConfigureAwait(false);
-                        recordingPath = null;
-                        Log.Debug(() => "Channel {0} has stopped recording to {1}".Fmt(UUID, recordingPath));
-                        recordingStatus = RecordingStatus.NotRecording;
-                    }
-                });
-        }
-
         public new void Dispose()
         {
             Dispose(true);
@@ -339,6 +252,7 @@ namespace NEventSocket.Channels
                     await eventSocket.Filter(HeaderNames.OtherLegUniqueId, bridgedUUID).ConfigureAwait(false);
                     await eventSocket.Filter(HeaderNames.ChannelCallUniqueId, bridgedUUID).ConfigureAwait(false);
 
+                    Log.Trace(() => "Channel [{0}] setting OtherLeg to [{1}]".Fmt(UUID, b.UUID));
                     this.OtherLeg = b;
                 }));
 
