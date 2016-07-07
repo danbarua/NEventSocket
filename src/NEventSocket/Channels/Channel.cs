@@ -187,7 +187,7 @@ namespace NEventSocket.Channels
 
                 eventSocket = null;
 
-                Log.Debug(() => "BasicChannel Disposed.");
+                Log.Debug(() => "Channel Disposed.");
             }
 
             base.Dispose(disposing);
