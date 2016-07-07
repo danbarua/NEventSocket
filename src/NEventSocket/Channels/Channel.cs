@@ -283,6 +283,8 @@ namespace NEventSocket.Channels
                                                Log.Info(() => "Channel [{0}] exiting".Fmt(UUID));
                                                await eventSocket.Exit().ConfigureAwait(false);
                                            }
+
+                                           Dispose();
                                        }
                                    }));
             }
