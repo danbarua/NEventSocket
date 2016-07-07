@@ -102,14 +102,16 @@ namespace NEventSocket.Sockets
                                     }
                                 }
                             }
-                            catch (ObjectDisposedException)
+                            catch (ObjectDisposedException ex)
                             {
                                 //expected - normal shutdown
+                                SafeLog(LogLevel.Trace, () => "ObjectDisposedException reading from stream", ex);
                                 subject.OnCompleted();
                             }
-                            catch (TaskCanceledException)
+                            catch (TaskCanceledException ex)
                             {
                                 //expected - normal shutdown
+                                SafeLog(LogLevel.Trace, () => "TaskCanceledException reading from stream", ex);
                                 subject.OnCompleted();
                             }
                             catch (IOException ex)
