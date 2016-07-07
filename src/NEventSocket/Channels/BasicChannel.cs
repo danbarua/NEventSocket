@@ -565,7 +565,7 @@ namespace NEventSocket.Channels
                     }
                 }
 
-                Log.Trace(() => "BasicChannel Disposed.");
+                Log.Debug(() => "BasicChannel Disposed.");
             }
         }
 
