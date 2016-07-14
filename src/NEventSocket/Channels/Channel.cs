@@ -51,7 +51,8 @@ namespace NEventSocket.Channels
                EventName.ChannelUnbridge,
                EventName.ChannelAnswer,
                EventName.ChannelHangup,
-               EventName.Dtmf).ConfigureAwait(false); //subscribe to minimum events
+               EventName.Dtmf,
+			   EventName.SessionHeartbeat).ConfigureAwait(false); //subscribe to minimum events
 
             await outboundSocket.Filter(HeaderNames.UniqueId, outboundSocket.ChannelData.UUID).ConfigureAwait(false); //filter for our unique id (in case using full socket mode)
             await outboundSocket.Filter(HeaderNames.OtherLegUniqueId, outboundSocket.ChannelData.UUID).ConfigureAwait(false); //filter for channels bridging to our unique id
