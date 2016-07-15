@@ -530,6 +530,7 @@ namespace NEventSocket.Sockets
         /// </summary>
         /// <param name="events">The <seealso cref="EventName"/>s to subscribe to.</param>
         /// <returns>A Task.</returns>
+        /// <remarks>This is additive - additional calls to .SubscribeEvents will add more event subscriptions.</remarks>
         public Task SubscribeEvents(params EventName[] events)
         {
             if (!events.All(@event => subscribedEvents.Contains(@event)))

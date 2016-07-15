@@ -51,8 +51,7 @@ namespace NEventSocket.Channels
                EventName.ChannelUnbridge,
                EventName.ChannelAnswer,
                EventName.ChannelHangup,
-               EventName.Dtmf,
-			   EventName.SessionHeartbeat).ConfigureAwait(false); //subscribe to minimum events
+               EventName.Dtmf).ConfigureAwait(false); //subscribe to minimum events
 
             await outboundSocket.Filter(HeaderNames.UniqueId, outboundSocket.ChannelData.UUID).ConfigureAwait(false); //filter for our unique id (in case using full socket mode)
             await outboundSocket.Filter(HeaderNames.OtherLegUniqueId, outboundSocket.ChannelData.UUID).ConfigureAwait(false); //filter for channels bridging to our unique id
@@ -148,7 +147,12 @@ namespace NEventSocket.Channels
 
         public Task EnableHeartBeat()
         {
-            return RunIfAnswered(() => eventSocket.ExecuteApplication(UUID, "enable_heartbeat"), true);
+            return RunIfAnswered(
+                async () =>
+                {
+                    await eventSocket.SubscribeEvents(EventName.SessionHeartbeat).ConfigureAwait(false);
+                    await eventSocket.ExecuteApplication(UUID, "enable_heartbeat").ConfigureAwait(false);
+                }, true);
         }
 
         public Task PreAnswer()
