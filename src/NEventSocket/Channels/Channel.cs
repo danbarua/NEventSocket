@@ -146,6 +146,11 @@ namespace NEventSocket.Channels
             return eventSocket.ExecuteApplication(UUID, "answer");
         }
 
+        public Task EnableHeartBeat()
+        {
+            return RunIfAnswered(() => eventSocket.ExecuteApplication(UUID, "enable_heartbeat"), true);
+        }
+
         public Task PreAnswer()
         {
             return eventSocket.ExecuteApplication(UUID, "pre_answer");
