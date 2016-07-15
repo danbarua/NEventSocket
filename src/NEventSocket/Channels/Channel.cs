@@ -145,13 +145,13 @@ namespace NEventSocket.Channels
             return eventSocket.ExecuteApplication(UUID, "answer");
         }
 
-        public Task EnableHeartBeat()
+        public Task EnableHeartBeat(int intervalSeconds = 60)
         {
             return RunIfAnswered(
                 async () =>
                 {
                     await eventSocket.SubscribeEvents(EventName.SessionHeartbeat).ConfigureAwait(false);
-                    await eventSocket.ExecuteApplication(UUID, "enable_heartbeat").ConfigureAwait(false);
+                    await eventSocket.ExecuteApplication(UUID, "enable_heartbeat", intervalSeconds.ToString()).ConfigureAwait(false);
                 }, true);
         }
 
