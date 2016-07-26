@@ -132,7 +132,7 @@ namespace NEventSocket.Sockets
                                                             connections.Remove(connection);
                                                         }));
                                   },
-                                  ex => Log.ErrorFormat("Error handling inbound connection", ex));
+                                  ex => Log.ErrorException("Error handling inbound connection", ex));
             }
         }
 
