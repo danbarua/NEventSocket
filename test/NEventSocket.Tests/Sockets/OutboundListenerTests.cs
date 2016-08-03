@@ -1,8 +1,10 @@
 ﻿namespace NEventSocket.Tests.Sockets
 {
     using System;
+    using System.Net.Sockets;
     using System.Threading.Tasks;
 
+    using NEventSocket.Sockets;
     using NEventSocket.Tests.Fakes;
     using NEventSocket.Tests.TestSupport;
 
@@ -125,6 +127,38 @@
                 await Wait.Until(() => connected == NumberOfConnections);
                 Assert.Equal(NumberOfConnections, connected);
             }
+        }
+
+        [Fact(Timeout = TimeOut.TestTimeOutMs)]
+        public async Task ProblematicSocket_connect_errors_should_not_cause_subsequent_connections_to_fail()
+        {
+            var connectionsHandled = 0;
+            var observableCompleted = false;
+
+            using (var listener = new ProblematicListener(0))
+            {
+                listener.Start();
+
+
+                listener.Connections.Subscribe(_ => connectionsHandled++, ex => { }, () => observableCompleted = true);
+
+                using (var client = new FakeFreeSwitchSocket(listener.Port))
+                {
+                    Assert.Equal(0, connectionsHandled);
+                    Assert.Equal(1, ProblematicListener.Counter);
+                    Assert.False(observableCompleted);
+                }
+
+                using (var client = new FakeFreeSwitchSocket(listener.Port))
+                {
+                    await Wait.Until(() => connectionsHandled == 1);
+                    Assert.Equal(1, connectionsHandled);
+                    Assert.Equal(2, ProblematicListener.Counter);
+                    Assert.False(observableCompleted);
+                }
+            }
+
+            Assert.True(observableCompleted);
         }
     }
 }
