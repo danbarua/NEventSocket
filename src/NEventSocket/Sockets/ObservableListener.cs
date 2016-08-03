@@ -117,6 +117,8 @@ namespace NEventSocket.Sockets
                               .TakeUntil(listenerTermination)
                               .Do(connection => Log.Trace(() => "New Connection from {0}".Fmt(connection.Client.RemoteEndPoint)))
                               .Select(tcpClient => observableSocketFactory(tcpClient))
+                              .Do(_ => { }, ex => Log.ErrorException("Unable to create observableSocket", ex))
+                              .Retry()
                               .Subscribe(
                                   connection =>
                                   {
