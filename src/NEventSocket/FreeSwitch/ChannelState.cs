@@ -38,7 +38,9 @@ namespace NEventSocket.FreeSwitch
 
         Destroy,
 
-        Reporting
+        Reporting,
+
+        None
 #pragma warning restore 1591
     }
 }
