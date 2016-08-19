@@ -102,40 +102,54 @@ namespace NEventSocket.Sockets
             {
                 throw new ObjectDisposedException(ToString());
             }
+            
 
-            //if (tcpListener != null)
-            {
-                tcpListener = new TcpListener(IPAddress.Any, port);
+            tcpListener = new TcpListener(IPAddress.Any, port);
 
-                tcpListener.Start();
+            tcpListener.Start();
 
-                Log.Trace(() => "Listener Started on Port {0}".Fmt(Port));
+            Log.Trace(() => "Listener Started on Port {0}".Fmt(Port));
 
-                subscription =
-                    Observable.FromAsync(tcpListener.AcceptTcpClientAsync)
-                              .Repeat()
-                              .TakeUntil(listenerTermination)
-                              .Do(connection => Log.Trace(() => "New Connection from {0}".Fmt(connection.Client.RemoteEndPoint)))
-                              .Select(tcpClient => observableSocketFactory(tcpClient))
-                              .Do(_ => { }, ex => Log.ErrorException("Unable to create observableSocket", ex))
-                              .Retry()
-                              .Subscribe(
-                                  connection =>
-                                  {
-                                      connections.Add(connection);
-                                      observable.OnNext(connection);
+            subscription = Observable.FromAsync(tcpListener.AcceptTcpClientAsync)
+                .Repeat()
+                .TakeUntil(listenerTermination)
+                .Do(connection => Log.Trace(() => "New Connection from {0}".Fmt(connection.Client.RemoteEndPoint)))
+                .Select(
+                    tcpClient =>
+                    {
+                        try
+                        {
+                            return observableSocketFactory(tcpClient);
+                        }
+                        catch (Exception ex)
+                        {
+                            //race condition - socket might shut down before we can initialize
+                            Log.ErrorException("Unable to create observableSocket", ex);
+                            return null;
+                        }
+                    })
+                .Where(x => x != null)
+                .Subscribe(
+                    connection =>
+                    {
+                        if (connection != null)
+                        {
+                            connections.Add(connection);
+                            observable.OnNext(connection);
 
-                                      disposables.Add(
-                                      Observable.FromEventPattern(h => connection.Disposed += h, h => connection.Disposed -= h)
-                                                .FirstAsync()
-                                                .Subscribe(_ =>
-                                                        {
-                                                            Log.Trace(() => "Connection Disposed");
-                                                            connections.Remove(connection);
-                                                        }));
-                                  },
-                                  ex => Log.ErrorException("Error handling inbound connection", ex));
-            }
+                            disposables.Add(
+                                Observable.FromEventPattern(h => connection.Disposed += h, h => connection.Disposed -= h)
+                                    .FirstAsync()
+                                    .Subscribe(
+                                        _ =>
+                                        {
+                                            Log.Trace(() => "Connection Disposed");
+                                            connections.Remove(connection);
+                                        }));
+                        }
+                    },
+                    ex => Log.ErrorException("Error handling inbound connection", ex));
+            
         }
 
         public void Stop()
