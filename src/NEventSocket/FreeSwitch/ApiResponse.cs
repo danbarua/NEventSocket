@@ -24,7 +24,7 @@ namespace NEventSocket.FreeSwitch
             }
 
             Headers = basicMessage.Headers;
-            BodyText = basicMessage.BodyText;
+            BodyText = basicMessage.BodyText.TrimEnd('\n');
         }
 
         /// <summary>
@@ -34,7 +34,11 @@ namespace NEventSocket.FreeSwitch
         {
             get
             {
-                return BodyText != null && BodyText[0] != '-';
+                //API Commands that don't return a response get turned into "-ERR no reply"
+                //this is probably not an error condition
+                //see mod_event_socket.c line 1553
+
+                return BodyText != null && (BodyText.StartsWith("-ERR no reply") || BodyText[0] != '-');
             }
         }
 

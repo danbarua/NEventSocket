@@ -148,18 +148,10 @@ namespace NEventSocket.Sockets
                                 {
                                     var logLevel = m.Success ? LogLevel.Debug : LogLevel.Error;
 
-                                    if (m.BodyText.StartsWith("-ERR no reply"))
-                                    {
-                                    //API Commands that don't return a response get turned into "-ERR no reply"
-                                    //this is probably not an error condition
-                                    //see mod_event_socket.c line 1553
-                                    logLevel = LogLevel.Debug;
-                                    }
-
                                     if (m.Success && command.StartsWith("uuid_dump"))
                                     {
-                                    //we don't need to dump the entire response to the logs
-                                    Log.Log(logLevel, () => "ApiResponse received CHANNEL_DATA for [{0}]".Fmt(command));
+                                        //we don't need to dump the entire response to the logs
+                                        Log.Log(logLevel, () => "ApiResponse received CHANNEL_DATA for [{0}]".Fmt(command));
                                     }
                                     else
                                     {

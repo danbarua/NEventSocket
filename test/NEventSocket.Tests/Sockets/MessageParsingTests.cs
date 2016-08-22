@@ -220,6 +220,49 @@
             Console.WriteLine(response);
         }
 
+        [Fact]
+        public void it_should_treat_Api_Response_ERR_no_reply_as_Success()
+        {
+            var parser = new Parser();
+            var rawInput = "Content-Type: api/response\nContent-Length: 13\n\n-ERR no reply";
+
+            foreach (char c in rawInput)
+            {
+                parser.Append(c);
+            }
+
+            Assert.True(parser.Completed);
+
+            var response = new ApiResponse(parser.ExtractMessage());
+            Assert.NotNull(response);
+            Assert.True(response.Success);
+            Assert.Equal("no reply", response.ErrorMessage);
+
+            Console.WriteLine(response);
+        }
+
+        [Fact]
+        public void it_should_trim_new_lines_from__the_end_of_ApiResponse_Body_text()
+        {
+            var parser = new Parser();
+            var rawInput = "Content-Type: api/response\nContent-Length: 14\n\n-ERR no reply\n";
+
+            foreach (char c in rawInput)
+            {
+                parser.Append(c);
+            }
+
+            Assert.True(parser.Completed);
+
+            var response = new ApiResponse(parser.ExtractMessage());
+            Assert.NotNull(response);
+            Assert.True(response.Success);
+            Assert.Equal("no reply", response.ErrorMessage);
+            Assert.Equal("-ERR no reply", response.BodyText);
+
+            Console.WriteLine(response);
+        }
+
         [Theory]
         [PropertyData("ExampleSessions")]
         public void Can_parse_example_sessions_to_completion(string input)
