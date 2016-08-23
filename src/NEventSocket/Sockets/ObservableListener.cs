@@ -148,7 +148,14 @@ namespace NEventSocket.Sockets
                                         }));
                         }
                     },
-                    ex => Log.ErrorException("Error handling inbound connection", ex));
+                    ex =>
+                    {
+                        //ObjectDisposedException is thrown by TcpListener when Stop() is called before EndAcceptTcpClient()
+                        if (!(ex is ObjectDisposedException))
+                        {
+                            Log.ErrorException("Error handling inbound connection", ex);
+                        }
+                    });
             
         }
 
@@ -192,7 +199,7 @@ namespace NEventSocket.Sockets
                     }
 
                     disposables.Dispose();
-                    connections?.ToList().ForEach(connection => connection.Dispose());
+                    connections?.ToList().ForEach(connection => connection?.Dispose());
 
                     observable.OnCompleted();
                     observable.Dispose();
