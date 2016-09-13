@@ -89,6 +89,32 @@
         }
 
         [Fact(Timeout = 2000)]
+        public async Task Can_restart_the_listener_after_stopping()
+        {
+            using (var listener = new OutboundListener(0))
+            {
+                listener.Start();
+                int counter = 0;
+
+                listener.Connections.Subscribe((socket) =>
+                {
+                    counter++;
+                });
+
+                new FakeFreeSwitchSocket(listener.Port);
+                await Wait.Until(() => counter == 1);
+                listener.Stop();
+
+                //not listening
+                Assert.Throws<SocketException>(() => new FakeFreeSwitchSocket(listener.Port));
+
+                listener.Start();
+                new FakeFreeSwitchSocket(listener.Port);
+                await Wait.Until(() => counter == 2);
+            }
+        }
+
+        [Fact(Timeout = 2000)]
         public async Task a_new_connection_produces_an_outbound_socket()
         {
             using (var listener = new OutboundListener(0))
