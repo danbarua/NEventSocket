@@ -160,5 +160,40 @@
 
             Assert.True(observableCompleted);
         }
+
+        [Fact(Timeout = 2000)]
+        public async Task IsStarted_is_true_when_started()
+        {
+            using (var listener = new OutboundListener(0))
+            {
+                listener.Start();
+                Assert.True(listener.IsStarted);
+            }
+        }
+
+        [Fact(Timeout = 2000)]
+        public async Task IsStarted_is_false_when_stopped()
+        {
+            using (var listener = new OutboundListener(0))
+            {
+                listener.Start();
+                Assert.True(listener.IsStarted);
+
+                listener.Stop();
+                Assert.False(listener.IsStarted);
+            }
+        }
+
+        [Fact(Timeout = 2000)]
+        public async Task IsStarted_is_false_when_disposed()
+        {
+            using (var listener = new OutboundListener(0))
+            {
+                listener.Start();
+
+                listener.Dispose();
+                await Wait.Until(() => listener.IsStarted == false);
+            }
+        }
     }
 }

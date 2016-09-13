@@ -168,7 +168,7 @@ namespace NEventSocket.Sockets
                             Log.ErrorException("Error handling inbound connection", ex);
                         }
                     },
-                    () => { isStarted = false;  });
+                    () => isStarted = false);
             
         }
 
@@ -177,6 +177,7 @@ namespace NEventSocket.Sockets
             if (tcpListener != null)
             {
                 tcpListener.Stop();
+                isStarted = false;
                 Log.Trace(() => "Listener stopped");
             }
         }
