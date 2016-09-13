@@ -31,7 +31,7 @@ namespace NEventSocket.Channels
         {
         }
 
-        protected internal Channel(EventMessage eventMessage, EventSocket eventSocket) : base(eventMessage, eventSocket)
+        protected internal Channel(ChannelEvent eventMessage, EventSocket eventSocket) : base(eventMessage, eventSocket)
         {
             LingerTime = 10;
         }
@@ -65,7 +65,7 @@ namespace NEventSocket.Channels
         {
             Dispose(false);
         }
-        public IObservable<EventMessage> Events { get { return Socket.Events.Where(x => x.UUID == UUID).AsObservable(); } }
+        public IObservable<EventMessage> Events { get { return Socket.ChannelEvents.Where(x => x.UUID == UUID).AsObservable(); } }
 
         public IObservable<BridgedChannel> BridgedChannels { get { return bridgedChannels.AsObservable(); } }
 
@@ -94,7 +94,7 @@ namespace NEventSocket.Channels
             if (onProgress != null)
             {
                 subscriptions.Add(
-                    eventSocket.Events.Where(x => x.UUID == options.UUID && x.EventName == EventName.ChannelProgress)
+                    eventSocket.ChannelEvents.Where(x => x.UUID == options.UUID && x.EventName == EventName.ChannelProgress)
                         .Take(1)
                         .Subscribe(onProgress));
             }
@@ -218,7 +218,7 @@ namespace NEventSocket.Channels
             }
 
             Disposables.Add(
-                    eventSocket.Events.Where(x => x.UUID == UUID 
+                    eventSocket.ChannelEvents.Where(x => x.UUID == UUID 
                                             && x.EventName == EventName.ChannelBridge
                                             && x.OtherLegUUID != bridgedUUID)
                     .Subscribe(
@@ -230,7 +230,7 @@ namespace NEventSocket.Channels
 
                             if (apiResponse.Success && apiResponse.BodyText != "+OK")
                             {
-                                var eventMessage = new EventMessage(apiResponse);
+                                var eventMessage = new ChannelEvent(apiResponse);
                                 bridgedChannels.OnNext(new BridgedChannel(eventMessage, eventSocket));
                             }
                             else
@@ -240,7 +240,7 @@ namespace NEventSocket.Channels
                         }));
 
             Disposables.Add(
-                eventSocket.Events.Where(x => x.UUID == UUID && x.EventName == EventName.ChannelUnbridge)
+                eventSocket.ChannelEvents.Where(x => x.UUID == UUID && x.EventName == EventName.ChannelUnbridge)
                            .Subscribe(x =>Log.Info(() =>"Channel [{0}] Unbridged from [{1}] {2}".Fmt(UUID, x.GetVariable("last_bridge_to"), x.GetVariable("bridge_hangup_cause")))));
 
             Disposables.Add(bridgedChannels.Subscribe(
@@ -264,7 +264,7 @@ namespace NEventSocket.Channels
                 }));
 
             Disposables.Add(
-                eventSocket.Events.Where(
+                eventSocket.ChannelEvents.Where(
                     x =>
                     x.EventName == EventName.ChannelBridge
                     && x.UUID != UUID
@@ -282,7 +282,7 @@ namespace NEventSocket.Channels
             if (eventSocket is OutboundSocket)
             {
                 Disposables.Add(
-                    eventSocket.Events.Where(x => x.UUID == UUID && x.EventName == EventName.ChannelHangup)
+                    eventSocket.ChannelEvents.Where(x => x.UUID == UUID && x.EventName == EventName.ChannelHangup)
                                .Subscribe(
                                    async e =>
                                    {

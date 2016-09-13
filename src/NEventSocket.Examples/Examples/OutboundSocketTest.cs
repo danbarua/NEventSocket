@@ -25,7 +25,7 @@
                     await connection.Connect();
                     Console.WriteLine("New Socket connected");
 
-                    connection.Events.Where(x => x.UUID == connection.ChannelData.UUID && x.EventName == EventName.ChannelHangup)
+                    connection.ChannelEvents.Where(x => x.UUID == connection.ChannelData.UUID && x.EventName == EventName.ChannelHangup)
                         .Take(1)
                         .Subscribe(
                             e =>

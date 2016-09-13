@@ -14,7 +14,7 @@ namespace NEventSocket.Channels
 
     public class BridgedChannel : BasicChannel
     {
-        protected internal BridgedChannel(EventMessage eventMessage, EventSocket eventSocket) : base(eventMessage, eventSocket)
+        protected internal BridgedChannel(ChannelEvent eventMessage, EventSocket eventSocket) : base(eventMessage, eventSocket)
         {
         }
     }

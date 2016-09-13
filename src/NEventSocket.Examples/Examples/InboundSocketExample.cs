@@ -70,7 +70,7 @@
                     var bridgeUUID = Guid.NewGuid().ToString();
 
                     var ringingHandler =
-                        client.Events.Where(x => x.UUID == bridgeUUID && x.EventName == EventName.ChannelProgress)
+                        client.ChannelEvents.Where(x => x.UUID == bridgeUUID && x.EventName == EventName.ChannelProgress)
                             .Take(1)
                             .Subscribe(e => ColorConsole.WriteLine("Progress {0} on {1}".Fmt(e.AnswerState, e.UUID).Blue()));
 
@@ -133,7 +133,7 @@
 
                         if (recordingResult.Success)
                         {
-                            client.Events.Where(x => x.UUID == uuid && x.EventName == EventName.Dtmf).Subscribe(
+                            client.ChannelEvents.Where(x => x.UUID == uuid && x.EventName == EventName.Dtmf).Subscribe(
                                 async (e) =>
                                 {
                                     var dtmf = e.Headers[HeaderNames.DtmfDigit];

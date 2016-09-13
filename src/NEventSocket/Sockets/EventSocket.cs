@@ -112,6 +112,21 @@ namespace NEventSocket.Sockets
             }
         }
 
+        /// <summary>
+        /// Gets an observable sequence of <seealso cref="ChannelEvent"/>.
+        /// </summary>
+        public IObservable<ChannelEvent> ChannelEvents
+        {
+            get
+            {
+                return Events.Where(x => x.Headers.ContainsKey(HeaderNames.UniqueId))
+                             .Select(x => new ChannelEvent(x));
+            }
+        }
+
+        /// <summary>
+        /// Gets an observable sequence of <seealso cref="ConferenceEvent"/>.
+        /// </summary>
         public IObservable<ConferenceEvent> ConferenceEvents
         {
             get
@@ -233,7 +248,7 @@ namespace NEventSocket.Sockets
         /// A Task of <seealso cref="EventMessage"/> that wraps the ChannelExecuteComplete event if the application completes successfully.
         /// The Task result will be null if the application did not execute, for example, the socket disconnected or the channel was hung up.
         /// </returns>
-        public Task<EventMessage> ExecuteApplication(
+        public Task<ChannelEvent> ExecuteApplication(
             string uuid, string application, string applicationArguments = null, bool eventLock = false, bool async = false, int loops = 1)
         {
             if (uuid == null)
@@ -272,7 +287,7 @@ namespace NEventSocket.Sockets
                 sb.AppendFormat("content-type: text/plain\ncontent-length: {0}\n\n{1}\n", applicationArguments.Length, applicationArguments);
             }
 
-            var tcs = new TaskCompletionSource<EventMessage>();
+            var tcs = new TaskCompletionSource<ChannelEvent>();
             var subscriptions = new CompositeDisposable();
 
             if (cts.Token.CanBeCanceled)
@@ -281,7 +296,7 @@ namespace NEventSocket.Sockets
             }
 
             subscriptions.Add(
-                Events.Where(
+                ChannelEvents.Where(
                     x => x.EventName == EventName.ChannelExecuteComplete && x.Headers["Application-UUID"] == applicationUUID)
                     .Take(1)
                     .Subscribe(
@@ -423,7 +438,7 @@ namespace NEventSocket.Sockets
             await SubscribeEvents(EventName.ChannelBridge, EventName.ChannelHangup).ConfigureAwait(false);
 
             var bridgedOrHungupEvent =
-                Events.FirstOrDefaultAsync(x => x.UUID == uuid && (x.EventName == EventName.ChannelBridge || x.EventName == EventName.ChannelHangup))
+                ChannelEvents.FirstOrDefaultAsync(x => x.UUID == uuid && (x.EventName == EventName.ChannelBridge || x.EventName == EventName.ChannelHangup))
                     .Do(
                         e =>
                             {
@@ -557,7 +572,7 @@ namespace NEventSocket.Sockets
         /// <param name="action">A Callback to be invoked on hangup.</param>
         public void OnHangup(string uuid, Action<EventMessage> action)
         {
-            Events.Where(x => x.UUID == uuid && x.EventName == EventName.ChannelHangup).Take(1).Subscribe(action);
+            ChannelEvents.Where(x => x.UUID == uuid && x.EventName == EventName.ChannelHangup).Take(1).Subscribe(action);
         }
 
         protected Task EnsureEventsSubscribed()

@@ -4,5 +4,5 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyDescription("An async reactive EventSocket driver for FreeSwitch")]
 [assembly: AssemblyCompany("Dan Barua")]
 [assembly: AssemblyProduct("NEventSocket")]
-[assembly: AssemblyCopyright("Copyright (C) 2014 Dan Barua and contributers. All rights reserved.")]
-[assembly: AssemblyVersion("2.0.0.0")]
+[assembly: AssemblyCopyright("Copyright (C) 2014-16 Dan Barua and contributers. All rights reserved.")]
+[assembly: AssemblyVersion("2.1.0.0")]

@@ -11,7 +11,7 @@ namespace NEventSocket.FreeSwitch
     /// </summary>
     public class PlayGetDigitsResult : ApplicationResult
     {
-        internal PlayGetDigitsResult(EventMessage eventMessage, string channelVariable) : base(eventMessage)
+        internal PlayGetDigitsResult(ChannelEvent eventMessage, string channelVariable) : base(eventMessage)
         {
             Digits = eventMessage.GetVariable(channelVariable);
 

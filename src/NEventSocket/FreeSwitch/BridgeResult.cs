@@ -11,7 +11,7 @@ namespace NEventSocket.FreeSwitch
     /// </summary>
     public class BridgeResult : ApplicationResult
     {
-        internal BridgeResult(EventMessage eventMessage) : base(eventMessage)
+        internal BridgeResult(ChannelEvent eventMessage) : base(eventMessage)
         {
             if (eventMessage != null)
             {

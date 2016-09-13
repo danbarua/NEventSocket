@@ -34,9 +34,9 @@ namespace NEventSocket.Channels
 
         protected EventSocket eventSocket;
 
-        protected EventMessage lastEvent;
+        protected ChannelEvent lastEvent;
 
-        private Action<EventMessage> hangupCallback = (e) => { };
+        private Action<ChannelEvent> hangupCallback = (e) => { };
 
         private string recordingPath;
 
@@ -47,7 +47,7 @@ namespace NEventSocket.Channels
             Dispose(false);
         }
 
-        protected BasicChannel(EventMessage eventMessage, EventSocket eventSocket)
+        protected BasicChannel(ChannelEvent eventMessage, EventSocket eventSocket)
         {
             Log = LogProvider.GetLogger(GetType());
 
@@ -56,7 +56,7 @@ namespace NEventSocket.Channels
             this.eventSocket = eventSocket;
 
             Disposables.Add(
-                eventSocket.Events
+                eventSocket.ChannelEvents
                            .Where(x => x.UUID == UUID)
                            .Subscribe(
                                e =>
@@ -115,7 +115,7 @@ namespace NEventSocket.Channels
         }
         public RecordingStatus RecordingStatus { get { return recordingStatus; } }
 
-        public Action<EventMessage> HangupCallBack
+        public Action<ChannelEvent> HangupCallBack
         {
             get
             {
@@ -133,7 +133,7 @@ namespace NEventSocket.Channels
             get
             {
                 return
-                    eventSocket.Events.Where(x => x.UUID == UUID && x.EventName == EventName.Dtmf)
+                    eventSocket.ChannelEvents.Where(x => x.UUID == UUID && x.EventName == EventName.Dtmf)
                         .Select(x => x.Headers[HeaderNames.DtmfDigit]);
             }
         }
@@ -179,7 +179,8 @@ namespace NEventSocket.Channels
         public IObservable<string> FeatureCodes(string prefix = "#")
         {
             return eventSocket
-                       .Events.Where(x => x.EventName == EventName.Dtmf && x.UUID == UUID).Select(x => x.Headers[HeaderNames.DtmfDigit])
+                       .ChannelEvents.Where(x => x.UUID == UUID && x.EventName == EventName.Dtmf)
+                       .Select(x => x.Headers[HeaderNames.DtmfDigit])
                        .Buffer(TimeSpan.FromSeconds(2), 2)
                        .Where(x => x.Count == 2 && x[0] == prefix)
                        .Select(x => string.Concat(x))
@@ -322,7 +323,7 @@ namespace NEventSocket.Channels
                 var aLegUUID = lastEvent.Headers[HeaderNames.OtherLegUniqueId];
                 var bLegUUID = UUID;
 
-                var events = eventSocket.Events;
+                var events = eventSocket.ChannelEvents;
 
                 Log.Debug(() => "Att XFer Starting A-Leg [{0}] B-Leg [{1}]".Fmt(aLegUUID, bLegUUID));
 

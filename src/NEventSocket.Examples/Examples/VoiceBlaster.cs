@@ -35,7 +35,7 @@
 
                 await client.SubscribeEvents(EventName.ChannelHangup, EventName.BackgroundJob);
 
-                client.Events.Where(x => x.EventName == EventName.ChannelHangup && x.HangupCause != HangupCause.NormalClearing)
+                client.ChannelEvents.Where(x => x.EventName == EventName.ChannelHangup && x.HangupCause != HangupCause.NormalClearing)
                     .Subscribe(x => { Console.WriteLine("Hangup Detected : {0} {1}", x.GetVariable("mobile_no"), x.HangupCause); });
 
                 using (var listener = new OutboundListener(8084))

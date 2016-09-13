@@ -12,7 +12,7 @@ namespace NEventSocket.FreeSwitch
     /// </summary>
     public class ReadResult : ApplicationResult
     {
-        internal ReadResult(EventMessage eventMessage, string channelVariable) : base(eventMessage)
+        internal ReadResult(ChannelEvent eventMessage, string channelVariable) : base(eventMessage)
         {
             if (eventMessage != null)
             {

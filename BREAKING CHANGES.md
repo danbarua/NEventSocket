@@ -1,3 +1,5 @@
+v2.1.0
+ - Split ChannelEvents from Events observable, created new ChannelEvent message type
 v2.0.0
  - Moved Originate operations from InboundSocket to extension methods on EventSocket (breaks binary compatibility)
  - Channels - exposes socket and last event properties on Channel instead of Channel.Advanced

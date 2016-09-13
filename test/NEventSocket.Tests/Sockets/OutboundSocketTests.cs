@@ -101,7 +101,7 @@ namespace NEventSocket.Tests.Sockets
             using (var listener = new OutboundListener(0))
             {
                 listener.Start();
-                EventMessage channelData = null;
+                ChannelEvent channelData = null;
 
                 listener.Connections.Subscribe(
                     async (socket) =>

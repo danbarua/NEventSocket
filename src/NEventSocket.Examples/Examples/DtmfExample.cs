@@ -64,7 +64,7 @@
                         client.Exit();
                     });
 
-                client.Events.Where(x => 
+                client.ChannelEvents.Where(x => 
                     x.UUID == uuid&& 
                     x.EventName == EventName.Dtmf).Subscribe(
                     e =>

@@ -46,7 +46,7 @@
                 await client.SetChannelVariable(uuid, "dtmf_verbose", "true");
                 //await client.StartDtmf(uuid);
 
-                client.Events.Where(x => x.UUID == uuid && x.EventName == EventName.ChannelHangup)
+                client.ChannelEvents.Where(x => x.UUID == uuid && x.EventName == EventName.ChannelHangup)
                     .Subscribe(
                     e =>
                     {
@@ -54,7 +54,7 @@
                         client.Exit();
                     });
 
-                client.Events.Where(x => x.UUID == uuid && x.EventName == EventName.Dtmf)
+                client.ChannelEvents.Where(x => x.UUID == uuid && x.EventName == EventName.Dtmf)
                     .Subscribe(e => ColorConsole.WriteLine("DTMF Detected ".Blue(), e.Headers[HeaderNames.DtmfDigit]));
 
                 var playGetDigitsResult = await

@@ -13,7 +13,7 @@ namespace NEventSocket.FreeSwitch
     /// </summary>
     public class PlayResult : ApplicationResult
     {
-        internal PlayResult(EventMessage eventMessage) : base(eventMessage)
+        internal PlayResult(ChannelEvent eventMessage) : base(eventMessage)
         {
             if (eventMessage != null)
             {

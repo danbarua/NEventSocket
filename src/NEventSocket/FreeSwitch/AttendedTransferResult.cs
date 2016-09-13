@@ -32,7 +32,7 @@ namespace NEventSocket.FreeSwitch
         /// </summary>
         public HangupCause? HangupCause { get; private set; }
 
-        protected internal static AttendedTransferResult Hangup(EventMessage hangupMessage)
+        protected internal static AttendedTransferResult Hangup(ChannelEvent hangupMessage)
         {
             if (hangupMessage.EventName != EventName.ChannelHangup)
             {

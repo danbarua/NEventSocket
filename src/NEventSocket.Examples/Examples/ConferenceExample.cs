@@ -64,7 +64,7 @@ namespace NEventSocket.Examples.Examples
 
                                 await channel.Play("ivr/ivr-say_name.wav");
                                 await channel.Play("tone_stream://%(500,0,500)");
-                                await channel.Socket.ExecuteApplication(channel.UUID, "record", nameFile + " 10 200 1");
+                                await channel.Execute("record", nameFile + " 10 200 1");
 
                                 //when this member enters the conference, play the announcement
                                 channel.Socket.ConferenceEvents.FirstAsync(x => x.Action == ConferenceAction.AddMember)
@@ -82,17 +82,22 @@ namespace NEventSocket.Examples.Examples
                             channel.Socket.ConferenceEvents
                                 .Subscribe(x =>
                                 {
+                                    // the channel's socket event stream is already filtered to that channel.
+                                    // for all other conference maintainence events, use a dedicated inbound socket
+
                                     ColorConsole.WriteLine("Got conf event ".DarkYellow(), x.Action.ToString().Yellow());
                                     switch (x.Action)
                                     {
                                         case ConferenceAction.StartTalking:
                                             ColorConsole.WriteLine(
-                                                "Channel ".DarkGreen(), x.UUID.Green(), " started talking".DarkGreen());
+                                                "Channel ".DarkGreen(), channel.UUID.Green(), " Member ".Green(), x.MemberId.Green(), " started talking".DarkGreen());
                                             break;
                                         case ConferenceAction.StopTalking:
-                                            ColorConsole.WriteLine("Channel ".DarkRed(), x.UUID.Red(), " stopped talking".DarkRed());
+                                            ColorConsole.WriteLine("Channel ".DarkRed(), channel.UUID.Red(), " Member ".DarkRed(), x.MemberId.Red(), " stopped talking".DarkRed());
                                             break;
                                     }
+
+                                    ColorConsole.WriteLine(x.ToString().DarkGray());
                                 });
 
                             //if we await the result of this, we'll get OperationCanceledException on hangup

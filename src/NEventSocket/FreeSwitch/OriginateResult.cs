@@ -15,7 +15,7 @@ namespace NEventSocket.FreeSwitch
     /// </summary>
     public class OriginateResult
     {
-        private OriginateResult(EventMessage channelEvent)
+        private OriginateResult(ChannelEvent channelEvent)
         {
             ChannelData = channelEvent;
             Success = channelEvent.AnswerState != AnswerState.Hangup;
@@ -52,7 +52,7 @@ namespace NEventSocket.FreeSwitch
         /// <summary>
         /// Gets an <see cref="EventMessage">EventMessage</see> contanining the ChannelData for the call.
         /// </summary>
-        public EventMessage ChannelData { get; protected set; }
+        public ChannelEvent ChannelData { get; protected set; }
 
         /// <summary>
         /// Creates an <see cref="OriginateResult"/> from either a BackgroundJobResult or an EventMessage
@@ -62,7 +62,7 @@ namespace NEventSocket.FreeSwitch
         /// <exception cref="ArgumentException">If the wrong message type is passed.</exception>
         public static OriginateResult FromBackgroundJobResultOrChannelEvent(BasicMessage message)
         {
-            var channelEvent = message as EventMessage;
+            var channelEvent = message as ChannelEvent;
             if (channelEvent != null)
             {
                 return new OriginateResult(channelEvent);

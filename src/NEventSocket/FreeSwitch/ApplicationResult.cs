@@ -20,8 +20,8 @@ namespace NEventSocket.FreeSwitch
         /// <summary>
         /// Instantiates an <seealso cref="ApplicationResult"/> from a ChannelExecuteComplete <seealso cref="EventMessage"/>.
         /// </summary>
-        /// <param name="eventMessage">The <seealso cref="EventMessage"/> to wrap.</param>
-        protected ApplicationResult(EventMessage eventMessage)
+        /// <param name="eventMessage">The <seealso cref="ChannelEvent"/> to wrap.</param>
+        protected ApplicationResult(ChannelEvent eventMessage)
         {
             //eventMessage may be null, this is the case where the other side disconnected and closed down
             //the socket before we got the CHANNEL_EXECUTE_COMPLETE event.
@@ -52,8 +52,8 @@ namespace NEventSocket.FreeSwitch
         public string ResponseText { get; protected set; }
 
         /// <summary>
-        /// Gets an <see cref="EventMessage">EventMessage</see> contanining the ChannelData for the call.
+        /// Gets an <see cref="ChannelEvent">ChannelEvent</see> containing the ChannelData for the call.
         /// </summary>
-        public EventMessage ChannelData { get; protected set; }
+        public ChannelEvent ChannelData { get; protected set; }
     }
 }

@@ -58,7 +58,7 @@
 
                         await connection.ExecuteApplication(connection.ChannelData.UUID, "answer");
 
-                        connection.Events.Where(x => x.UUID == connection.ChannelData.UUID && x.EventName == EventName.ChannelHangup)
+                        connection.ChannelEvents.Where(x => x.UUID == connection.ChannelData.UUID && x.EventName == EventName.ChannelHangup)
                             .Take(1)
                             .Subscribe(
                                 async e =>
@@ -73,7 +73,7 @@
                                 });
 
 
-                        connection.Events.Where(x => x.UUID == connection.ChannelData.UUID && x.EventName == EventName.Dtmf)
+                        connection.ChannelEvents.Where(x => x.UUID == connection.ChannelData.UUID && x.EventName == EventName.Dtmf)
                             .Subscribe(
                                 async e =>
                                 {

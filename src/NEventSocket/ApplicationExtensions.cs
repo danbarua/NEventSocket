@@ -109,17 +109,17 @@ namespace NEventSocket
             }
         }
 
-        public static Task<EventMessage> Say(this EventSocket eventSocket, string uuid, SayOptions options)
+        public static Task<ChannelEvent> Say(this EventSocket eventSocket, string uuid, SayOptions options)
         {
             return eventSocket.ExecuteApplication(uuid, "say", options.ToString());
         }
 
-        public static Task<EventMessage> StartDtmf(this EventSocket eventSocket, string uuid)
+        public static Task<ChannelEvent> StartDtmf(this EventSocket eventSocket, string uuid)
         {
             return eventSocket.ExecuteApplication(uuid, "spandsp_start_dtmf");
         }
 
-        public static Task<EventMessage> StopDtmf(this EventSocket eventSocket, string uuid)
+        public static Task<ChannelEvent> StopDtmf(this EventSocket eventSocket, string uuid)
         {
             return eventSocket.ExecuteApplication(uuid, "spandsp_stop_dtmf");
         }

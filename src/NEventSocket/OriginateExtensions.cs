@@ -85,13 +85,13 @@ namespace NEventSocket
                     socket.BackgroundJob("originate", originateString)
                         .ToObservable()
                         .Merge(
-                            socket.Events.FirstAsync(
+                            socket.ChannelEvents.FirstAsync(
                                 x =>
                                     x.UUID == options.UUID
                                     && (x.EventName == EventName.ChannelAnswer || x.EventName == EventName.ChannelHangup
                                         || (options.ReturnRingReady && x.EventName == EventName.ChannelProgress))).Cast<BasicMessage>())
-                        .FirstAsync(x => (x is BackgroundJobResult && !((BackgroundJobResult)x).Success) || x is EventMessage)
-                        .Select(OriginateResult.FromBackgroundJobResultOrChannelEvent)
+                        .FirstAsync(x => (x is BackgroundJobResult && !((BackgroundJobResult)x).Success) || x is ChannelEvent)
+                        .Select(OriginateResult.FromBackgroundJobResultOrChannelEvent) // pattern matching, my kingdom for pattern matching
                         .ToTask()
                         .ConfigureAwait(false);
         }

@@ -39,15 +39,15 @@ namespace NEventSocket
         /// When FS connects to an "Event Socket Outbound" handler, it sends
         /// a "CHANNEL_DATA" event in the headers of the Command-Reply received in response to Connect();
         /// </summary>
-        public EventMessage ChannelData { get; private set; }
+        public ChannelEvent ChannelData { get; private set; }
 
         /// <summary>
         /// Sends the connect command to FreeSwitch, populating the <see cref="ChannelData"/> property on reply.
         /// </summary>
-        public async Task<EventMessage> Connect()
+        public async Task<ChannelEvent> Connect()
         {
             var response = await SendCommand("connect").ConfigureAwait(false);
-            ChannelData = new EventMessage(response);
+            ChannelData = new ChannelEvent(response);
 
             var socketMode = ChannelData.GetHeader("Socket-Mode");
             var controlMode = ChannelData.GetHeader("Control");
