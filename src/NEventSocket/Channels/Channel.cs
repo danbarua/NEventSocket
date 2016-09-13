@@ -65,7 +65,7 @@ namespace NEventSocket.Channels
         {
             Dispose(false);
         }
-        public IObservable<EventMessage> Events { get { return Socket.ChannelEvents.Where(x => x.UUID == UUID).AsObservable(); } }
+        public IObservable<ChannelEvent> Events { get { return Socket.ChannelEvents.Where(x => x.UUID == UUID).AsObservable(); } }
 
         public IObservable<BridgedChannel> BridgedChannels { get { return bridgedChannels.AsObservable(); } }
 
