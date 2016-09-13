@@ -45,7 +45,7 @@ namespace NEventSocket.Sockets
 
         private TcpListener tcpListener;
 
-        private bool isStarted;
+        private readonly InterlockedBoolean isStarted = new InterlockedBoolean();
         
         static ObservableListener()
         {
@@ -99,7 +99,7 @@ namespace NEventSocket.Sockets
         {
             get
             {
-                return isStarted;
+                return isStarted.Value;
             }
         }
 
@@ -112,13 +112,15 @@ namespace NEventSocket.Sockets
             {
                 throw new ObjectDisposedException(ToString());
             }
-            
+
+            if (isStarted.EnsureCalledOnce())
+            {
+                return;
+            }
 
             tcpListener = new TcpListener(IPAddress.Any, port);
 
             tcpListener.Start();
-
-            isStarted = true;
 
             Log.Trace(() => "Listener Started on Port {0}".Fmt(Port));
 
@@ -168,7 +170,7 @@ namespace NEventSocket.Sockets
                             Log.ErrorException("Error handling inbound connection", ex);
                         }
                     },
-                    () => isStarted = false);
+                    () => isStarted.Set(false));
             
         }
 
@@ -177,7 +179,7 @@ namespace NEventSocket.Sockets
             if (tcpListener != null)
             {
                 tcpListener.Stop();
-                isStarted = false;
+                isStarted.Set(false);
                 Log.Trace(() => "Listener stopped");
             }
         }

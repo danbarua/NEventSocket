@@ -195,5 +195,16 @@
                 await Wait.Until(() => listener.IsStarted == false);
             }
         }
+
+        [Fact(Timeout = 2000)]
+        public async Task Starting_should_be_idempotent()
+        {
+            using (var listener = new OutboundListener(0))
+            {
+                listener.Start();
+                listener.Start();
+                Assert.True(listener.IsStarted);
+            }
+        }
     }
 }
