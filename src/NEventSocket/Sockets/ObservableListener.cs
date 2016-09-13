@@ -44,6 +44,8 @@ namespace NEventSocket.Sockets
         private IDisposable subscription;
 
         private TcpListener tcpListener;
+
+        private bool isStarted;
         
         static ObservableListener()
         {
@@ -93,6 +95,14 @@ namespace NEventSocket.Sockets
             }
         }
 
+        public bool IsStarted
+        {
+            get
+            {
+                return isStarted;
+            }
+        }
+
         /// <summary>
         /// Starts the Listener
         /// </summary>
@@ -107,6 +117,8 @@ namespace NEventSocket.Sockets
             tcpListener = new TcpListener(IPAddress.Any, port);
 
             tcpListener.Start();
+
+            isStarted = true;
 
             Log.Trace(() => "Listener Started on Port {0}".Fmt(Port));
 
@@ -155,7 +167,8 @@ namespace NEventSocket.Sockets
                         {
                             Log.ErrorException("Error handling inbound connection", ex);
                         }
-                    });
+                    },
+                    () => { isStarted = false;  });
             
         }
 
