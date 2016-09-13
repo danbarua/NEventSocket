@@ -188,6 +188,15 @@
         }
 
         [Fact(Timeout = 2000)]
+        public async Task IsStarted_is_false_when_initialized()
+        {
+            using (var listener = new OutboundListener(0))
+            {
+                Assert.False(listener.IsStarted);
+            }
+        }
+
+        [Fact(Timeout = 2000)]
         public async Task IsStarted_is_true_when_started()
         {
             using (var listener = new OutboundListener(0))
