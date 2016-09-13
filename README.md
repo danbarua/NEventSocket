@@ -45,7 +45,7 @@ using (var socket = await InboundSocket.Connect("localhost", 8021, "ClueCon"))
   await socket.SubscribeEvents(EventName.ChannelAnswer);
 
   //Handle events as they come in using Rx
-  socket.Events.Where(x => x.EventName == EventName.ChannelAnswer)
+  socket.ChannelEvents.Where(x => x.EventName == EventName.ChannelAnswer)
         .Subscribe(async x =>
             {
                 Console.WriteLine("Channel Answer Event " +  x.UUID);
@@ -92,7 +92,7 @@ using (var listener = new OutboundListener(8084))
 
       await socket.SubscribeEvents(EventName.ChannelHangup);
 
-      socket.Events
+      socket.ChannelEvents
             .Where(x => x.EventName == EventName.ChannelHangup && x.UUID == uuid)
             .Take(1)
             .Subscribe(async x => {
@@ -136,7 +136,7 @@ try {
 
   await socket.SubscribeEvents(EventName.Dtmf);
 
-  socket.Events.Where(x => x.UUID == uuid && x.EventName == EventName.Dtmf)
+  socket.ChannelEvents.Where(x => x.UUID == uuid && x.EventName == EventName.Dtmf)
         .Subscribe(async e => {
           try {
             Console.WriteLine(e.Headers[HeaderNames.DtmfDigit]);
