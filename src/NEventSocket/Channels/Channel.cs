@@ -241,7 +241,18 @@ namespace NEventSocket.Channels
 
             Disposables.Add(
                 eventSocket.ChannelEvents.Where(x => x.UUID == UUID && x.EventName == EventName.ChannelUnbridge)
-                           .Subscribe(x =>Log.Info(() =>"Channel [{0}] Unbridged from [{1}] {2}".Fmt(UUID, x.GetVariable("last_bridge_to"), x.GetVariable("bridge_hangup_cause")))));
+                           .Subscribe(
+                               x =>
+                               {
+                                   Log.Info(
+                                       () =>
+                                           "Channel [{0}] Unbridged from [{1}] {2}".Fmt(
+                                               UUID,
+                                               x.GetVariable("last_bridge_to"),
+                                               x.GetVariable("bridge_hangup_cause")));
+
+                                   this.OtherLeg = null;
+                               }));
 
             Disposables.Add(bridgedChannels.Subscribe(
                 async b =>
