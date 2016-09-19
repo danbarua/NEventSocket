@@ -504,7 +504,7 @@ namespace NEventSocket.Sockets
                             .Subscribe(
                                 x =>
                                     {
-                                        Log.Info(() => "Disconnect Notice received [{0}]".Fmt(x.BodyText));
+                                        Log.Debug(() => "Disconnect Notice received [{0}]".Fmt(x.BodyText));
                                         tcs.TrySetResult(x);
                                     },
                                 ex =>
