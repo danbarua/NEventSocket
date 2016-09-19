@@ -51,6 +51,7 @@ namespace NEventSocket.Channels
                EventName.ChannelUnbridge,
                EventName.ChannelAnswer,
                EventName.ChannelHangup,
+               EventName.ChannelHangupComplete,
                EventName.Dtmf).ConfigureAwait(false); //subscribe to minimum events
 
             await outboundSocket.Filter(HeaderNames.UniqueId, outboundSocket.ChannelData.UUID).ConfigureAwait(false); //filter for our unique id (in case using full socket mode)
@@ -293,7 +294,7 @@ namespace NEventSocket.Channels
             if (eventSocket is OutboundSocket)
             {
                 Disposables.Add(
-                    eventSocket.ChannelEvents.Where(x => x.UUID == UUID && x.EventName == EventName.ChannelHangup)
+                    eventSocket.ChannelEvents.Where(x => x.UUID == UUID && x.EventName == EventName.ChannelHangupComplete)
                                .Subscribe(
                                    async e =>
                                    {
@@ -302,6 +303,7 @@ namespace NEventSocket.Channels
                                            //give event subscribers time to complete
                                            if (LingerTime > 0)
                                            {
+                                               Log.Debug(() => "Channel[{0}] will exit in {1} seconds...".Fmt(UUID, LingerTime));
                                                await Task.Delay(LingerTime * 1000);
                                            }
 
