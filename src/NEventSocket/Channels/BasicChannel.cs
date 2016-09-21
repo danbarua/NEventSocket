@@ -344,14 +344,6 @@ namespace NEventSocket.Channels
                     events.Where(x => x.EventName == EventName.ChannelAnswer && x.UUID != bLegUUID && x.UUID != aLegUUID)
                           .Do(x => Log.Debug(() => "Att XFer Answer Detected on C-Leg [{0}]".Fmt(x.UUID)));
 
-                var bLegUnbridge =
-                    events.Where(x => x.EventName == EventName.ChannelUnbridge && x.UUID == bLegUUID)
-                          .Do(x => Log.Debug(() => "Att XFer Unbridge Detected on C-Leg [{0}]".Fmt(x.UUID)));
-
-                var cLegUnbridge =
-                    events.Where(x => x.EventName == EventName.ChannelUnbridge && x.UUID != bLegUUID && x.UUID != aLegUUID)
-                          .Do(x => Log.Debug(() => "Att XFer Unbridge Detected on C-Leg [{0}]".Fmt(x.UUID)));
-
                 var aLegBridge =
                     events.Where(x => x.EventName == EventName.ChannelBridge && x.UUID == aLegUUID)
                           .Do(x => Log.Debug(() => "Att XFer Bridge Detected on A-Leg [{0}]".Fmt(x.UUID)));
@@ -368,7 +360,6 @@ namespace NEventSocket.Channels
                             && x.UUID == bLegUUID
                             && x.GetHeader(HeaderNames.Application) == "att_xfer");
 
-                var cFailed = cLegHangup.And(channelExecuteComplete.Where(x => x.GetVariable("originate_disposition") != "SUCCESS"));
 
                 var cAnsweredThenHungUp =
                     cLegAnswer.And(cLegHangup)
@@ -382,13 +373,14 @@ namespace NEventSocket.Channels
                     cLegAnswer.And(bLegHangup)
                         .And(cLegBridge.Where(x => x.OtherLegUUID == aLegUUID));
 
-                subscriptions.Add(Observable.When(cFailed.Then((hangup, execComplete) => new { hangup, execComplete }))
-                                            .Subscribe(
-                                                x =>
-                                                {
-                                                    Log.Debug(() => "Att Xfer Not Answered");
-                                                    tcs.TrySetResult(AttendedTransferResult.Failed(x.execComplete.GetVariable("originate_disposition").HeaderToEnum<HangupCause>()));
-                                                }));
+                subscriptions.Add(channelExecuteComplete.Where(x => x.GetVariable("originate_disposition") != "SUCCESS")
+                    .Subscribe(
+                        x =>
+                        {
+                            Log.Debug(() => "Att Xfer Not Answered");
+                            tcs.TrySetResult(AttendedTransferResult.Failed(x.GetVariable("originate_disposition").HeaderToEnum<HangupCause>()));
+
+                        }));
 
                 subscriptions.Add(Observable.When(cAnsweredThenHungUp.Then((answer, hangup, execComplete) => new { answer, hangup, execComplete }))
                                             .Subscribe(
