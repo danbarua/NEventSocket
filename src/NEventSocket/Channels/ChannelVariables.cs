@@ -18,5 +18,7 @@ namespace NEventSocket.Channels
         public string this[string variableName] => this.channel.GetVariable(variableName);
 
         public HangupCause? BridgeHangupCause => (this["last_bridge_hangup_cause"] ?? this["originate_disposition"]).HeaderToEnumOrNull<HangupCause>();
+
+        public int SessionId => int.Parse(this["session_id"]);
     }
 }
