@@ -222,7 +222,7 @@ namespace NEventSocket.Examples.Examples
 
                         if (!channel.IsBridged)
                         {
-                            ColorConsole.WriteLine("Bridge Failed - {0}".Fmt(channel.GetVariable("last_bridge_hangup_cause")).Red());
+                            ColorConsole.WriteLine("Bridge Failed - {0}".Fmt(channel.Variables.BridgeHangupCause).Red());
                             await channel.Play("ivr/ivr-call_rejected.wav");
                             await channel.Hangup(HangupCause.NormalTemporaryFailure);
                         }

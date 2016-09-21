@@ -55,6 +55,8 @@ namespace NEventSocket.Channels
             lastEvent = eventMessage;
             this.eventSocket = eventSocket;
 
+            Variables = new ChannelVariables(this);
+
             Disposables.Add(
                 eventSocket.ChannelEvents
                            .Where(x => x.UUID == UUID)
@@ -140,7 +142,9 @@ namespace NEventSocket.Channels
         
         public EventSocket Socket { get { return eventSocket; } }
 
-        public IDictionary<string,string> Headers { get {  return lastEvent.Headers; } } 
+        public IDictionary<string,string> Headers { get {  return lastEvent.Headers; } }
+
+        public ChannelVariables Variables { get; private set; }
 
         public bool IsBridged
         {
@@ -611,3 +615,4 @@ namespace NEventSocket.Channels
         }
     }
 }
+
