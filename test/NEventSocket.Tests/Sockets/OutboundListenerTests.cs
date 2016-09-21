@@ -170,6 +170,7 @@
 
                 using (var client = new FakeFreeSwitchSocket(listener.Port))
                 {
+                    await Wait.Until(() => ProblematicListener.Counter == 1);
                     Assert.Equal(0, connectionsHandled);
                     Assert.Equal(1, ProblematicListener.Counter);
                     Assert.False(observableCompleted);
