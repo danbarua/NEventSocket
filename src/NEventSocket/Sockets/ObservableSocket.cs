@@ -114,9 +114,17 @@ namespace NEventSocket.Sockets
                             }
                             catch (IOException ex)
                             {
-                                //socket comms interrupted - propogate the error up the layers
-                                SafeLog(LogLevel.Error, () => "IO Error reading from stream", ex);
-                                subject.OnError(ex);
+                                if (ex.InnerException is ObjectDisposedException)
+                                {
+                                    //expected - normal shutdown
+                                    subject.OnCompleted();
+                                }
+                                else
+                                {
+                                    //socket comms interrupted - propogate the error up the layers
+                                    SafeLog(LogLevel.Error, () => "IO Error reading from stream", ex);
+                                    subject.OnError(ex);
+                                }
                             }
                             catch (SocketException ex)
                             {
