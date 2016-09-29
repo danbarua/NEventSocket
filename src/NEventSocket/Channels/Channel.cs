@@ -241,10 +241,20 @@ namespace NEventSocket.Channels
                         }));
 
             Disposables.Add(
-                eventSocket.ChannelEvents.Where(x => x.UUID == UUID && x.EventName == EventName.ChannelUnbridge)
+                eventSocket.ChannelEvents.Where(x => 
+                                    x.UUID == UUID 
+                                    && x.EventName == EventName.ChannelUnbridge
+                                    && x.GetVariable("bridge_hangup_cause") != null)
                            .Subscribe(
                                x =>
                                {
+                                   /* side effects:
+                                    * the att_xfer application is evil
+                                    * if after speaking to C, B presses '#' to cancel,
+                                    * the A channel fires an unbridge event, even though it is still bridged to B
+                                    * in this case, bridge_hangup_cause will be empty so we'll ignore those events
+                                    * however, this may break if this channel has had any completed bridges before this. */
+
                                    Log.Info(
                                        () =>
                                            "Channel [{0}] Unbridged from [{1}] {2}".Fmt(
