@@ -23,7 +23,7 @@ namespace NEventSocket.Channels
         
         private readonly InterlockedBoolean disposed = new InterlockedBoolean();
 
-        private BehaviorSubject<BridgedChannel> bridgedChannelsSubject = new BehaviorSubject<BridgedChannel>(null);
+        private readonly BehaviorSubject<BridgedChannel> bridgedChannelsSubject = new BehaviorSubject<BridgedChannel>(null);
 
         private string bridgedUUID;
 
