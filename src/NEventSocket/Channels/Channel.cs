@@ -191,12 +191,7 @@ namespace NEventSocket.Channels
                     }
 
                     OtherLeg?.Dispose();
-
-                    if (bridgedChannelsSubject != null)
-                    {
-                        bridgedChannelsSubject.Dispose();
-                        bridgedChannelsSubject = null;
-                    }
+                    bridgedChannelsSubject.Dispose();
                 }
 
                 if (eventSocket != null && eventSocket is OutboundSocket)
