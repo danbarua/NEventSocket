@@ -23,7 +23,7 @@ namespace NEventSocket.Channels
         
         private readonly InterlockedBoolean disposed = new InterlockedBoolean();
 
-        private Subject<BridgedChannel> bridgedChannels = new Subject<BridgedChannel>();
+        private BehaviorSubject<BridgedChannel> bridgedChannelsSubject = new BehaviorSubject<BridgedChannel>(null);
 
         private string bridgedUUID;
 
@@ -68,9 +68,9 @@ namespace NEventSocket.Channels
         }
         public IObservable<ChannelEvent> Events { get { return Socket.ChannelEvents.Where(x => x.UUID == UUID).AsObservable(); } }
 
-        public IObservable<BridgedChannel> BridgedChannels { get { return bridgedChannels.AsObservable(); } }
+        public IObservable<BridgedChannel> BridgedChannels { get { return bridgedChannelsSubject.Where(x => x != null).AsObservable(); } }
 
-        public BridgedChannel OtherLeg { get; private set; }
+        public BridgedChannel OtherLeg => bridgedChannelsSubject.Value;
 
         public bool ExitOnHangup { get; set; }
 
@@ -100,10 +100,17 @@ namespace NEventSocket.Channels
                         .Subscribe(onProgress));
             }
 
+            var bridgedChannel = this.BridgedChannels.FirstAsync(x => x.UUID == options.UUID);
             var result = await eventSocket.Bridge(UUID, destination, options).ConfigureAwait(false);
 
             Log.Debug(() => "Channel {0} bridge complete {1} {2}".Fmt(UUID, result.Success, result.ResponseText));
             subscriptions.Dispose();
+
+            if (result.Success)
+            {
+                //wait for this.OtherLeg to be set before completing
+                await bridgedChannel;
+            }
         }
 
         public Task Execute(string application, string args)
@@ -183,16 +190,12 @@ namespace NEventSocket.Channels
                         Disposables.Dispose();
                     }
 
-                    if (bridgedChannels != null)
-                    {
-                        bridgedChannels.Dispose();
-                        bridgedChannels = null;
-                    }
+                    OtherLeg?.Dispose();
 
-                    if (OtherLeg != null)
+                    if (bridgedChannelsSubject != null)
                     {
-                        OtherLeg.Dispose();
-                        OtherLeg = null;
+                        bridgedChannelsSubject.Dispose();
+                        bridgedChannelsSubject = null;
                     }
                 }
 
@@ -232,7 +235,7 @@ namespace NEventSocket.Channels
                             if (apiResponse.Success && apiResponse.BodyText != "+OK")
                             {
                                 var eventMessage = new ChannelEvent(apiResponse);
-                                bridgedChannels.OnNext(new BridgedChannel(eventMessage, eventSocket));
+                                bridgedChannelsSubject.OnNext(new BridgedChannel(eventMessage, eventSocket));
                             }
                             else
                             {
@@ -262,10 +265,10 @@ namespace NEventSocket.Channels
                                                x.GetVariable("last_bridge_to"),
                                                x.GetVariable("bridge_hangup_cause")));
 
-                                   this.OtherLeg = null;
+                                   bridgedChannelsSubject.OnNext(null); //clears out OtherLeg
                                }));
 
-            Disposables.Add(bridgedChannels.Subscribe(
+            Disposables.Add(BridgedChannels.Subscribe(
                 async b =>
                 {
                     if (bridgedUUID != null && bridgedUUID != b.UUID)
@@ -282,7 +285,6 @@ namespace NEventSocket.Channels
                     await eventSocket.Filter(HeaderNames.ChannelCallUniqueId, bridgedUUID).ConfigureAwait(false);
 
                     Log.Trace(() => "Channel [{0}] setting OtherLeg to [{1}]".Fmt(UUID, b.UUID));
-                    this.OtherLeg = b;
                 }));
 
             Disposables.Add(
@@ -297,7 +299,7 @@ namespace NEventSocket.Channels
                         {
                             //there is another channel out there that has bridged to us but we didn't get the CHANNEL_BRIDGE event on this channel
                             Log.Info(() => "Channel [{0}] bridged to [{1}]] on CHANNEL_BRIDGE received on other channel".Fmt(UUID, x.UUID));
-                            bridgedChannels.OnNext(new BridgedChannel(x, eventSocket));
+                            bridgedChannelsSubject.OnNext(new BridgedChannel(x, eventSocket));
                         }));
 
 
