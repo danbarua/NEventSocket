@@ -11,9 +11,21 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>An async reactive EventSocket driver for FreeSwitch</description>
     <dependencies />
-    <copyright>Copyright (C) Dan Barua 2014</copyright>
+    <copyright>Copyright (C) Dan Barua 2014-2016</copyright>
     <tags>FreeSwitch EventSocket ESL Reactive</tags>
     <releaseNotes>
+      
+      2.1.0 - BREAKING CHANGES: ( see https://github.com/danbarua/NEventSocket/blob/master/BREAKING%20CHANGES.md )
+                - ChannelEvents are now a separate observable and type
+                - Moved Originate operations from InboundSocket to extension methods on EventSocket (breaks binary compatibility)
+            - Channels
+                - exposes socket and last event properties on Channel instead of Channel.Advanced
+                - uses CHANNEL_HANGUP_COMPLETE instead of CHANNEL_HANGUP
+                - add channel.EnableHeartBeat() for keepalive
+                - move recording functionality to BasicChannel
+            - Changed type of BridgeOptions.FilterDtmf from boolean to Leg enum - allow one or both legs to filter DTMF  
+            - OutboundListener can be stopped and restarted
+            - Reliability bugfixes
       1.1.0 - Critical Bugfix:
                 - Make socket initialization thread-safe
               Other Bugfixes: 
@@ -42,7 +54,8 @@
       0.5.2 - Channels: Filter events so underlying socket does not receive events for all channels
       0.5.1 - Fix issues with initializing Rx when run in scriptcs
       0.5.0 - Fix uri decoding issue on message parsing
-      Allow operations on Channels in Pre-Answer state
+            - Allow operations on Channels in Pre-Answer state
+      
     </releaseNotes>
   </metadata>
     <files>
