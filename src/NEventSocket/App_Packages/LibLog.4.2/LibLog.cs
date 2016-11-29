@@ -507,23 +507,22 @@ namespace NEventSocket.Logging
 #else
         internal
 #endif
-        static ILog GetCurrentClassLogger()
+        static ILog GetCurrentClassLogger([CallerMemberName]string name="")
         {
 #if NETSTANDARD16
-            var trace = new StackTrace(null, false);
-            var stackFrame = trace.GetFrames().Skip(1).First();
+            return GetLogger(name);
 #else
             var stackFrame = new StackFrame(1, false);
-#endif
             return GetLogger(stackFrame.GetMethod().DeclaringType);
+#endif
         }
 #endif
 
-            /// <summary>
-            /// Gets a logger for the specified type.
-            /// </summary>
-            /// <param name="type">The type whose name will be used for the logger.</param>
-            /// <returns>An instance of <see cref="ILog"/></returns>
+        /// <summary>
+        /// Gets a logger for the specified type.
+        /// </summary>
+        /// <param name="type">The type whose name will be used for the logger.</param>
+        /// <returns>An instance of <see cref="ILog"/></returns>
 #if LIBLOG_PUBLIC
         public
 #else
