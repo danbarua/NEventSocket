@@ -49,8 +49,10 @@ namespace NEventSocket.Sockets
         
         static ObservableListener()
         {
+#if NET451
             //we need this to work around issues ilmerging rx assemblies
             PlatformEnlightenmentProvider.Current = new CurrentPlatformEnlightenmentProvider();
+#endif
         }
 
         /// <summary>

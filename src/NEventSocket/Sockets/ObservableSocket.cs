@@ -38,7 +38,7 @@ namespace NEventSocket.Sockets
 
         private readonly InterlockedBoolean isStarted = new InterlockedBoolean();
 
-        private TcpClient tcpClient;
+        protected TcpClient tcpClient;
 
         private Subject<byte[]> subject;
 
@@ -46,8 +46,10 @@ namespace NEventSocket.Sockets
         
         static ObservableSocket()
         {
+#if NET451
             //we need this to work around issues ilmerging rx assemblies
             PlatformEnlightenmentProvider.Current = new CurrentPlatformEnlightenmentProvider();
+#endif
         }
 
         /// <summary>
@@ -312,7 +314,11 @@ namespace NEventSocket.Sockets
                 {
                     if (tcpClient != null)
                     {
+#if NETSTANDARD16
+                        tcpClient.Dispose();
+#else
                         tcpClient.Close();
+#endif
                         tcpClient = null;
 
                         SafeLog(LogLevel.Trace, () => "TcpClient closed");

@@ -264,7 +264,7 @@ namespace NEventSocket.Channels
             if (!CanPlayBackAudio)
             {
                 Log.Warn(() => "Channel [{0}] attempted to play hold music when not answered".Fmt(UUID));
-                return Task.FromResult(new DisposableAction());
+                return new DisposableAction();
             }
 
             // essentially, we'll do a playback application call without waiting for the ChannelExecuteComplete event

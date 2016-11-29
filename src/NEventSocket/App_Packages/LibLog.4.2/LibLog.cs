@@ -39,6 +39,7 @@
 #pragma warning disable 1591
 
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 
 [assembly: SuppressMessage("Microsoft.Design", "CA1020:AvoidNamespacesWithFewTypes", Scope = "namespace", Target = "NEventSocket.Logging")]
 [assembly: SuppressMessage("Microsoft.Design", "CA1026:DefaultParametersShouldNotBeUsed", Scope = "member", Target = "NEventSocket.Logging.Logger.#Invoke(NEventSocket.Logging.LogLevel,System.Func`1<System.String>,System.Exception,System.Object[])")]
@@ -506,10 +507,14 @@ namespace NEventSocket.Logging
 #else
         internal
 #endif
-        static ILog GetCurrentClassLogger()
+        static ILog GetCurrentClassLogger([CallerMemberName]string name="")
         {
+#if NETSTANDARD16
+            return GetLogger(name);
+#else
             var stackFrame = new StackFrame(1, false);
             return GetLogger(stackFrame.GetMethod().DeclaringType);
+#endif
         }
 #endif
 
@@ -690,6 +695,7 @@ namespace NEventSocket.Logging
                 return false;
             }
 #if !LIBLOG_PORTABLE
+            
             var envVar = Environment.GetEnvironmentVariable(LogProvider.DisableLoggingEnvironmentVariable);
 
             if (envVar != null && envVar.Equals("true", StringComparison.OrdinalIgnoreCase))
@@ -1205,9 +1211,24 @@ namespace NEventSocket.Logging.LogProviders
                     lock (CallerStackBoundaryTypeSync)
                     {
 #if !LIBLOG_PORTABLE
+#if NETSTANDARD16
+                        StackTrace stack = new StackTrace(exception, true);
+#else
                         StackTrace stack = new StackTrace();
+#endif
                         Type thisType = GetType();
                         s_callerStackBoundaryType = Type.GetType("LoggerExecutionWrapper");
+#if NETSTANDARD16
+                        var frames = stack.GetFrames();
+                        for (var i = 1; i < frames.Length; i++)
+                        {
+                            if (!IsInTypeHierarchy(thisType, frames[i].GetMethod().DeclaringType))
+                            {
+                                s_callerStackBoundaryType = frames[i - 1].GetMethod().DeclaringType;
+                                break;
+                            }
+                        }
+#else
                         for (var i = 1; i < stack.FrameCount; i++)
                         {
                             if (!IsInTypeHierarchy(thisType, stack.GetFrame(i).GetMethod().DeclaringType))
@@ -1216,6 +1237,7 @@ namespace NEventSocket.Logging.LogProviders
                                 break;
                             }
                         }
+#endif
 #else
                         s_callerStackBoundaryType = typeof (LoggerExecutionWrapper);
 #endif
@@ -1997,7 +2019,11 @@ namespace NEventSocket.Logging.LogProviders
 #if LIBLOG_PORTABLE
             return type.GetTypeInfo().BaseType;
 #else
+#if NETSTANDARD16
+            return type.GetTypeInfo().BaseType;
+#else
             return type.BaseType;
+#endif
 #endif
         }
 
@@ -2016,7 +2042,11 @@ namespace NEventSocket.Logging.LogProviders
 #if !LIBLOG_PORTABLE
         internal static object CreateDelegate(this MethodInfo methodInfo, Type delegateType)
         {
+#if NETSTANDARD16
+            return null;
+#else
             return Delegate.CreateDelegate(delegateType, methodInfo);
+#endif
         }
 #endif
 
@@ -2025,7 +2055,11 @@ namespace NEventSocket.Logging.LogProviders
 #if LIBLOG_PORTABLE
             return type.GetTypeInfo().Assembly;
 #else
+#if NETSTANDARD16
+            return type.GetTypeInfo().Assembly;
+#else
             return type.Assembly;
+#endif
 #endif
         }
     }

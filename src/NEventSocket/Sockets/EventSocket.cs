@@ -72,7 +72,7 @@ namespace NEventSocket.Sockets
                     .ObserveOn(Scheduler.Immediate)
                     .Publish()
                     .RefCount();
-                        
+
 
             Log.Trace(() => "EventSocket initialized");
         }
