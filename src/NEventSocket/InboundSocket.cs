@@ -26,9 +26,16 @@ namespace NEventSocket
     {
         private static readonly ILog Log = LogProvider.GetCurrentClassLogger();
 
+#if NETSTANDARD16
+        private InboundSocket(string host, int port, TimeSpan? timeout = null) : base(new TcpClient(), timeout)
+        {
+            this.tcpClient.ConnectAsync(host, port).Wait();
+        }
+#else
         private InboundSocket(string host, int port, TimeSpan? timeout = null) : base(new TcpClient(host, port), timeout)
         {
         }
+#endif
 
         /// <summary>
         /// Connects to FreeSwitch and authenticates

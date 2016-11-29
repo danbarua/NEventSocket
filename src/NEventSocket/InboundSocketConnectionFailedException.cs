@@ -39,7 +39,10 @@ namespace NEventSocket
         /// </summary>
         /// <param name="info">The information.</param>
         /// <param name="context">The context.</param>
-        protected InboundSocketConnectionFailedException(SerializationInfo info, StreamingContext context) : base(info, context)
+        protected InboundSocketConnectionFailedException(SerializationInfo info, StreamingContext context)
+#if NET451
+            : base(info, context)
+#endif
         {
         }
     }
