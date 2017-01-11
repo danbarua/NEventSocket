@@ -38,6 +38,8 @@ namespace NEventSocket.Sockets
 
         private readonly InterlockedBoolean isStarted = new InterlockedBoolean();
 
+		private readonly CancellationTokenSource readCancellationToken = new CancellationTokenSource();
+
         private TcpClient tcpClient;
 
         private Subject<byte[]> subject;
@@ -84,7 +86,7 @@ namespace NEventSocket.Sockets
                             {
                                 while (bytesRead > 0)
                                 {
-                                    bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
+									bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, readCancellationToken.Token);
                                     if (bytesRead > 0)
                                     {
                                         if (bytesRead == buffer.Length)
@@ -310,6 +312,8 @@ namespace NEventSocket.Sockets
 
                 if (IsConnected)
                 {
+					readCancellationToken.Cancel();
+
                     if (tcpClient != null)
                     {
                         tcpClient.Close();
