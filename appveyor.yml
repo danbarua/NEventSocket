@@ -5,3 +5,12 @@ test: off
 artifacts:
   - path: 'build\**\*.nupkg'
   - path: 'build\**\*.zip'
+  
+deploy:
+- provider: NuGet
+  server: https://www.myget.org/F/neventsocket-prerelease/api/v2/package
+  api_key:
+    secure: 27pEUhi4VfcbVVe3/eZ3U4xc7/f6/om/uTtkkNLEHUdNkqoDp5lPzIDtvn0AOF2R
+  symbol_server: https://www.myget.org/F/neventsocket-prerelease/api/v2/package
+  on:
+    branch: master
