@@ -1,7 +1,6 @@
 NEventSocket 
 ============
-[![NuGet Badge](https://buildstats.info/nuget/NEventSocket)](https://www.nuget.org/packages/NEventSocket/) [![MyGet Badge](https://buildstats.info/myget/neventsocket-prerelease/NEventSocket)](https://www.myget.org/feed/neventsocket-prerelease/package/nuget/NEventSocket)
-[![Join the chat at https://gitter.im/danbarua/NEventSocket](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/danbarua/NEventSocket?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![NuGet Badge](https://buildstats.info/nuget/NEventSocket.DotNetCore)](https://www.nuget.org/packages/NEventSocket.DotNetCore/)
 
 | Windows / .NET | Linux / Mono
 | --- | ---
