@@ -104,12 +104,6 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\NEventSocket\NEventSocket.csproj">
-      <Project>{83DCA19D-3FF7-4E60-A066-BAE1C5A7B65E}</Project>
-      <Name>NEventSocket</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <Content Include="att_xfer.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
