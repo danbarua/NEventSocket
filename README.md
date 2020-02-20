@@ -1,4 +1,4 @@
-NEventSocket 
+NEventSocket.DotNetCore 
 ============
 [![NuGet Badge](https://buildstats.info/nuget/NEventSocket.DotNetCore)](https://www.nuget.org/packages/NEventSocket.DotNetCore/)
 
