@@ -9,6 +9,8 @@ NEventSocket
 
 NEventSocket is a FreeSwitch [event socket](https://freeswitch.org/confluence/display/FREESWITCH/mod_event_socket) client/[server](https://freeswitch.org/confluence/display/FREESWITCH/Event+Socket+Outbound) library for .Net 4.5.
 
+Since I no longer work in the telecoms industry, this library is no longer maintained. There is a DotNetCore 3 fork of the project here: https://github.com/iamkinetic/NEventSocket
+
 Installing Release builds
 ---
 Package Manager Console: `Install-Package NEventSocket` 
