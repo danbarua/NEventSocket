@@ -1,5 +1,6 @@
 ﻿namespace NEventSocket.Tests.Applications
 {
+    using System.Collections.Generic;
     using System.IO;
     using System.Runtime.Serialization.Formatters.Binary;
 
@@ -10,7 +11,7 @@
     public class OriginateTests
     {
         [Fact]
-        public void Can_format_originate_options()
+        public void can_format_originate_options()
         {
             var options = new OriginateOptions()
                               {
@@ -28,6 +29,31 @@
             Assert.Equal(
                 "{origination_caller_id_name='Dan',origination_caller_id_number='0123457890',execute_on_originate='my_app::my_arg',originate_retries='5',originate_retry_sleep_ms='200',return_ring_ready='true',originate_timeout='60',origination_uuid='83fe4f3d-b957-4b26-b6bf-3879d7e21972',ignore_early_media='true'}",
                 options.ToString());
+        }
+
+        [Fact]
+        public void can_set_enterprise_channel_variables()
+        {
+            var options = new OriginateOptions 
+                { 
+                    EnterpriseChannelVariables = new Dictionary<string, string>
+                    {
+                         {"e1" , "ev1"},
+                         {"e2" , "ev2"}
+                    }
+                }.ToString();
+            Assert.Contains("<e1='ev1',e2='ev2'>", options);
+        }
+
+        [Fact]
+        public void can_set_enterprise_channel_variables_and_channel_variables()
+        {
+            var options = new OriginateOptions
+                          {
+                              EnterpriseChannelVariables = new Dictionary<string, string> { { "e1", "ev1" }, { "e2", "ev2" } },
+                              ChannelVariables = new Dictionary<string, string> { { "c1", "cv1" }, { "c2", "cv2" } }
+                          }.ToString();
+            Assert.Contains("<e1='ev1',e2='ev2'>{c1='cv1',c2='cv2'}", options);
         }
 
         [Fact]

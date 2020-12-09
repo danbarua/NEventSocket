@@ -10,6 +10,7 @@ namespace NEventSocket.FreeSwitch
     using System.Collections.Generic;
     using System.Linq;
     using System.Runtime.Serialization;
+    using System.Text;
 
     using NEventSocket.Util;
     using NEventSocket.Util.ObjectPooling;
@@ -32,6 +33,7 @@ namespace NEventSocket.FreeSwitch
         public OriginateOptions()
         {
             ChannelVariables = new Dictionary<string, string>();
+            EnterpriseChannelVariables = new Dictionary<string, string>();
         }
 
         /// <summary>
@@ -41,6 +43,8 @@ namespace NEventSocket.FreeSwitch
         {
             parameters =
                 (Dictionary<string, string>)info.GetValue("parameters", typeof(Dictionary<string, string>));
+            EnterpriseChannelVariables =
+                (Dictionary<string, string>)info.GetValue("EnterpriseChannelVariables", typeof(Dictionary<string, string>));
             ChannelVariables =
                 (Dictionary<string, string>)info.GetValue("ChannelVariables", typeof(Dictionary<string, string>));
         }
@@ -240,6 +244,11 @@ namespace NEventSocket.FreeSwitch
         public IDictionary<string, string> ChannelVariables { get; set; }
 
         /// <summary>
+        /// Container for any Enterprise Channel Variables to be set before executing the origination
+        /// </summary>
+        public IDictionary<string, string> EnterpriseChannelVariables { get; set; }
+
+        /// <summary>
         /// Implements the operator ==.
         /// </summary>
         public static bool operator ==(OriginateOptions left, OriginateOptions right)
@@ -262,6 +271,39 @@ namespace NEventSocket.FreeSwitch
         public override string ToString()
         {
             var sb = StringBuilderPool.Allocate();
+            AppendOriginateEnterpriseChannelVariablesString(sb);
+            AppendOriginateChannelVariablesString(sb);
+
+            return StringBuilderPool.ReturnAndFree(sb);
+        }
+
+        /// <summary>
+        /// Append enterprise channel variables to string builder
+        /// </summary>
+        private void AppendOriginateEnterpriseChannelVariablesString(StringBuilder sb)
+        {
+            if (!EnterpriseChannelVariables.Any())
+            {
+                return;
+            }
+
+            sb.Append("<");
+
+            sb.Append(EnterpriseChannelVariables.ToOriginateString());
+
+            if (sb.Length > 1)
+            {
+                sb.Remove(sb.Length - 1, 1);
+            }
+
+            sb.Append(">");
+        }
+
+        /// <summary>
+        /// Append channel variables to string builder
+        /// </summary>
+        private void AppendOriginateChannelVariablesString(StringBuilder sb)
+        {
             sb.Append("{");
 
             sb.Append(parameters.ToOriginateString());
@@ -273,8 +315,6 @@ namespace NEventSocket.FreeSwitch
             }
 
             sb.Append("}");
-
-            return StringBuilderPool.ReturnAndFree(sb);
         }
 
         /// <summary>
@@ -283,6 +323,7 @@ namespace NEventSocket.FreeSwitch
         public void GetObjectData(SerializationInfo info, StreamingContext context)
         {
             info.AddValue("parameters", parameters, typeof(Dictionary<string, string>));
+            info.AddValue("EnterpriseChannelVariables", EnterpriseChannelVariables, typeof(Dictionary<string, string>));
             info.AddValue("ChannelVariables", ChannelVariables, typeof(Dictionary<string, string>));
         }
 
@@ -310,13 +351,13 @@ namespace NEventSocket.FreeSwitch
         {
             unchecked
             {
-                return ((ChannelVariables != null ? ChannelVariables.GetHashCode() : 0) * 397) ^ (parameters != null ? parameters.GetHashCode() : 0);
+                return ((EnterpriseChannelVariables != null ? EnterpriseChannelVariables.GetHashCode() : 0) * 531) ^ ((ChannelVariables != null ? ChannelVariables.GetHashCode() : 0) * 397) ^ (parameters != null ? parameters.GetHashCode() : 0);
             }
         }
 
         protected bool Equals(OriginateOptions other)
         {
-            return ChannelVariables.SequenceEqual(other.ChannelVariables) && parameters.SequenceEqual(other.parameters);
+            return EnterpriseChannelVariables.SequenceEqual(other.EnterpriseChannelVariables) && ChannelVariables.SequenceEqual(other.ChannelVariables) && parameters.SequenceEqual(other.parameters);
         }
     }
 }

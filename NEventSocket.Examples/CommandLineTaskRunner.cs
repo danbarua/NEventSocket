@@ -11,6 +11,8 @@ using Serilog.Events;
 
 namespace NEventSocket.Examples
 {
+    using NEventSocket.Examples.NetCore;
+
     public class CommandLineTaskRunner : IDisposable
     {
         private CancellationTokenSource cancellationTokenSource;
