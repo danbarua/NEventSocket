@@ -41,13 +41,15 @@
                                    TimeoutSeconds = 20
                                };
 
+             options.EnterpriseChannelVariables.Add("fooE", "barE");
+             options.EnterpriseChannelVariables.Add("bazE", "widgetsE");
              options.ChannelVariables.Add("foo", "bar");
              options.ChannelVariables.Add("baz", "widgets");
 
              var toString = options.ToString();
 
              const string Expected =
-                 "{origination_uuid='985cea12-4e70-4c03-8a2c-2c4b4502bbbb',bypass_media='true',origination_caller_id_name='Test',origination_caller_id_number='12341234',execute_on_originate='start_dtmf',ignore_early_media='true',originate_retries='3',originate_retry_sleep_ms='4000',return_ring_ready='true',originate_timeout='20',hangup_after_bridge='false',foo='bar',baz='widgets'}";
+                 "<fooE='barE',bazE='widgetsE'>{origination_uuid='985cea12-4e70-4c03-8a2c-2c4b4502bbbb',bypass_media='true',origination_caller_id_name='Test',origination_caller_id_number='12341234',execute_on_originate='start_dtmf',ignore_early_media='true',originate_retries='3',originate_retry_sleep_ms='4000',return_ring_ready='true',originate_timeout='20',hangup_after_bridge='false',foo='bar',baz='widgets'}";
              Assert.Equal(Expected, toString);
          }
 
