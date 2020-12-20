@@ -3,15 +3,15 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <PackageId>NEventSocket.DotNetCore</PackageId>
-    <Authors>iamkinetic</Authors>
-    <Company>iamkinetic</Company>
+    <Authors>questnet</Authors>
+    <Company>questnet</Company>
     <Product>NEventSocket.DotNetCore</Product>
     <Description>.Net Core port of NEventSocket</Description>
     <Version>2.0.0</Version>
-    <RepositoryUrl>https://github.com/iamkinetic/NEventSocket</RepositoryUrl>
+    <RepositoryUrl>https://github.com/questnet/NEventSocket</RepositoryUrl>
     <PackageTags>FreeSwitch NEventSocket DotNetCore</PackageTags>
     <PackageReleaseNotes>Initial beta version.</PackageReleaseNotes>
-    <PackageProjectUrl>https://github.com/iamkinetic/NEventSocket</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/questnet/NEventSocket</PackageProjectUrl>
     <dependencies>
       <group targetFramework=".NETStandard2.0">
         <dependency id="Microsoft.Extensions.Logging" version="3.1.2" />
