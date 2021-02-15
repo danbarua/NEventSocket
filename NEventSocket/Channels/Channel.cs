@@ -172,7 +172,7 @@ namespace NEventSocket.Channels
             GC.SuppressFinalize(this);
         }
 
-        protected virtual void Dispose(bool disposing)
+        protected new virtual void Dispose(bool disposing)
         {
             if (disposed != null && !disposed.EnsureCalledOnce())
             {

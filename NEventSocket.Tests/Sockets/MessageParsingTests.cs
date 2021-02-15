@@ -12,7 +12,7 @@ namespace NEventSocket.Tests.Sockets
 {
     public class MessageParsingTests
     {
-        [Theory, MemberData("ExampleMessages")]
+        [Theory, MemberData(nameof(ExampleMessages))]
         public void it_should_parse_the_expected_messages_from_a_stream(int expectedMessageCount, string exampleInput)
         {
             int parsedMessageCount = 0;
@@ -260,7 +260,7 @@ namespace NEventSocket.Tests.Sockets
         }
 
         [Theory]
-        [MemberData("ExampleSessions")]
+        [MemberData(nameof(ExampleSessions))]
         public void Can_parse_example_sessions_to_completion(string input)
         {
             if (Environment.GetEnvironmentVariable("APPVEYOR_BUILD_NUMBER") == null)

@@ -39,7 +39,6 @@ namespace NEventSocket.Tests.Util
             const string Input = "UNALLOCATED_NUMBER";
             var output = Input.HeaderToEnum<HangupCause>();
 
-            Assert.NotNull(output);
             Assert.Equal(HangupCause.UnallocatedNumber, output);
         }
 

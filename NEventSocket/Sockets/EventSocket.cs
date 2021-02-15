@@ -77,7 +77,6 @@ namespace NEventSocket.Sockets
         /// <summary>
         /// Gets or sets the TimeOut after which the socket will throw a <seealso cref="TimeoutException"/>.
         /// </summary>
-        [Obsolete("This is due to be removed.")]
         public TimeSpan ResponseTimeOut { get; set; }
 
         /// <summary>

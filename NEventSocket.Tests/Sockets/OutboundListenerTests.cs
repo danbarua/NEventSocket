@@ -200,7 +200,7 @@
         }
 
         [Fact(Timeout = 2000)]
-        public async Task IsStarted_is_false_when_initialized()
+        public void IsStarted_is_false_when_initialized()
         {
             using (var listener = new OutboundListener(0))
             {
@@ -209,7 +209,7 @@
         }
 
         [Fact(Timeout = 2000)]
-        public async Task IsStarted_is_true_when_started()
+        public void IsStarted_is_true_when_started()
         {
             using (var listener = new OutboundListener(0))
             {
@@ -219,7 +219,7 @@
         }
 
         [Fact(Timeout = 2000)]
-        public async Task IsStarted_is_false_when_stopped()
+        public void IsStarted_is_false_when_stopped()
         {
             using (var listener = new OutboundListener(0))
             {
@@ -244,7 +244,7 @@
         }
 
         [Fact(Timeout = 2000)]
-        public async Task Starting_should_be_idempotent()
+        public void Starting_should_be_idempotent()
         {
             using (var listener = new OutboundListener(0))
             {
