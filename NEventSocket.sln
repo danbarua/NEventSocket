@@ -7,7 +7,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionIt
 	ProjectSection(SolutionItems) = preProject
 		BREAKING CHANGES.md = BREAKING CHANGES.md
 		default.ps1 = default.ps1
-		src\NEventSocket\NEventSocket.nuspec = src\NEventSocket\NEventSocket.nuspec
+		global.json = global.json
 		Settings.StyleCop = Settings.StyleCop
 		SharedAssemblyInfo.cs = SharedAssemblyInfo.cs
 	EndProjectSection
@@ -17,11 +17,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{8A973BD1
 		test\Settings.StyleCop = test\Settings.StyleCop
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NEventSocket", "NEventSocket\NEventSocket.csproj", "{1DEB4916-B77F-419B-BA1F-91C6D2223641}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NEventSocket", "NEventSocket\NEventSocket.csproj", "{1DEB4916-B77F-419B-BA1F-91C6D2223641}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NEventSocket.Tests", "NEventSocket.Tests\NEventSocket.Tests.csproj", "{F536B50D-164B-488E-9240-46E3732E43C6}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NEventSocket.Examples", "NEventSocket.Examples\NEventSocket.Examples.csproj", "{84081B39-0D77-470E-A347-9F4937EF24D5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NEventSocket.Tests", "NEventSocket.Tests\NEventSocket.Tests.csproj", "{F536B50D-164B-488E-9240-46E3732E43C6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -37,10 +35,6 @@ Global
 		{F536B50D-164B-488E-9240-46E3732E43C6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F536B50D-164B-488E-9240-46E3732E43C6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F536B50D-164B-488E-9240-46E3732E43C6}.Release|Any CPU.Build.0 = Release|Any CPU
-		{84081B39-0D77-470E-A347-9F4937EF24D5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{84081B39-0D77-470E-A347-9F4937EF24D5}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{84081B39-0D77-470E-A347-9F4937EF24D5}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{84081B39-0D77-470E-A347-9F4937EF24D5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

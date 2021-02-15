@@ -31,7 +31,7 @@ namespace NEventSocket.Tests.Sockets
 
         }
 
-        [Fact(Timeout = TimeOut.TestTimeOutMs)]
+        [Fact(Timeout = TimeOut.TestTimeOutMs, Skip = "Removing timeouts")]
         public async Task Disposing_the_listener_completes_the_message_observables()
         {
             using (var listener = new OutboundListener(0))

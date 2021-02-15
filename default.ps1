@@ -13,11 +13,12 @@ properties {
   $is_appveyor_build = Test-Path Env:\APPVEYOR_BUILD_NUMBER
 }
 
-task default -depends Clean, UpdateVersion, RunTests, CreateNuGetPackages
+task BuildMergedPackage -depends Clean, UpdateVersion, RunTests, CreateNuGetPackages
+task default -depends Clean, CreateNuGetPackageFromProject
 
 task Clean {
   Remove-Item $buildOutputDir -Force -Recurse -ErrorAction SilentlyContinue
-  exec { msbuild /nologo /verbosity:quiet $solutionFilePath /t:Clean /p:platform="Any CPU"}
+  exec { dotnet build /nologo /verbosity:quiet $solutionFilePath /t:Clean /p:platform="Any CPU"}
 }
 
 task UpdateVersion {
@@ -29,10 +30,10 @@ task UpdateVersion {
 
 task Compile {
   if ($is_appveyor_build){
-    exec { msbuild /nologo /verbosity:quiet $solutionFilePath /p:Configuration=Release /p:platform="Any CPU"  /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"}
+    exec { dotnet build /nologo /verbosity:quiet $solutionFilePath /p:Configuration=Release /p:platform="Any CPU"  /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"}
   }
   else{
-    exec { msbuild /nologo /verbosity:quiet $solutionFilePath /p:Configuration=Release /p:platform="Any CPU"}
+    exec { dotnet build /nologo /verbosity:quiet $solutionFilePath /p:Configuration=Release /p:platform="Any CPU"}
   }
 }
 
@@ -40,7 +41,7 @@ task RunTests -depends Compile {
   New-Item "$reportsDir\xUnit\$project\" -Type Directory -ErrorAction SilentlyContinue
 
   #if (!($is_appveyor_build)){
-    exec { & $xunit_path "$rootDir\test\NEventSocket.Tests\bin\Release\NEventSocket.Tests.dll" /html "$reportsDir\xUnit\$project\index.html"}
+    exec { & dotnet test -c Release -r "$reportsDir\xUnit\$project"}
   #}
 }
 
@@ -68,6 +69,10 @@ task CreateNuGetPackages -depends ILMerge {
   gci $srcDir -Recurse -Include *.nuspec | % {
     exec { nuget.exe pack $_ -o $buildOutputDir -version $packageVersion }
   }
+}
+
+task CreateNuGetPackageFromProject -depends RunTests {
+    exec { dotnet pack -o $buildOutputDir -c Release }
 }
 
 task PublishNugetPackages -depends CreateNuGetPackages {
