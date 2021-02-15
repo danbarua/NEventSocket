@@ -304,7 +304,7 @@ namespace NEventSocket.FreeSwitch
         /// </summary>
         private void AppendOriginateChannelVariablesString(StringBuilder sb)
         {
-            if (!ChannelVariables.Any())
+            if (!ChannelVariables.Any() && !parameters.Any())
             {
                 return;
             }
