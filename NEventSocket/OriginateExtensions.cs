@@ -66,33 +66,18 @@ namespace NEventSocket
             {
                 options = new OriginateOptions();
             }
+            var originateString = $"{options}{endpoint} {destination}";
 
-            // if no UUID provided, we'll set one now and use that to filter for the correct channel events
-            // this way, one inbound socket can originate many calls and we can complete the correct
-            // TaskCompletionSource for each originated call.
-            if (string.IsNullOrEmpty(options.UUID))
-            {
-                options.UUID = Guid.NewGuid().ToString();
-            }
-
-            await socket.SubscribeEvents(EventName.ChannelAnswer, EventName.ChannelHangup, EventName.ChannelProgress).ConfigureAwait(false);
-
-            var originateString = string.Format("{0}{1} {2}", options, endpoint, destination);
-
+            await socket.SubscribeEvents(EventName.BackgroundJob).ConfigureAwait(false);
             return
                 await
                     socket.BackgroundJob("originate", originateString)
                         .ToObservable()
-                        .Merge(
-                            socket.ChannelEvents.FirstAsync(
-                                x =>
-                                    x.UUID == options.UUID
-                                    && (x.EventName == EventName.ChannelAnswer || x.EventName == EventName.ChannelHangup
-                                        || (options.ReturnRingReady && x.EventName == EventName.ChannelProgress))).Cast<BasicMessage>())
-                        .FirstAsync(x => (x is BackgroundJobResult && !((BackgroundJobResult)x).Success) || x is ChannelEvent)
-                        .Select(OriginateResult.FromBackgroundJobResultOrChannelEvent) // pattern matching, my kingdom for pattern matching
+                        .Select(OriginateResult.FromBackgroundJobResultOrChannelEvent)
                         .ToTask()
                         .ConfigureAwait(false);
+
+
         }
     }
 }
