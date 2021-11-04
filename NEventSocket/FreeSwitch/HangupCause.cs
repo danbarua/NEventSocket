@@ -137,6 +137,40 @@ namespace NEventSocket.FreeSwitch
 
         ProgressTimeout = 607, 
 
+        InvalidGateway = 608,
+ 
+        GatewayDown = 609,
+ 
+        InvalidUrl = 610,
+ 
+        InvalidProfile = 611,
+ 
+        NoPickup = 612,
+ 
+        SrtpReadError = 613,
+ 
+        Bowout = 614,
+ 
+        BusyEverywhere = 615,
+ 
+        Decline = 616,
+ 
+        DoesNotExistAnywhere = 617,
+ 
+        NotAcceptable = 618,
+ 
+        Unwanted = 619,
+ 
+        NoIdentity = 620,
+ 
+        BadIdentityInfo = 621,
+ 
+        UnsupportedCertificate = 622,
+ 
+        InvalidIdentity = 623,
+ 
+        StaleDate = 624,
+ 
         Unknown = 9999
     }
 #pragma warning restore 1591
