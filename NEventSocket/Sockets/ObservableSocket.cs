@@ -33,7 +33,7 @@ namespace NEventSocket.Sockets
         private readonly InterlockedBoolean isStarted = new InterlockedBoolean();
         private readonly CancellationTokenSource readCancellationToken = new CancellationTokenSource();
         private TcpClient tcpClient;
-        private Subject<byte[]> subject;
+        private readonly SubjectBase<byte[]> subject;
         private IObservable<byte[]> receiver;
         
         static ObservableSocket()
@@ -56,93 +56,92 @@ namespace NEventSocket.Sockets
 
             this.tcpClient = tcpClient;
 
-            subject = new Subject<byte[]>();
+            subject = new NotifyingSubject<byte[]>(SubscriberAdded);
+            receiver = subject.AsObservable();
 
-            receiver = Observable.Defer(
-                () =>
+            void SubscriberAdded()
+            {
+                if (isStarted.EnsureCalledOnce())
                 {
-                    if (isStarted.EnsureCalledOnce())
+                    return;
+                }
+
+                Task.Run(
+                    async () =>
                     {
-                        return subject.AsObservable();
-                    }
+                        SafeLog(LogLevel.Trace, "{0} Worker Task {1} started".Fmt(GetType(), id));
 
-                    Task.Run(
-                        async () =>
+                        int bytesRead = 1;
+                        var stream = tcpClient.GetStream();
+                        byte[] buffer = SharedPools.ByteArray.Allocate();
+                        try
                         {
-                            SafeLog(LogLevel.Trace, "{0} Worker Thread {1} started".Fmt(GetType(), id));
-
-                            int bytesRead = 1;
-                            var stream = tcpClient.GetStream();
-                            byte[] buffer = SharedPools.ByteArray.Allocate();
-                            try
+                            while (bytesRead > 0)
                             {
-                                while (bytesRead > 0)
+                                bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, readCancellationToken.Token);
+                                if (bytesRead > 0)
                                 {
-									bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, readCancellationToken.Token);
-                                    if (bytesRead > 0)
+                                    if (bytesRead == buffer.Length)
                                     {
-                                        if (bytesRead == buffer.Length)
-                                        {
-                                            subject.OnNext(buffer);
-                                        }
-                                        else
-                                        {
-                                            subject.OnNext(buffer.Take(bytesRead).ToArray());
-                                        }
+                                        subject.OnNext(buffer);
                                     }
                                     else
                                     {
-                                        subject.OnCompleted();
+                                        subject.OnNext(buffer.Take(bytesRead).ToArray());
                                     }
-                                }
-                            }
-                            catch (ObjectDisposedException)
-                            {
-                                //expected - normal shutdown
-                                subject.OnCompleted();
-                            }
-                            catch (TaskCanceledException)
-                            {
-                                //expected - normal shutdown
-                                subject.OnCompleted();
-                            }
-                            catch (IOException ex)
-                            {
-                                if (ex.InnerException is ObjectDisposedException)
-                                {
-                                    //expected - normal shutdown
-                                    subject.OnCompleted();
                                 }
                                 else
                                 {
-                                    //socket comms interrupted - propogate the error up the layers
-                                    SafeLog(LogLevel.Error, "IO Error reading from stream", ex);
-                                    subject.OnError(ex);
+                                    subject.OnCompleted();
                                 }
                             }
-                            catch (SocketException ex)
+                        }
+                        catch (ObjectDisposedException)
+                        {
+                            //expected - normal shutdown
+                            subject.OnCompleted();
+                        }
+                        catch (TaskCanceledException)
+                        {
+                            //expected - normal shutdown
+                            subject.OnCompleted();
+                        }
+                        catch (IOException ex)
+                        {
+                            if (ex.InnerException is ObjectDisposedException)
                             {
-                                //socket comms interrupted - propogate the error up the layers
-                                SafeLog(LogLevel.Error, "Socket Error reading from stream", ex);
+                                //expected - normal shutdown
+                                subject.OnCompleted();
+                            }
+                            else
+                            {
+                                //socket comms interrupted - propagate the error up the layers
+                                SafeLog(LogLevel.Error, "IO Error reading from stream", ex);
+                                    subject.OnError(ex);
+                            }
+                        }
+                        catch (SocketException ex)
+                        {
+                            //socket comms interrupted - propagate the error up the layers
+                            SafeLog(LogLevel.Error, "Socket Error reading from stream", ex);
                                 subject.OnError(ex);
-                            }
-                            catch (Exception ex)
-                            {
-                                //unexpected error
-                                SafeLog(LogLevel.Error, "Unexpected Error reading from stream", ex);
+                        }
+                        catch (Exception ex)
+                        {
+                            //unexpected error
+                            SafeLog(LogLevel.Error, "Unexpected Error reading from stream", ex);
                                 subject.OnError(ex);
-                            }
-                            finally
-                            {
-                                SharedPools.ByteArray.Free(buffer);
+                        }
+                        finally
+                        {
+                            SharedPools.ByteArray.Free(buffer);
 
-                                SafeLog(LogLevel.Trace, "{0} Worker Thread {1} completed".Fmt(GetType(), id));
-                                Dispose();
-                            }
-                        });
+                            SafeLog(LogLevel.Trace, "{0} Worker Thread {1} completed".Fmt(GetType(), id));
+                            Dispose();
+                        }
+                    });
 
-                    return subject.AsObservable();
-                });
+            }
         }
 
         /// <summary>
@@ -317,4 +316,48 @@ namespace NEventSocket.Sockets
             Log?.Log(logLevel, exception, message, formatParameters);
         }
     }
-}
+
+    /// <summary>
+    /// A subject that calls an `Action` when a new subscriber subscribed to it.
+    /// </summary>
+    sealed class NotifyingSubject<T> : SubjectBase<T> {
+        readonly Action subscriberAdded;
+        readonly Subject<T> inner = new Subject<T>();
+
+        public NotifyingSubject(Action subscriberAdded)
+        {
+            this.subscriberAdded = subscriberAdded;
+        }
+
+        public override void Dispose()
+        {
+            inner.Dispose();
+        }
+
+        public override void OnCompleted()
+        {
+            inner.OnCompleted();
+        }
+
+        public override void OnError(Exception error)
+        {
+            inner.OnError(error);
+        }
+
+        public override void OnNext(T value)
+        {
+            inner.OnNext(value);
+        }
+
+        public override IDisposable Subscribe(IObserver<T> observer)
+        {
+            var r = inner.Subscribe(observer);
+            subscriberAdded();
+            return r;
+        }
+
+        public override bool HasObservers => inner.HasObservers;
+
+        public override bool IsDisposed => inner.IsDisposed;
+    }
+};
