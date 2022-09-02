@@ -9,8 +9,8 @@ namespace NEventSocket.Examples.Examples
 
     using Net.CommandLine;
 
-    using NEventSocket.FreeSwitch;
-    using NEventSocket.Util;
+    using NEventSocket.Core.FreeSwitch;
+    using NEventSocket.Core.Util;
 
     public class ConferenceExample : ICommandLineTask, IDisposable
 
@@ -21,7 +21,6 @@ namespace NEventSocket.Examples.Examples
         {
             const string TempFolder = "C:/temp/";
             const string ConferenceId = "my-test-conference";
-            const string ConferencePin = "1234";
             const string ConferenceArgs = ConferenceId;// +"+" + ConferencePin;
 
             listener = new OutboundListener(8084);

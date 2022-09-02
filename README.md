@@ -1,27 +1,20 @@
-NEventSocket 
+NEventSocket.DotNetCore 
 ============
-[![NuGet Badge](https://buildstats.info/nuget/NEventSocket)](https://www.nuget.org/packages/NEventSocket/) [![MyGet Badge](https://buildstats.info/myget/neventsocket-prerelease/NEventSocket)](https://www.myget.org/feed/neventsocket-prerelease/package/nuget/NEventSocket)
-[![Join the chat at https://gitter.im/danbarua/NEventSocket](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/danbarua/NEventSocket?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![NuGet Badge](https://buildstats.info/nuget/NEventSocket.DotNetCore)](https://www.nuget.org/packages/NEventSocket.DotNetCore/)
 
 | Windows / .NET | Linux / Mono
 | --- | ---
 | [![Build status](https://ci.appveyor.com/api/projects/status/0d28m5hxdd55243q/branch/master?svg=true)](https://ci.appveyor.com/project/danbarua/neventsocket/branch/master)| [![Build Status](https://travis-ci.org/danbarua/NEventSocket.svg?branch=master)](https://travis-ci.org/danbarua/NEventSocket)
 
-NEventSocket is a FreeSwitch [event socket](https://freeswitch.org/confluence/display/FREESWITCH/mod_event_socket) client/[server](https://freeswitch.org/confluence/display/FREESWITCH/Event+Socket+Outbound) library for .Net 4.5.
+NEventSocket is a FreeSwitch [event socket](https://freeswitch.org/confluence/display/FREESWITCH/mod_event_socket) client/[server](https://freeswitch.org/confluence/display/FREESWITCH/Event+Socket+Outbound) library for .Net/.Net Framework (.Net Standard 2).  This is pretty much a direct port of danbarua/NEventSocket.
 
 Since I no longer work in the telecoms industry, this library is no longer maintained. There is a DotNetCore 3 fork of the project here: https://github.com/iamkinetic/NEventSocket
 
 Installing Release builds
 ---
-Package Manager Console: `Install-Package NEventSocket` 
+Package Manager Console: `Install-Package NEventSocket.DotNetCore` 
 
-CommandLine: `nuget install NEventSocket`
-
-Installing Pre-Release builds
----
-NuGet v3 (VS2015): `nuget install NEventSocket -PreRelease -Source "https://www.myget.org/F/neventsocket-prerelease/api/v3/index.json"`
-
-NuGet v2 (VS2012): `nuget install NEventSocket -PreRelease -Source "https://www.myget.org/F/neventsocket-prerelease/api/v2"` 
+CommandLine: `nuget install NEventSocket.DotNetCore`
 
 Inbound Socket Client
 --------------

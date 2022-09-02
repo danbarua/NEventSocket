@@ -12,8 +12,8 @@
 
     using Net.CommandLine;
 
-    using NEventSocket.FreeSwitch;
-    using NEventSocket.Util;
+    using NEventSocket.Core.FreeSwitch;
+    using NEventSocket.Core.Util;
 
     public class LoadTest : ICommandLineTask, IDisposable
     {

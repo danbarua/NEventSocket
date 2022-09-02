@@ -9,7 +9,7 @@
 
     using Net.Autofac.CommandLine;
 
-    using NEventSocket.Logging;
+    using NEventSocket.Core.Logging;
 
     using Serilog;
     using Serilog.Debugging;
